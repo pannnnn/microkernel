@@ -4,7 +4,9 @@
  * task.c - manage task-related functions
  */
 
-#include <task.h>
+#include <syscall.h>
+
+extern int swi(int code);
 
 int Create(int priority, void (*function)()){
 	// allocate & initialize a task descriptor
@@ -13,7 +15,11 @@ int Create(int priority, void (*function)()){
 		// no arguments and no return value
 	// when complete, task descriptor contains all info necessary to run
 	// the task's main function
-
+	Args args;
+	args.code = SYS_CODE.CREATE;
+    args.a0 = priority;
+    args.a1 = function;
+	swi(args);
 	// return value:
 		// if successful: the task id set for this task
 		// if invalid priority: -1
@@ -40,4 +46,7 @@ void Exit() {
 	// removed from send queues
 	// removed from receive queues
 	// removed from event queues
+	Args args;
+	args.code = SYS_CODE.EXIT;
+    swi(args);
 }
