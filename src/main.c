@@ -1,4 +1,4 @@
-#include <kernel.h>
+#include <k.h>
 
 KernelState *_kernel_state;
 

@@ -1,8 +1,4 @@
-#include <mem.h>
-#include <kernel.h>
-#include <task.h>
-#include <k_syscall.h>
-#include <bootstrap.h>
+#include <k.h>
 
 extern int enter_kernel();
 

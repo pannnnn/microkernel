@@ -1,7 +1,4 @@
-#include <kernel.h>
-#include <syscall.h>
-#include <mem.h>
-#include <k_syscall.h>
+#include <k.h>
 
 extern KernelState *_kernel_state;
 
@@ -12,6 +9,12 @@ int _sys_create_td()
     td->id = _kernel_state->curr_td_id++;
     return td->id;
 }
+
+
+TaskDescriptor *get_td(int id) 
+{
+    return (TaskDescriptor *) (_kernel_state->td_stack_addr + sizeof(TaskDescriptor) * id);
+} 
 
 int sys_create(PRIORITY priority, void (*function)()) 
 {
@@ -33,9 +36,3 @@ int sys_create(PRIORITY priority, void (*function)())
     td->state = READY;
     return 0;
 }
-
-
-TaskDescriptor *get_td(int id) 
-{
-    return (TaskDescriptor *) (_kernel_state->td_stack_addr + sizeof(TaskDescriptor) * id);
-} 
