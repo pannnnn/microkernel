@@ -30,6 +30,15 @@ void k_main()
             case CREATE:
                 result = sys_create(args->arg0, (void *) args->arg1);
                 break;
+            case TID:
+                result = sys_tid();
+                break;
+            case PID:
+                result = sys_pid();
+                break;
+            case YIELD:
+                sys_yield();
+                break;
             case EXIT:
                 sys_exit();
                 break;
@@ -38,6 +47,5 @@ void k_main()
         }
 
         ((unsigned int*)td->stack_pointer)[2] = result;
-        break;
     }
 }

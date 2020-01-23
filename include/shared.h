@@ -4,6 +4,9 @@
 typedef enum
 {
 	CREATE = 0,
+	TID,
+	PID,
+	YIELD,
     EXIT
 } SYS_CODE;
 

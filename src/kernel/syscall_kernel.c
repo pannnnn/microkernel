@@ -41,9 +41,23 @@ int sys_create(int priority, void (*function)())
     td->stack_pointer = (unsigned int) stack_pointer_addr;
 
     td->state = READY;
+    return td_id;
+}
+
+int sys_tid()
+{
     return 0;
 }
 
+int sys_pid()
+{
+    return 0;
+}
+
+void sys_yield()
+{
+    return;
+}
 void sys_exit()
 {
     return;

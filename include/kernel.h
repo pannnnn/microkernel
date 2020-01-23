@@ -50,7 +50,7 @@ typedef struct
 typedef struct 
 {
 	int id;
-	int parent_id;
+	int pid;
 	int priority;
 	int next_ready;
 	int next_send;
@@ -68,5 +68,8 @@ void k_main();
 
 int _sys_create_td();
 int sys_create(int priority, void (*function)());
+int sys_tid();
+int sys_pid();
+void sys_yield();
 void sys_exit();
 TaskDescriptor *get_td(int id);

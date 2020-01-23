@@ -25,7 +25,7 @@ static void init_kernel_state()
 static void create_first_user_task()
 {
     int priority = 1;
-    sys_create(priority, user_task_1);
+    sys_create(priority, user_task_0);
 }
 
 static void init_peripheral() {
