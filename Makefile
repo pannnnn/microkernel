@@ -25,9 +25,9 @@ CFLAGS = -g -S -fPIC -Wall -mcpu=arm920t -msoft-float -I. -I./include
 LDFLAGS = -static -e main -nmagic -T linker.ld -L ./lib -L $(XLIBDIR2)
 
 CSOURCES = $(wildcard src/lib/*.c) $(wildcard src/user/*.c)  $(wildcard src/kernel/*.c)
-ASMSOURCES = $(wildcard src/kernel/*.s)
+ASMSOURCES = $(wildcard src/kernel/*.S)
 ASMFILES = $(CSOURCES:.c=.s)
-OBJECTS = $(ASMSOURCES:.s=.o)
+OBJECTS = $(CSOURCES:.c=.o) $(ASMSOURCES:.S=.o)
 MAIN = main
 EXEC = microkernel
 

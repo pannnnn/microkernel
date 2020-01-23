@@ -1,8 +1,10 @@
-#include <k.h>
+#include <kernel.h>
+#include <user.h>
+#include <lib_periph_init.h>
 
 extern int enter_kernel();
 
-extern KernelState *_kernel_state;
+extern KernelState _kernel_state;
 
 static void register_swi_handler()
 {
@@ -12,21 +14,27 @@ static void register_swi_handler()
 
 static void init_kernel_state()
 {
-    KernelState kernel_state;
-    kernel_state.machine_state = NORMAL;
-    kernel_state.td_stack_addr = KERNEL_STACK_TD_ADDR;
-    kernel_state.curr_td_id = 0;
-    _kernel_state = &kernel_state;
+    _kernel_state.machine_state = NORMAL;
+    _kernel_state.kernel_stack_addr = (unsigned int) &_kernel_state;
+    _kernel_state.kernel_stack_td_addr = KERNEL_STACK_TD_ADDR;
+    _kernel_state.user_stack_addr = USER_STACK_ADDR;
+    _kernel_state.user_stack_size_per_user = USER_STACK_SIZE_PER_USER;
+    _kernel_state.curr_td_id = 0;
 }
 
 static void create_first_user_task()
 {
-    PRIORITY priority = PRIORITY.MEDIUM;
-    sys_create(priority, first_user_task);
+    int priority = 1;
+    sys_create(priority, user_task_1);
+}
+
+static void init_peripheral() {
+    init_uart();
 }
 
 void bootstrap()
 {
+    init_peripheral();
     register_swi_handler();
     init_kernel_state();
     create_first_user_task();

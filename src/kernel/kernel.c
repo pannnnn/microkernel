@@ -1,4 +1,6 @@
-#include <k.h>
+#include <kernel.h>
+#include <shared.h>
+#include <lib_periph_bwio.h>
 
 extern int leave_kernel(int sp, Args *args);
 extern int swi_exit(int sp, void** tf);
@@ -16,25 +18,26 @@ void k_main()
         TaskDescriptor *td = get_td(taskId);
 
         Args *args;
+        Args emptyArg = {};
+        args = &emptyArg;
 
-        int stack_pointer = leave_kernel(td->stack_pointer, args);
+        unsigned int stack_pointer = leave_kernel(td->stack_pointer, args);
 
         td->stack_pointer = stack_pointer;
 
         int result = -1;
         switch (args->code) {
-            case SYS_CODE.CREATE:
-                PRIORITY priority = args->a0;
-                void *function = (void*) args->a1;
-                result = sys_create(priority, function);
+            case CREATE:
+                result = sys_create(args->arg0, (void *) args->arg1);
                 break;
-            case SYS_CODE.EXIT:
+            case EXIT:
                 sys_exit();
                 break;
             default:
                 break;
         }
 
-        ((int*)td->stack_pointer)[2] = result;
+        ((unsigned int*)td->stack_pointer)[2] = result;
+        break;
     }
 }

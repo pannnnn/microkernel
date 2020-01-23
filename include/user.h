@@ -29,4 +29,6 @@ void Yield();
 
 void Exit();
 
-void first_user_task();
+void function_wrapper(void (*function)());
+
+void user_task_1();

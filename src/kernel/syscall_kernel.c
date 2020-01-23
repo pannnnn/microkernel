@@ -1,24 +1,23 @@
-#include <k.h>
+#include <kernel.h>
 
-extern KernelState *_kernel_state;
+extern KernelState _kernel_state;
 extern void function_wrapper(void (*function)());
-
 
 int _sys_create_td() 
 {
     // TODO: Some logic to check if run out of task stack or task descriptor space
-    TaskDescriptor *td = (TaskDescriptor *) _kernel_state->td_stack_addr;
-    td->id = _kernel_state->curr_td_id++;
+    TaskDescriptor *td = (TaskDescriptor *) _kernel_state.kernel_stack_td_addr;
+    td->id = _kernel_state.curr_td_id++;
     return td->id;
 }
 
 
 TaskDescriptor *get_td(int id) 
 {
-    return (TaskDescriptor *) (_kernel_state->td_stack_addr + sizeof(TaskDescriptor) * id);
+    return (TaskDescriptor *) (_kernel_state.kernel_stack_td_addr + sizeof(TaskDescriptor) * id);
 } 
 
-int sys_create(PRIORITY priority, void (*function)()) 
+int sys_create(int priority, void (*function)()) 
 {
     int td_id = _sys_create_td();
 
@@ -26,17 +25,26 @@ int sys_create(PRIORITY priority, void (*function)())
 
     td->priority = priority;
 
-    td->stack_pointer = USER_STACK_ADDR + td_id * USER_STACK_SIZE_PER_USER;
-    int *stack_pointer = td->stack_pointer;
-    // r0 serves as function pointer
-    *(--stack_pointer) = function;
-    // leave space for uninitialized r1-r12
-    for (int i = 1; i++; i< NEW_TASK_REGS_SPACE) {
-        *(--stack_pointer) = 0;
+    td->stack_pointer = 
+        (_kernel_state.user_stack_addr + td_id * _kernel_state.user_stack_size_per_user);
+    unsigned int *stack_pointer_addr = (unsigned int *) td->stack_pointer;
+    // user space function return address can be null set in initialization
+    *(--stack_pointer_addr) = 0;
+    // leave space for uninitialized r12-r1
+    for (int i = 0; i < NEW_TASK_UNUSED_REGS_SPACE; i++) {
+        *(--stack_pointer_addr) = 0;
     }
-    *(--stack_pointer) = function_wrapper;
-    *(--stack_pointer) = USER_MODE_DEFAULT;
+    // r0 serves as function pointer
+    *(--stack_pointer_addr) = (unsigned int) function;
+    *(--stack_pointer_addr) = (unsigned int) function_wrapper;
+    *(--stack_pointer_addr) = USER_MODE_DEFAULT;
+    td->stack_pointer = (unsigned int) stack_pointer_addr;
 
     td->state = READY;
     return 0;
+}
+
+void sys_exit()
+{
+    return;
 }

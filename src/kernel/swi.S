@@ -1,8 +1,8 @@
-.global swi
-.type   swi, %function
-swi:
+.global enter_swi
+.type   enter_swi, %function
+enter_swi:
     @ software interrupt, trapped into swi_handler (enter_kernel)
-    swi
+    swi     0
     @ return back to caller
     mov     pc, lr
 
