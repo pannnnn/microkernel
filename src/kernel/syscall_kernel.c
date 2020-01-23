@@ -1,6 +1,8 @@
 #include <k.h>
 
 extern KernelState *_kernel_state;
+extern void function_wrapper(void (*function)());
+
 
 int _sys_create_td() 
 {
@@ -26,11 +28,13 @@ int sys_create(PRIORITY priority, void (*function)())
 
     td->stack_pointer = USER_STACK_ADDR + td_id * USER_STACK_SIZE_PER_USER;
     int *stack_pointer = td->stack_pointer;
-    // leave space for uninitialized r0-r12
-    for (int i = 0; i++; i< NEW_TASK_REGS_SPACE) {
+    // r0 serves as function pointer
+    *(--stack_pointer) = function;
+    // leave space for uninitialized r1-r12
+    for (int i = 1; i++; i< NEW_TASK_REGS_SPACE) {
         *(--stack_pointer) = 0;
     }
-    *(--stack_pointer) = function;
+    *(--stack_pointer) = function_wrapper;
     *(--stack_pointer) = USER_MODE_DEFAULT;
 
     td->state = READY;

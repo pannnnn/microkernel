@@ -21,7 +21,7 @@ void k_main()
 
         td->stack_pointer = stack_pointer;
 
-        int result = 0;
+        int result = -1;
         switch (args->code) {
             case SYS_CODE.CREATE:
                 PRIORITY priority = args->a0;
@@ -34,7 +34,7 @@ void k_main()
             default:
                 break;
         }
-        
+
         ((int*)td->stack_pointer)[2] = result;
     }
 }
