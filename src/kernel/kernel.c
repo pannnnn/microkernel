@@ -24,8 +24,6 @@ void k_main()
     while(1) {
         int tid = schedule();
 
-        // bwprintf( COM2, "\n\rScheduled id %d\n\r", tid);
-
         if (tid == -1) return;
 
         TaskDescriptor *td = get_td(tid);

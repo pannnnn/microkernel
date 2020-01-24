@@ -89,3 +89,4 @@ void pq_insert(int tid);
 int pq_pop();
 void pq_remove(int tid) ;
 int min_child(int index);
+void dump_queue();

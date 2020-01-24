@@ -32,8 +32,4 @@ void Exit();
 void function_wrapper(void (*function)());
 
 void user_task_0();
-void user_task_1();
-void user_task_2();
-void user_task_3();
-void user_task_4();
-void user_task_5();
+void user_task_test();

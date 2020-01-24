@@ -77,10 +77,18 @@ int min_child(int index) {
     TaskDescriptor *right_child_td = get_td(right_child_tid);
 
     if (left_child_td->priority > right_child_td->priority || 
-        (left_child_td->priority = right_child_td->priority && 
+        (left_child_td->priority == right_child_td->priority && 
         left_child_td->scheduled_count < right_child_td->scheduled_count)) {
             return left_child_index;
     }
 
     return right_child_index;
+}
+
+void dump_queue() {
+    bwprintf( COM2, "Queue");
+    for (int i = 1; i <= _kernel_state.queue_size; i++) {
+        bwprintf( COM2, " %d", _kernel_state.queue[i]);
+    }
+    bwprintf( COM2, "\n\r");
 }
