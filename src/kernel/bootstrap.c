@@ -15,6 +15,7 @@ static void register_swi_handler()
 static void init_kernel_state()
 {
     _kernel_state.id_counter = 0;
+    _kernel_state.schedule_counter = 0;
     _kernel_state.scheduled_tid = -1;
     _kernel_state.queue_size = 0;
 

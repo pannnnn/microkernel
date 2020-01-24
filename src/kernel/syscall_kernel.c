@@ -9,7 +9,8 @@ int _sys_create_td()
     // TODO: Some logic to check if run out of task stack or task descriptor space
     TaskDescriptor *td = get_td(_kernel_state.id_counter);
     td->id = _kernel_state.id_counter++;
-    td->scheduled_count = 0;
+    // -1 is to raise higher priority
+    td->scheduled_count = _kernel_state.schedule_counter - 1;
     td->pid = _kernel_state.scheduled_tid;
     return td->id;
 }

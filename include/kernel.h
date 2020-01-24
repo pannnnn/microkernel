@@ -57,6 +57,7 @@ typedef struct
     MACHINE_STATE machine_state;
 
     int id_counter;
+    int schedule_counter;
     int scheduled_tid;
     int queue_size;
     int queue[QUEUE_SIZE + 1];

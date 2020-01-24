@@ -11,6 +11,9 @@ int schedule()
 {
     if (_kernel_state.queue_size == 0) return -1;
     int scheduled_tid = pq_pop();
+    _kernel_state.schedule_counter +=2;
+    TaskDescriptor *td = get_td(scheduled_tid);
+    td->scheduled_count = _kernel_state.schedule_counter;
     pq_insert(scheduled_tid);
     _kernel_state.scheduled_tid = scheduled_tid;
     return scheduled_tid;
@@ -20,6 +23,8 @@ void k_main()
 {
     while(1) {
         int tid = schedule();
+
+        // bwprintf( COM2, "\n\rScheduled id %d\n\r", tid);
 
         if (tid == -1) return;
 
@@ -32,7 +37,6 @@ void k_main()
         unsigned int stack_pointer = leave_kernel(td->stack_pointer, &args);
 
         td->stack_pointer = stack_pointer;
-        td->scheduled_count++;
 
         int result = -1;
         switch (args->code) {

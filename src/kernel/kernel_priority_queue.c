@@ -6,7 +6,7 @@ extern KernelState _kernel_state;
 void percolate_up(int index) {
     int *queue = _kernel_state.queue;
     if (index > _kernel_state.queue_size) return;
-    while (index/2 != 0) {
+    while (index/2 > 0) {
         int tid = queue[index];
         TaskDescriptor *td = get_td(tid);
         int parent_tid = queue[index/2];
@@ -58,10 +58,8 @@ void pq_remove(int tid)  {
     for (int i = 1; i <= _kernel_state.queue_size; i++) {
         if (queue[i] == tid) {
             queue[i] = queue[_kernel_state.queue_size--];
-            // bwprintf( COM2, "\n\rBefore <%d> <%d>\n\r", i, queue[i]);
             percolate_down(i);
             percolate_up(i);
-            // bwprintf( COM2, "\n\rAfter <%d> <%d>\n\r", i, queue[i]);
             return;
         }
     }
