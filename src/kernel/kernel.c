@@ -2,28 +2,37 @@
 #include <shared.h>
 #include <lib_periph_bwio.h>
 
-extern int leave_kernel(int sp, Args *args);
+extern int leave_kernel(int sp, Args **args);
 extern int swi_exit(int sp, void** tf);
+
+extern KernelState _kernel_state;
 
 int schedule() 
 {
-    return 0;
+    if (_kernel_state.queue_size == 0) return -1;
+    int scheduled_tid = pq_pop();
+    pq_insert(scheduled_tid);
+    _kernel_state.scheduled_tid = scheduled_tid;
+    return scheduled_tid;
 }
 
 void k_main() 
 {
     while(1) {
-        int taskId = schedule();
+        int tid = schedule();
 
-        TaskDescriptor *td = get_td(taskId);
+        if (tid == -1) return;
+
+        TaskDescriptor *td = get_td(tid);
 
         Args *args;
         Args emptyArg = {};
         args = &emptyArg;
 
-        unsigned int stack_pointer = leave_kernel(td->stack_pointer, args);
+        unsigned int stack_pointer = leave_kernel(td->stack_pointer, &args);
 
         td->stack_pointer = stack_pointer;
+        td->scheduled_count++;
 
         int result = -1;
         switch (args->code) {

@@ -16,6 +16,8 @@
 
 #define NEW_TASK_UNUSED_REGS_SPACE 12
 
+#define QUEUE_SIZE 1024
+
 /*
  * Enum definition
  */
@@ -37,20 +39,10 @@ typedef enum
  */
 typedef struct 
 {
-    int machine_state;
-    int curr_td_id;
-    
-    unsigned int kernel_stack_addr;
-    unsigned int kernel_stack_td_addr;
-    unsigned int user_stack_addr;
-    unsigned int user_stack_size_per_user;
-    unsigned int stack_pointer;
-} KernelState;
-
-typedef struct 
-{
 	int id;
 	int pid;
+    // this is a increasing time related id
+    int scheduled_count;
 	int priority;
 	int next_ready;
 	int next_send;
@@ -60,16 +52,39 @@ typedef struct
 	unsigned int stack_pointer;
 } TaskDescriptor;
 
+typedef struct 
+{
+    MACHINE_STATE machine_state;
+
+    int id_counter;
+    int scheduled_tid;
+    int queue_size;
+    int queue[QUEUE_SIZE + 1];
+
+    unsigned int kernel_stack_addr;
+    unsigned int kernel_stack_td_addr;
+    unsigned int user_stack_addr;
+    unsigned int user_stack_size_per_user;
+} KernelState;
+
 /*
  * Function definition
  */
 void bootstrap();
 void k_main();
 
-int _sys_create_td();
 int sys_create(int priority, void (*function)());
 int sys_tid();
 int sys_pid();
 void sys_yield();
 void sys_exit();
+
+int _sys_create_td();
 TaskDescriptor *get_td(int id);
+
+void percolate_up(int index);
+void percolate_down(int index);
+void pq_insert(int tid);
+int pq_pop();
+void pq_remove(int tid) ;
+int min_child(int index);

@@ -61,21 +61,19 @@ int Create(int priority, void (*function)()){
 int MyTid() {
 	Args args;
 	args.code = TID;
-    enter_swi(&args);
+    return enter_swi(&args);
 	// returns the task id of the calling task
 	// return current_task_id;
-	return 0;
 }
 
 int MyParentTid() {
 	Args args;
 	args.code = PID;
-    enter_swi(&args);
+	return enter_swi(&args);
 	// returns the task id of the task that created the calling task
 	// int* current_task_descriptor;
 	// current_task_descriptor = task_descriptor_array[current_task_id];
 	// return current_task_descriptor->parent_id;
-	return 0;
 }
 
 void Yield() {
