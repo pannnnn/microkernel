@@ -57,6 +57,7 @@ void k_main()
                 break;
         }
 
+        // load value into r0
         ((unsigned int*)td->stack_pointer)[2] = result;
     }
 }
