@@ -2,16 +2,20 @@
 #include <user.h>
 #include <lib_periph_init.h>
 
+// defined in swi.S
 extern int enter_kernel();
 
+// defined as a global variable in main.c
 extern KernelState _kernel_state;
 
+// set enter_kernel as the software interrupt handler
 static void register_swi_handler()
 {
     unsigned int *swiHandlerAddr = (unsigned int*) SWI_HANDLER_ADDR;
     *swiHandlerAddr = (unsigned int) enter_kernel;
 }
 
+// initialize _kernel_state with starting values
 static void init_kernel_state()
 {
     _kernel_state.id_counter = 0;
@@ -19,7 +23,7 @@ static void init_kernel_state()
     _kernel_state.scheduled_tid = -1;
     _kernel_state.queue_size = 0;
 
-    _kernel_state.kernel_stack_addr = (unsigned int) &_kernel_state;
+    _kernel_state.kernel_stack_addr = KERNEL_STACK_ADDR;
     _kernel_state.kernel_stack_td_addr = KERNEL_STACK_TD_ADDR;
     _kernel_state.user_stack_addr = USER_STACK_ADDR;
     _kernel_state.user_stack_size_per_user = USER_STACK_SIZE_PER_USER;
@@ -27,16 +31,19 @@ static void init_kernel_state()
     _kernel_state.machine_state = NORMAL;
 }
 
+// create the first user task with priority 1
 static void create_first_user_task()
 {
     int priority = 1;
     sys_create(priority, user_task_0);
 }
 
+// initialize the peripherals
 static void init_peripheral() {
     init_uart();
 }
 
+// initialize the system
 void bootstrap()
 {
     init_peripheral();

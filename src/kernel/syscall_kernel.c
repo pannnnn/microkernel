@@ -1,20 +1,26 @@
 #include <kernel.h>
 #include <lib_periph_bwio.h>
 
+// declared as global variable in main.c
 extern KernelState _kernel_state;
+
+// defined in task.c
 extern void function_wrapper(void (*function)());
 
+// initializes the new task descriptor
 int _sys_create_td() 
 {
     // TODO: Some logic to check if run out of task stack or task descriptor space
     TaskDescriptor *td = get_td(_kernel_state.id_counter);
     td->id = _kernel_state.id_counter++;
-    // -1 is to raise higher priority
+    // ensure the created task has a higher priority than its parent
     td->scheduled_count = _kernel_state.schedule_counter - 1;
     td->pid = _kernel_state.scheduled_tid;
     return td->id;
 }
 
+// creates a new task by creating the task descriptor and
+// adding the task id to the ready queue
 int sys_create(int priority, void (*function)()) 
 {
     int td_id = _sys_create_td();
@@ -44,11 +50,13 @@ int sys_create(int priority, void (*function)())
     return td_id;
 }
 
+// returns the id of the currently "active" task
 int sys_tid()
 {
     return _kernel_state.scheduled_tid;
 }
 
+// returns the id of the parent of the currently "active" task
 int sys_pid()
 {
     int tid = _kernel_state.scheduled_tid;
@@ -58,6 +66,7 @@ int sys_pid()
 
 void sys_yield() {}
 
+// removes the exiting task from the ready queue
 void sys_exit()
 {
     pq_remove(_kernel_state.scheduled_tid);

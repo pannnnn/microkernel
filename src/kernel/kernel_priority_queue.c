@@ -1,8 +1,10 @@
 #include <kernel.h>
 #include <lib_periph_bwio.h>
 
+// declared as global variable in main.c
 extern KernelState _kernel_state;
 
+// bubble up: sorting the heap after removing a node
 void percolate_up(int index) {
     int *queue = _kernel_state.queue;
     if (index > _kernel_state.queue_size) return;
@@ -20,6 +22,7 @@ void percolate_up(int index) {
     }
 }
 
+// bubble down: sorting the heap after adding a node
 void percolate_down(int index) {
     int *queue = _kernel_state.queue;
     if (index >= _kernel_state.queue_size) return;
@@ -38,6 +41,7 @@ void percolate_down(int index) {
     }
 }
 
+// add a node into the priority queue
 void pq_insert(int tid) {
     int *queue = _kernel_state.queue;
     int index = ++_kernel_state.queue_size;
@@ -45,6 +49,7 @@ void pq_insert(int tid) {
     percolate_up(index);
 }
 
+// return the top (root) node from the priority queue
 int pq_pop() {
     int *queue = _kernel_state.queue;
     int result = queue[1];
@@ -53,6 +58,7 @@ int pq_pop() {
     return result;
 }
 
+// remove a node from the priority queue
 void pq_remove(int tid)  {
     int *queue = _kernel_state.queue;
     for (int i = 1; i <= _kernel_state.queue_size; i++) {
@@ -65,6 +71,7 @@ void pq_remove(int tid)  {
     }
 }
 
+// find the minimum child node of the given node
 int min_child(int index) {
     int left_child_index = index * 2;
     int right_child_index = index * 2 + 1;
@@ -85,6 +92,7 @@ int min_child(int index) {
     return right_child_index;
 }
 
+// flush the priority queue; used for debugging
 void dump_queue() {
     bwprintf( COM2, "Queue");
     for (int i = 1; i <= _kernel_state.queue_size; i++) {
