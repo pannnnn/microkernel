@@ -13,14 +13,14 @@ int Create(int priority, void (*function)()){
 	return enter_swi(&args);
 }
 
-// gets this task's id; enter's kernel mode
+// gets this task's id; enters kernel mode
 int MyTid() {
 	Args args;
 	args.code = TID;
     return enter_swi(&args);
 }
 
-// get's this task's parent's id; enters kernel mode
+// gets this task's parent's id; enters kernel mode
 int MyParentTid() {
 	Args args;
 	args.code = PID;
