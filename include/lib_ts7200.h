@@ -1,3 +1,6 @@
+#ifndef LMCVITTI_Y247PAN_TS7000
+#define LMCVITTI_Y247PAN_TS7000
+
 /*
  * ts7200.h - definitions describing the ts7200 peripheral registers
  *
@@ -80,3 +83,5 @@
 #define UART_HDLCAM_OFFSET	0x214
 #define UART_HDLCRIB_OFFSET	0x218
 #define UART_HDLCSTS_OFFSET	0x21c
+
+#endif

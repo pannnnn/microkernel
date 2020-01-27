@@ -1,3 +1,6 @@
+#ifndef LMCVITTI_Y247PAN_USER
+#define LMCVITTI_Y247PAN_USER
+
 /*
  * Include section
  */
@@ -33,3 +36,5 @@ void function_wrapper(void (*function)());
 
 void user_task_0();
 void user_task_test();
+
+#endif

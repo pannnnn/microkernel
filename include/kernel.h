@@ -1,6 +1,10 @@
+#ifndef LMCVITTI_Y247PAN_KERNEL
+#define LMCVITTI_Y247PAN_KERNEL
+
 /*
  * Include section
  */
+#include <shared.h>
 
 /*
  * Macro definition
@@ -27,12 +31,6 @@ typedef enum
     IDLE
 } MACHINE_STATE;
 
-typedef enum
-{
-    READY = 0,
-    BLOCKED
-} TASK_STATE;
-
 
 /*
  * Struct definition
@@ -41,7 +39,7 @@ typedef struct
 {
 	int id;
 	int pid;
-    // this is a increasing time related id
+    // this is an increasing time related id
     int scheduled_count;
 	int priority;
 	int next_ready;
@@ -90,3 +88,5 @@ int pq_pop();
 void pq_remove(int tid) ;
 int min_child(int index);
 void dump_queue();
+
+#endif

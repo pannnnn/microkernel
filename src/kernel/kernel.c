@@ -24,7 +24,6 @@ int schedule()
     _kernel_state.schedule_counter +=2;
     TaskDescriptor *td = get_td(scheduled_tid);
     td->scheduled_count = _kernel_state.schedule_counter;
-    pq_insert(scheduled_tid);
     _kernel_state.scheduled_tid = scheduled_tid;
     
     // return the id of the task to be scheduled
@@ -52,6 +51,16 @@ void k_main()
         // store the new location of the task's stack pointer into
         // the task's task descriptor
         task_descriptor->stack_pointer = stack_pointer;
+
+        // put the task onto the appropriate queue 
+        task_descriptor->state = args->state;
+        switch (args->state) {
+            case READY:
+                pq_insert(tid);
+                break;
+            default:
+                break;
+        }
 
         // determine what the kernel needs to do based on the system code
         // that comes from the user task that was just switched away from

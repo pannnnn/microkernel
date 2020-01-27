@@ -8,6 +8,7 @@ extern int enter_swi(Args *args);
 int Create(int priority, void (*function)()){
 	Args args;
 	args.code = CREATE;
+	args.state = READY;
     args.arg0 = priority;
     args.arg1 = (unsigned int) function;
 	return enter_swi(&args);
@@ -17,6 +18,7 @@ int Create(int priority, void (*function)()){
 int MyTid() {
 	Args args;
 	args.code = TID;
+	args.state = READY;
     return enter_swi(&args);
 }
 
@@ -24,6 +26,7 @@ int MyTid() {
 int MyParentTid() {
 	Args args;
 	args.code = PID;
+	args.state = READY;
 	return enter_swi(&args);
 }
 
@@ -31,6 +34,7 @@ int MyParentTid() {
 void Yield() {
 	Args args;
 	args.code = YIELD;
+	args.state = READY;
     enter_swi(&args);
 }
 
@@ -38,5 +42,6 @@ void Yield() {
 void Exit() {
 	Args args;
 	args.code = EXIT;
+	args.state = EXITING;
     enter_swi(&args);
 }
