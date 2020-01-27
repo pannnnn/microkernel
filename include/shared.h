@@ -13,12 +13,6 @@ typedef enum
     EXIT
 } SYS_CODE;
 
-typedef enum
-{
-    READY = 0,
-    BLOCKED,
-    EXITING
-} TASK_STATE;
 
 /*
  * Struct definition
@@ -26,7 +20,6 @@ typedef enum
 typedef struct
 {
     SYS_CODE code;
-    TASK_STATE state;
     unsigned int arg0;
     unsigned int arg1;
     unsigned int arg2;

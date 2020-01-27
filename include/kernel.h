@@ -4,14 +4,15 @@
 /*
  * Include section
  */
-#include <shared.h>
+
 
 /*
  * Macro definition
  */
 #define KERNEL_STACK_ADDR 0x2000000
-    #define KERNEL_STACK_TD_ADDR 0x1F00000
-#define USER_STACK_ADDR 0x1E00000
+    #define KERNEL_STACK_TD_ADDR 0x2000000
+    #define KERNEL_STACK_TD_CAP 4096
+#define USER_STACK_ADDR 0x1F00000
     #define USER_STACK_SIZE_PER_USER 0x10000
 
 #define SWI_HANDLER_ADDR   0x28
@@ -22,6 +23,9 @@
 
 #define QUEUE_SIZE 1024
 
+#define MIN_PRIORITY 0
+#define MAX_PRIORITY 100
+
 /*
  * Enum definition
  */
@@ -30,6 +34,13 @@ typedef enum
     NORMAL = 0,
     IDLE
 } MACHINE_STATE;
+
+typedef enum
+{
+    READY = 0,
+    BLOCKED,
+    EXITING
+} TASK_STATE;
 
 
 /*
@@ -78,7 +89,7 @@ int sys_pid();
 void sys_yield();
 void sys_exit();
 
-int _sys_create_td();
+int _sys_create_td(int priority);
 TaskDescriptor *get_td(int id);
 
 void percolate_up(int index);

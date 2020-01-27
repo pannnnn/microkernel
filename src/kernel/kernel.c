@@ -39,28 +39,21 @@ void k_main()
         if (tid == -1) return;
 
         // get the task descriptor from the task id
-        TaskDescriptor *task_descriptor = get_td(tid);
+        TaskDescriptor *td = get_td(tid);
 
         Args *args;
         Args emptyArg = {};
         args = &emptyArg;
 
         // switch out of kernel mode and run the scheduled task
-        unsigned int stack_pointer = leave_kernel(task_descriptor->stack_pointer, &args);
+        unsigned int stack_pointer = leave_kernel(td->stack_pointer, &args);
 
         // store the new location of the task's stack pointer into
         // the task's task descriptor
-        task_descriptor->stack_pointer = stack_pointer;
+        td->stack_pointer = stack_pointer;
 
         // put the task onto the appropriate queue 
-        task_descriptor->state = args->state;
-        switch (args->state) {
-            case READY:
-                pq_insert(tid);
-                break;
-            default:
-                break;
-        }
+        if (args->code != EXIT) pq_insert(tid);
 
         // determine what the kernel needs to do based on the system code
         // that comes from the user task that was just switched away from
@@ -73,7 +66,7 @@ void k_main()
                 result = sys_create(args->arg0, (void *) args->arg1);
                 break;
             case TID:
-                // return the task id of the task that was just interruped
+                // return the task id of the task that was just interrupted
                 result = sys_tid();
                 break;
             case PID:
@@ -98,6 +91,6 @@ void k_main()
         // when it is next scheduled; the task can then access the 
         // result as the return value of the function that caused this
         // interrupt
-        ((unsigned int*)task_descriptor->stack_pointer)[2] = result;
+        ((unsigned int*)td->stack_pointer)[2] = result;
     }
 }
