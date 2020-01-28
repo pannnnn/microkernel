@@ -4,7 +4,7 @@
 /*
  * Include section
  */
-
+#include <queue.h>
 
 /*
  * Macro definition
@@ -20,8 +20,6 @@
 #define USER_MODE_DEFAULT 0x10
 
 #define NEW_TASK_UNUSED_REGS_SPACE 12
-
-#define QUEUE_SIZE 1024
 
 #define MIN_PRIORITY 0
 #define MAX_PRIORITY 100
@@ -68,8 +66,7 @@ typedef struct
     int id_counter;
     int schedule_counter;
     int scheduled_tid;
-    int queue_size;
-    int queue[QUEUE_SIZE + 1];
+    Queue ready_queue;
 
     unsigned int kernel_stack_addr;
     unsigned int kernel_stack_td_addr;
@@ -91,13 +88,5 @@ void sys_exit();
 
 int _sys_create_td(int priority);
 TaskDescriptor *get_td(int id);
-
-void percolate_up(int index);
-void percolate_down(int index);
-void pq_insert(int tid);
-int pq_pop();
-void pq_remove(int tid) ;
-int min_child(int index);
-void dump_queue();
 
 #endif

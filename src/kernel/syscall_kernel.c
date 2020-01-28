@@ -1,4 +1,5 @@
 #include <kernel.h>
+#include <queue.h>
 #include <lib_periph_bwio.h>
 
 // declared as global variable in main.c
@@ -48,7 +49,7 @@ int sys_create(int priority, void (*function)())
     *(--stack_pointer_addr) = USER_MODE_DEFAULT;
     td->stack_pointer = (unsigned int) stack_pointer_addr;
 
-    pq_insert(td_id);
+    pq_insert(&_kernel_state.ready_queue, td_id);
     return td_id;
 }
 

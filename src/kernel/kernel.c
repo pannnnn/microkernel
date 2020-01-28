@@ -1,5 +1,6 @@
 #include <kernel.h>
 #include <shared.h>
+#include <queue.h>
 #include <lib_periph_bwio.h>
 
 // defined in swi.S
@@ -15,10 +16,10 @@ extern KernelState _kernel_state;
 int schedule() 
 {
     // nothing to be run; 
-    if (_kernel_state.queue_size == 0) return -1;
+    if (_kernel_state.ready_queue.size == 0) return -1;
     
     // get the next scheduled task
-    int scheduled_tid = pq_pop();
+    int scheduled_tid = pq_pop(&_kernel_state.ready_queue);
 
     // rescheduling
     _kernel_state.schedule_counter +=2;
@@ -53,7 +54,7 @@ void k_main()
         td->stack_pointer = stack_pointer;
 
         // put the task onto the appropriate queue 
-        if (args->code != EXIT) pq_insert(tid);
+        if (args->code != EXIT) pq_insert(&_kernel_state.ready_queue, tid);
 
         // determine what the kernel needs to do based on the system code
         // that comes from the user task that was just switched away from
