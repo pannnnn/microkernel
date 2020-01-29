@@ -1,6 +1,6 @@
 #include <kernel.h>
 #include <shared.h>
-#include <queue.h>
+#include <ds.h>
 #include <lib_periph_bwio.h>
 
 // defined in swi.S

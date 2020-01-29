@@ -1,5 +1,5 @@
 #include <kernel.h>
-#include <queue.h>
+#include <ds.h>
 #include <lib_mem.h>
 #include <lib_periph_bwio.h>
 

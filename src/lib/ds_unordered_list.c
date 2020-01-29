@@ -1,4 +1,4 @@
-#include <queue.h>
+#include <ds.h>
 
 int ul_add(Queue *queue_struct, int tid) {
 	// no space in queue

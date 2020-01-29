@@ -1,5 +1,5 @@
 #include <kernel.h>
-#include <queue.h>
+#include <ds.h>
 #include <shared.h>
 
 // declared as global variable in main.c

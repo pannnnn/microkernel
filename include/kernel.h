@@ -4,7 +4,7 @@
 /*
  * Include section
  */
-#include <queue.h>
+#include <ds.h>
 
 /*
  * Macro definition
