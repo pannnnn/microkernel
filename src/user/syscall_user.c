@@ -70,3 +70,17 @@ int Reply(int tid, const char *reply, int rplen) {
 	args.arg2 = rplen;
 	return enter_swi(&args);
 }
+
+void Malloc(int size) {
+	Args args;
+	args.code = MALLOC;
+    args.arg0 = size;
+    enter_swi(&args);
+}
+
+void Free(char *ptr) {
+	Args args;
+	args.code = FREE;
+    args.arg0 = ptr;
+    enter_swi(&args);
+}

@@ -1,6 +1,7 @@
 #include <user.h>
 
 static int _name_server_tid = -1;
+static unsigned int _hash_table[HASHSIZE];
 
 int RegisterAs(const char *name) {
     if (_name_server_tid == -1) return -1;
@@ -24,6 +25,7 @@ int WhoIs(const char *name) {
 }
 
 void NameServer() {
+    init_hash_table(_hash_table, HASHSIZE);
     _name_server_tid = MyTid();
     int client_tid, result;
     NSMessage ns_message;

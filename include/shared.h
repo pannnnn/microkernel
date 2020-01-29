@@ -19,7 +19,9 @@ typedef enum
     DELETE,
     SEND,
     RECEIVE,
-    REPLY
+    REPLY,
+    MALLOC,
+    FREE
 } SYS_CODE;
 
 /*

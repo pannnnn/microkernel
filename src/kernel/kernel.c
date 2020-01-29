@@ -102,6 +102,13 @@ void k_main()
                 task_return(td, result);
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
+            case MALLOC:
+                // removes the exiting task from all queues
+                sys_malloc(args->arg0);
+                break;
+            case FREE:
+                // removes the exiting task from all queues
+                sys_free((char *) args->arg0);
                 break;
             default:
                 break;

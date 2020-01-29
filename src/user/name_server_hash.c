@@ -1,8 +1,13 @@
 #include <user.h>
 #include <shared.h>
 
+void init_hash_table(unsigned int *hash_table, int hash_size) {
+    for (int i = 0; i < hash_size; i++) {
+        hash_table[i] = NULL;
+    }
+}
 
-unsigned hash(char *s)
+unsigned _hash(char *s)
 {
     unsigned hash_value;
     for (hash_value = 0; *s != '\0'; s++)
@@ -10,22 +15,28 @@ unsigned hash(char *s)
     return hash_value % HASHSIZE;
 }
 
-NSHashEntry *get(char *name) {
-    NSHashEntry *entry;
-    for (entry = hash_table[hash(name)]; entry != NULL; entry = entry->next) {
-        if (strcmp(name, entry->name) == 0)
+HashEntry *get(unsigned int *hash_table, int hash_size, char *key) 
+{
+    HashEntry *entry;
+    for (entry = hash_table[_hash(key)]; entry != NULL; entry = entry->next) {
+        if (strcmp(key, entry->key) == 0)
           return entry;
     }
     return NULL;
 }
 
-NSHashEntry *set(char *name, int tid) {
-    // TODO: add newly create entry to bucket
-    NSHashEntry *entry;
+HashEntry *set(unsigned int *hash_table, int hash_size, char *key, int value) 
+{
+    HashEntry *entry;
     unsigned hashval;
-    if ((entry = get(name)) == NULL) {
-        entry = (NSHashEntry *) malloc(sizeof(NSHashEntry));
+    if ((entry = get(hash_table, hash_size, key)) == NULL) {
+        HashEntry *new_entry = (HashEntry *) Malloc(sizeof(HashEntry));
+        new_entry->key = key;
+        new_entry->value = value;
+        new_entry->next = NULL;
+        entry->next = new_entry;
     } else {
-        entry->name = name;
+        entry->key = value;
     }
+    return entry;
 }

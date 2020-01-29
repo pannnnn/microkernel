@@ -1,5 +1,7 @@
 #include <kernel.h>
 #include <queue.h>
+#include <lib_mem.h>
+#include <lib_periph_bwio.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;
@@ -26,6 +28,7 @@ int _sys_create_td(int priority)
             tid = i;
         }
     }
+    if (tid == -1 ) return -2;
     TaskDescriptor *td = get_td(tid);
     td->id = tid;
     td->stack_pointer = USER_STACK_STACK_REGION - tid * USER_STACK_STACK_SIZE_PER_USER;
@@ -85,4 +88,12 @@ void sys_exit() {
     int tid = _kernel_state.scheduled_tid;
     TaskDescriptor *td = get_td(tid);
     td->state = EXITED;
+}
+
+char *sys_malloc(int size) {
+    return mem_malloc(size);
+}
+
+void sys_free(char *ptr) {
+    mem_free(ptr);
 }

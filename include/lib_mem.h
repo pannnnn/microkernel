@@ -23,6 +23,5 @@ typedef struct {
  */
 void mem_init_task_descriptors();
 void mem_init_heap_region(HEAP_TYPE heap_type);
-char *mem_get_block(HEAP_TYPE heap_type);
 void mem_free(char *ptr);
 char *mem_malloc(int size);

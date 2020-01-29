@@ -5,6 +5,7 @@
  * Include section
  */
 
+
 /*
  * Macro definition
  */
@@ -29,12 +30,12 @@ typedef struct
     int tid;
 } NSMessage;
 
-typedef struct _NSHashEntry
+typedef struct _HashEntry
 {
-	struct _NSHashEntry *next;
-    char *name;
-    int tid;
-} NSHashEntry;
+	struct _HashEntry *next;
+    char *key;
+    int value;
+} HashEntry;
 
 // task creation
 int Create(int priority, void (*function)());
@@ -52,9 +53,9 @@ int NameServerTid();
 int RegisterAs(const char *name);
 int WhoIs(const char *name);
 
-unsigned hash(char *s);
-NSHashEntry *get(char *name);
-NSHashEntry *set(char *name, int tid);
+void init_hash_table(unsigned int *hash_table, int hash_size);
+HashEntry *get(unsigned int *hash_table, int hash_size, char *key);
+HashEntry *set(unsigned int *hash_table, int hash_size, char *key, int value);
 
 void function_wrapper(void (*function)());
 void user_task_0();
