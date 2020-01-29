@@ -66,5 +66,6 @@ int remove(unsigned int (*hash_table)[2], int hash_size, char *key);
 void function_wrapper(void (*function)());
 void user_task_0();
 void user_task_test();
+void game_server();
 
 #endif

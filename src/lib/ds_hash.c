@@ -1,7 +1,9 @@
 #include <user.h>
 #include <shared.h>
+#include <lib_periph_bwio.h>
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size) {
+    bwprintf( COM2, "\n\rName Server Hash Table: Initializing ...\n\r");
     for (int i = 0; i < hash_size; i++) {
         hash_table[i][0] = NULL;
         hash_table[i][1] = NULL;
@@ -44,6 +46,7 @@ HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key)
 
 void *put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value) 
 {
+    bwprintf( COM2, "\n\rName Server put key <%s> value <%d>\n\r", key, value);
     HashEntry *entry;
     unsigned int hash = _hash(key);
     if ((entry = get(hash_table, hash_size, key)) == NULL) {
