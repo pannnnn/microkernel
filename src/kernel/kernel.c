@@ -53,9 +53,6 @@ void k_main()
         // the task's task descriptor
         td->stack_pointer = stack_pointer;
 
-        // put the task onto the appropriate queue 
-        if (args->code != EXIT) pq_insert(&_kernel_state.ready_queue, tid);
-
         // determine what the kernel needs to do based on the system code
         // that comes from the user task that was just switched away from
         int result = -1;
@@ -65,15 +62,24 @@ void k_main()
                 // arg1 will hold the pointer to the new task's main function
                 // will return the id of the created task
                 result = sys_create(args->arg0, (void *) args->arg1);
+                task_return(td, result);
+                // put the task back on the ready queue
+                pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case TID:
                 // return the task id of the task that was just interrupted
                 result = sys_tid();
+                task_return(td, result);
+                // put the task back on the ready queue
+                pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case PID:
                 // return the task id of the parent of the task
                 // that was just interrupted
                 result = sys_pid();
+                task_return(td, result);
+                // put the task back on the ready queue
+                pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case YIELD:
                 // does nothing
@@ -83,15 +89,22 @@ void k_main()
                 // removes the exiting task from all queues
                 sys_exit();
                 break;
+            case SEND:
+                // try to send message
+                sys_send(args->arg0, (int*)args->arg1, args->arg2, (int*)args->arg3, args->arg4);
+                break;
+            case RECEIVE:
+                // attempt to receive a sent message
+                sys_receive((int*)args->arg0, (int*)args->arg1, args->arg2);
+                break;
+            case REPLY:
+                result = sys_reply(args->arg0, (int*)args->arg1, args->arg2);
+                task_return(td, result);
+                // put the task back on the ready queue
+                pq_insert(&_kernel_state.ready_queue, tid);
+                break;
             default:
                 break;
         }
-
-        // load the return value into the memory location that will be
-        // loaded into r0 when context-switching back to this task
-        // when it is next scheduled; the task can then access the 
-        // result as the return value of the function that caused this
-        // interrupt
-        ((unsigned int*)td->stack_pointer)[2] = result;
     }
 }

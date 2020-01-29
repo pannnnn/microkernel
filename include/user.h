@@ -18,19 +18,17 @@
  * Struct definition
  */
 
-
-// int task_descriptor_array[MAX_DESCRIPTORS];
-// int current_task;
-
+// task creation
 int Create(int priority, void (*function)());
-
 int MyTid();
-
 int MyParentTid();
-
 void Yield();
-
 void Exit();
+
+// message passing
+int Send(int tid, const char *msg, int msglen, char *reply, int rplen);
+int Receive(int *tid, char *msg, int msglen);
+int Reply(int tid, const char *reply, int rplen);
 
 void function_wrapper(void (*function)());
 

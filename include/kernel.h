@@ -37,7 +37,7 @@ typedef enum
 {
     READY = 0,
     BLOCKED,
-    EXITING
+    EXITED, 
 } TASK_STATE;
 
 
@@ -51,10 +51,18 @@ typedef struct
     // this is an increasing time related id
     int scheduled_count;
 	int priority;
-	int next_ready;
-	int next_send;
-	void *next_td;
+	int next_ready;    // not used yet
+	int next_send;     // not used yet
+	void *next_td;     // not used yet
 	TASK_STATE state;
+
+    // message passing
+    int *msg;           // message to send
+    int msglen;         // lenght of msg
+    int *rpl;           // reply buffer
+    int rpllen;         // len of repl buf
+    int *sender_id_ptr;     // for receiver; ptr to sender id
+    Queue sending;      // ol implementation
 
 	unsigned int stack_pointer;
 } TaskDescriptor;
@@ -63,11 +71,18 @@ typedef struct
 {
     MACHINE_STATE machine_state;
 
+    // task & scheduling mgmt
     int id_counter;
     int schedule_counter;
     int scheduled_tid;
-    Queue ready_queue;
 
+    // task queues
+    Queue ready_queue;      // pq implementation
+    Queue send_queue;       // ul implementation
+    Queue receive_queue;    // ul implementation
+    Queue reply_queue;      // ul implementation
+
+    // stack ptrs
     unsigned int kernel_stack_addr;
     unsigned int kernel_stack_td_addr;
     unsigned int user_stack_addr;
@@ -80,13 +95,20 @@ typedef struct
 void bootstrap();
 void k_main();
 
+// task creation & mgmt
 int sys_create(int priority, void (*function)());
 int sys_tid();
 int sys_pid();
 void sys_yield();
 void sys_exit();
 
+// message passing
+int sys_send(int tid, int *msg, int msglen, int *reply, int rplen);
+int sys_receive(int *tid, int *msg, int msglen);
+int sys_reply(int tid, int *reply, int rplen);
+
 int _sys_create_td(int priority);
 TaskDescriptor *get_td(int id);
+void task_return(TaskDescriptor *td, int return_val);
 
 #endif

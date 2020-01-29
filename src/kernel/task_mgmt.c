@@ -1,6 +1,5 @@
 #include <kernel.h>
 #include <queue.h>
-#include <lib_periph_bwio.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;
@@ -70,4 +69,8 @@ int sys_pid()
 void sys_yield() {}
 
 // may need to do some clean up and relaim memory address
-void sys_exit() {}
+void sys_exit() {
+    int tid = _kernel_state.scheduled_tid;
+    TaskDescriptor *td = get_td(tid);
+    td->state = EXITED;
+}

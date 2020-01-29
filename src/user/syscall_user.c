@@ -40,3 +40,33 @@ void Exit() {
 	args.code = EXIT;
     enter_swi(&args);
 }
+
+int Send(int tid, const char *msg, int msglen, char *reply, int rplen) {
+	Args args;
+	args.code = SEND;
+	args.arg0 = tid;
+	args.arg1 = (unsigned int) msg;
+	args.arg2 = msglen;
+	args.arg3 = (unsigned int) reply;
+	args.arg4 = rplen;
+	enter_swi(&args);
+	return enter_swi(&args);
+}
+
+int Receive(int *tid, char *msg, int msglen) {
+	Args args;
+	args.code = RECEIVE;
+	args.arg0 = (unsigned int) tid;
+	args.arg1 = (unsigned int) msg,
+	args.arg2 = msglen;
+	return enter_swi(&args);
+}
+
+int Reply(int tid, const char *reply, int rplen) {
+	Args args;
+	args.code = REPLY;
+	args.arg0 = tid;
+	args.arg1 = (unsigned int) reply;
+	args.arg2 = rplen;
+	return enter_swi(&args);
+}
