@@ -7,22 +7,34 @@ extern KernelState _kernel_state;
 // defined in task.c
 extern void function_wrapper(void (*function)());
 
+int _sys_destroy_td(int tid) 
+{
+    TaskDescriptor *td = get_td(tid);
+    _kernel_state.td_user_stack_availability[td->id] = 0;
+    return 0;
+}
+
 // initializes the new task descriptor
 int _sys_create_td(int priority) 
 {
     if (priority < MIN_PRIORITY || priority > MAX_PRIORITY) return -1;
-    if (_kernel_state.id_counter >= KERNEL_STACK_TD_CAP) return -2;
+    if (_kernel_state.td_queue_size == KERNEL_STACK_TD_LIMIT) return -2;
     
-    TaskDescriptor *td = get_td(_kernel_state.id_counter);
-    td->id = _kernel_state.id_counter++;
+    int tid = -1;
+    for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
+        if (_kernel_state.td_user_stack_availability[i] == 0) {
+            tid = i;
+        }
+    }
+    TaskDescriptor *td = get_td(tid);
+    td->id = tid;
+    td->stack_pointer = USER_STACK_STACK_REGION - tid * USER_STACK_STACK_SIZE_PER_USER;
     // ensure the created task has a higher priority than its parent
     td->scheduled_count = _kernel_state.schedule_counter - 1;
     td->pid = _kernel_state.scheduled_tid;
     td->priority = priority;
     td->state = READY;
-    td->stack_pointer = 
-        (_kernel_state.user_stack_addr - td->id * _kernel_state.user_stack_size_per_user);
-    return td->id;
+    return tid;
 }
 
 // creates a new task by creating the task descriptor and

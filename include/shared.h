@@ -2,6 +2,11 @@
 #define LMCVITTI_Y247PAN_SHARED
 
 /*
+ * Macro definition
+ */
+#define NULL 0
+
+/*
  * Enum definition
  */
 typedef enum
@@ -16,7 +21,6 @@ typedef enum
     RECEIVE,
     REPLY
 } SYS_CODE;
-
 
 /*
  * Struct definition

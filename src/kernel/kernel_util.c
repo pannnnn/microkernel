@@ -1,12 +1,10 @@
 #include <kernel.h>
 
-// declared as global variable in main.c
 extern KernelState _kernel_state;
 
-// gets the location of the task decriptor for the given task id
 TaskDescriptor *get_td(int id) 
 {
-    return (TaskDescriptor *) (_kernel_state.kernel_stack_td_addr - sizeof(TaskDescriptor) * (id + 1));
+    return (TaskDescriptor *) (KERNEL_STACK_ADDR - KERNEL_STACK_TD_SIZE * (id + 1));
 } 
 
 void task_return(TaskDescriptor *td, int return_val) {

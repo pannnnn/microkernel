@@ -10,10 +10,22 @@
  * Macro definition
  */
 #define KERNEL_STACK_ADDR 0x2000000
-    #define KERNEL_STACK_TD_ADDR 0x2000000
-    #define KERNEL_STACK_TD_CAP 256
+    #define KERNEL_STACK_TD_COUNT 8192
+    #define KERNEL_STACK_TD_LIMIT 128
+    #define KERNEL_STACK_TD_SIZE 128
 #define USER_STACK_ADDR 0x1F00000
-    #define USER_STACK_SIZE_PER_USER 0x10000
+    #define USER_STACK_HEAP_META_SIZE 12
+    #define USER_STACK_S_HEAP_REGION 0x1E00000
+        #define USER_STACK_S_HEAP_BLOCK_COUNT 65536
+        #define USER_STACK_S_HEAP_BLOCK_SIZE 16
+    #define USER_STACK_M_HEAP_REGION 0x1D00000
+        #define USER_STACK_M_HEAP_BLOCK_COUNT 16384
+        #define USER_STACK_M_HEAP_BLOCK_SIZE 64
+    #define USER_STACK_L_HEAP_REGION 0x1C00000
+        #define USER_STACK_L_HEAP_BLOCK_COUNT 4096
+        #define USER_STACK_L_HEAP_BLOCK_SIZE 256
+    #define USER_STACK_STACK_REGION 0x1B00000
+        #define USER_STACK_STACK_SIZE_PER_USER 0x10000
 
 #define SWI_HANDLER_ADDR   0x28
 
@@ -40,11 +52,17 @@ typedef enum
     EXITED, 
 } TASK_STATE;
 
+typedef enum
+{
+	SMALL = 0,
+	MEDIUM,
+	LARGE,
+} HEAP_TYPE;
 
 /*
  * Struct definition
  */
-typedef struct 
+typedef struct
 {
 	int id;
 	int pid;
@@ -82,11 +100,16 @@ typedef struct
     Queue receive_queue;    // ul implementation
     Queue reply_queue;      // ul implementation
 
-    // stack ptrs
-    unsigned int kernel_stack_addr;
-    unsigned int kernel_stack_td_addr;
-    unsigned int user_stack_addr;
-    unsigned int user_stack_size_per_user;
+    int td_queue_size;
+    int td_queue[KERNEL_STACK_TD_LIMIT + 1];
+    int td_user_stack_availability[KERNEL_STACK_TD_LIMIT];
+
+    char *s_block_used;
+    char *s_block_unused;
+    char *m_block_used;
+    char *m_block_unused;
+    char *l_block_used;
+    char *l_block_unused;
 } KernelState;
 
 /*

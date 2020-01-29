@@ -1,5 +1,7 @@
 #include <kernel.h>
 #include <user.h>
+#include <shared.h>
+#include <lib_mem.h>
 #include <lib_periph_init.h>
 
 // defined in swi.S
@@ -18,8 +20,6 @@ static void register_swi_handler()
 // initialize _kernel_state with starting values
 static void init_kernel_state()
 {
-    _kernel_state.id_counter = 0;
-    _kernel_state.schedule_counter = 0;
     _kernel_state.scheduled_tid = -1;
 
     _kernel_state.ready_queue.size = 0;
@@ -27,10 +27,12 @@ static void init_kernel_state()
     _kernel_state.receive_queue.size = 0;
     _kernel_state.reply_queue.size = 0;
 
-    _kernel_state.kernel_stack_addr = KERNEL_STACK_ADDR;
-    _kernel_state.kernel_stack_td_addr = KERNEL_STACK_TD_ADDR;
-    _kernel_state.user_stack_addr = USER_STACK_ADDR;
-    _kernel_state.user_stack_size_per_user = USER_STACK_SIZE_PER_USER;
+    _kernel_state.schedule_counter = 0;
+
+    mem_init_task_descriptors();
+    mem_init_heap_region(SMALL);
+    mem_init_heap_region(MEDIUM);
+    mem_init_heap_region(LARGE);
 
     _kernel_state.machine_state = NORMAL;
 }
