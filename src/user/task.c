@@ -10,19 +10,8 @@ void function_wrapper(void (*function)()) {
 // the main function of first task that is created (with priority 1)
 void user_task_0() {
     bwprintf( COM2, "\n\rTask Id <%d> Parent Task Id <%d>\n\r", 0, -1);
-    // creates two tasks of lower priority
-    // NOTE: we have inverted standard operating system priorty
-    //      convention: 0 is the highest possible priority
-    int task_1_id = Create(0, user_task_test);
-    bwprintf( COM2, "\n\rCreated: <%d>\n\r", task_1_id);
-    int task_2_id = Create(0, user_task_test);
-    bwprintf( COM2, "\n\rCreated: <%d>\n\r", task_2_id);
-    // creates two tasks of higher priority
-    int task_3_id = Create(2, user_task_test);
-    bwprintf( COM2, "\n\rCreated: <%d>\n\r", task_3_id);
-    int task_4_id = Create(2, user_task_test);
-    bwprintf( COM2, "\n\rCreated: <%d>\n\r", task_4_id);
-    // prints it's exit command
+    int name_server_tid = Create(0, NameServer);
+    bwprintf( COM2, "\n\rCreated Name Server: <%d>\n\r", name_server_tid);
     bwprintf( COM2, "\n\rFirstUserTask: exiting\n\r");
 }
 

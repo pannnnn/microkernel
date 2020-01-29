@@ -51,7 +51,7 @@ int Send(int tid, const char *msg, int msglen, char *reply, int rplen);
 int Receive(int *tid, char *msg, int msglen);
 int Reply(int tid, const char *reply, int rplen);
 
-int NameServerTid();
+void NameServer();
 int RegisterAs(const char *name);
 int WhoIs(const char *name);
 
