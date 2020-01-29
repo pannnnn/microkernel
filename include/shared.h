@@ -10,7 +10,11 @@ typedef enum
 	TID,
 	PID,
 	YIELD,
-    EXIT
+    EXIT,
+    DELETE,
+    SEND,
+    RECEIVE,
+    REPLY
 } SYS_CODE;
 
 
@@ -26,5 +30,7 @@ typedef struct
     unsigned int arg3;
     unsigned int arg4;
 } Args;
+
+void charstr_copy(int *msg, int *buf, int length);
 
 #endif

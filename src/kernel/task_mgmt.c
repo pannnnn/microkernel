@@ -1,5 +1,5 @@
 #include <kernel.h>
-#include <lib_periph_bwio.h>
+#include <queue.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;
@@ -48,7 +48,7 @@ int sys_create(int priority, void (*function)())
     *(--stack_pointer_addr) = USER_MODE_DEFAULT;
     td->stack_pointer = (unsigned int) stack_pointer_addr;
 
-    pq_insert(td_id);
+    pq_insert(&_kernel_state.ready_queue, td_id);
     return td_id;
 }
 
@@ -69,4 +69,8 @@ int sys_pid()
 void sys_yield() {}
 
 // may need to do some clean up and relaim memory address
-void sys_exit() {}
+void sys_exit() {
+    int tid = _kernel_state.scheduled_tid;
+    TaskDescriptor *td = get_td(tid);
+    td->state = EXITED;
+}
