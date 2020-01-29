@@ -10,6 +10,7 @@
  * Macro definition
  */
 #define HASHSIZE 101
+#define STRING_MAX_LENGTH 256
 
 /*
  * Enum definition
@@ -32,9 +33,10 @@ typedef struct
 
 typedef struct _HashEntry
 {
+	struct _HashEntry *prev;
 	struct _HashEntry *next;
-    char *key;
-    int value;
+    const char *key;
+    unsigned int value;
 } HashEntry;
 
 // task creation
@@ -53,9 +55,13 @@ int NameServerTid();
 int RegisterAs(const char *name);
 int WhoIs(const char *name);
 
-void init_hash_table(unsigned int *hash_table, int hash_size);
-HashEntry *get(unsigned int *hash_table, int hash_size, char *key);
-HashEntry *set(unsigned int *hash_table, int hash_size, char *key, int value);
+char *Malloc(int size);
+void Free(char *ptr);
+
+void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
+HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);
+void *put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value);
+int remove(unsigned int (*hash_table)[2], int hash_size, char *key);
 
 void function_wrapper(void (*function)());
 void user_task_0();

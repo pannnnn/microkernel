@@ -1,42 +1,92 @@
 #include <user.h>
 #include <shared.h>
 
-void init_hash_table(unsigned int *hash_table, int hash_size) {
+void init_hash_table(unsigned int (*hash_table)[2], int hash_size) {
     for (int i = 0; i < hash_size; i++) {
-        hash_table[i] = NULL;
+        hash_table[i][0] = NULL;
+        hash_table[i][1] = NULL;
     }
 }
 
-unsigned _hash(char *s)
+int _strcmp(const char *str1, const char *str2) 
 {
-    unsigned hash_value;
+    for (int i = 0; ; i++) {
+        if (str1[i] == '\0' && str1[i] == '\0') {
+            return 0;
+        }
+        if (str1[i] == str2[i]) {
+            continue;
+        } else {
+            return -1;
+        }
+    }
+    return -1;
+}
+
+unsigned int _hash(const char *s)
+{
+    unsigned int hash_value;
     for (hash_value = 0; *s != '\0'; s++)
       hash_value = *s + 31 * hash_value;
     return hash_value % HASHSIZE;
 }
 
-HashEntry *get(unsigned int *hash_table, int hash_size, char *key) 
+HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key) 
 {
     HashEntry *entry;
-    for (entry = hash_table[_hash(key)]; entry != NULL; entry = entry->next) {
-        if (strcmp(key, entry->key) == 0)
+    for (entry = (HashEntry *) hash_table[_hash(key)][0]; entry != NULL; entry = entry->next) {
+        if (_strcmp(key, entry->key) == 0) {
           return entry;
+        }
     }
     return NULL;
 }
 
-HashEntry *set(unsigned int *hash_table, int hash_size, char *key, int value) 
+void *put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value) 
 {
     HashEntry *entry;
-    unsigned hashval;
+    unsigned int hash = _hash(key);
     if ((entry = get(hash_table, hash_size, key)) == NULL) {
         HashEntry *new_entry = (HashEntry *) Malloc(sizeof(HashEntry));
         new_entry->key = key;
         new_entry->value = value;
-        new_entry->next = NULL;
-        entry->next = new_entry;
+
+        if (hash_table[hash][0] == NULL) {
+            hash_table[hash][0] = (unsigned int) new_entry;
+            new_entry->prev = NULL;
+            new_entry->next = NULL;
+        } else {
+            HashEntry *tail = (HashEntry *) hash_table[hash][1];
+            new_entry->prev = tail;
+            tail->next = new_entry;
+        }
+        hash_table[hash][1] = (unsigned int) new_entry;
     } else {
-        entry->key = value;
+        entry->value = value;
     }
     return entry;
+}
+
+int remove(unsigned int (*hash_table)[2], int hash_size, char *key) {
+    HashEntry *entry;
+    unsigned int hash = _hash(key);
+    if ((entry = get(hash_table, hash_size, key)) == NULL) {
+        return -1;
+    } else {
+        if (entry->prev == NULL && entry->next == NULL) {
+            hash_table[hash][0] = NULL;
+            hash_table[hash][1] = NULL;
+        } else if (entry->prev == NULL) {
+            entry->next->prev = NULL;
+            hash_table[hash][0] = (unsigned int) entry->next;
+        } else if (entry->next == NULL) {
+            entry->prev->next = NULL;
+            hash_table[hash][1] = (unsigned int) entry->prev;
+        } else {
+            entry->prev->next = entry->next;
+            entry->next->prev = entry->prev;
+        }
+        Free((char *)entry);
+        return 0;
+    }
 }

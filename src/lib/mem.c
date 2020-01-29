@@ -149,11 +149,11 @@ char *mem_malloc(int size)
 {
     int requested_size = size + HEAP_META_SIZE;
     if (requested_size < S_HEAP_BLOCK_SIZE) {
-        return mem_get_block(SMALL);
+        return _mem_get_block(SMALL);
     } else if (requested_size < M_HEAP_BLOCK_SIZE) {
-        return mem_get_block(MEDIUM);
+        return _mem_get_block(MEDIUM);
     } else if (requested_size < L_HEAP_BLOCK_SIZE) {
-        return mem_get_block(LARGE);
+        return _mem_get_block(LARGE);
     } else {
         return NULL;
     }

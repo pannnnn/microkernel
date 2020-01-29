@@ -9,13 +9,6 @@ extern KernelState _kernel_state;
 // defined in task.c
 extern void function_wrapper(void (*function)());
 
-int _sys_destroy_td(int tid) 
-{
-    TaskDescriptor *td = get_td(tid);
-    _kernel_state.td_user_stack_availability[td->id] = 0;
-    return 0;
-}
-
 // initializes the new task descriptor
 int _sys_create_td(int priority) 
 {
@@ -85,9 +78,7 @@ void sys_yield() {}
 
 // may need to do some clean up and relaim memory address
 void sys_exit() {
-    int tid = _kernel_state.scheduled_tid;
-    TaskDescriptor *td = get_td(tid);
-    td->state = EXITED;
+    _kernel_state.td_user_stack_availability[_kernel_state.scheduled_tid] = 0;
 }
 
 char *sys_malloc(int size) {

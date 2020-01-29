@@ -55,7 +55,7 @@ void k_main()
 
         // determine what the kernel needs to do based on the system code
         // that comes from the user task that was just switched away from
-        int result = -1;
+        unsigned int result = 0xFFFFFFFF;
         switch (args->code) {
             case CREATE:
                 // create a new task; arg0 will hold the priority
@@ -104,7 +104,7 @@ void k_main()
                 pq_insert(&_kernel_state.ready_queue, tid);
             case MALLOC:
                 // removes the exiting task from all queues
-                sys_malloc(args->arg0);
+                result = (unsigned int) sys_malloc(args->arg0);
                 break;
             case FREE:
                 // removes the exiting task from all queues

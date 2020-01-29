@@ -34,6 +34,21 @@ void Yield() {
     enter_swi(&args);
 }
 
+int Send(int tid, const char *msg, int msglen, char *reply, int rplen)
+{
+	return 0;
+}
+
+int Receive(int *tid, char *msg, int msglen)
+{
+	return 0;
+}
+
+int Reply(int tid, const char *reply, int rplen)
+{
+	return 0;
+}
+
 // ends the task; enters kernel mode
 void Exit() {
 	Args args;
@@ -71,16 +86,16 @@ int Reply(int tid, const char *reply, int rplen) {
 	return enter_swi(&args);
 }
 
-void Malloc(int size) {
+char *Malloc(int size) {
 	Args args;
 	args.code = MALLOC;
     args.arg0 = size;
-    enter_swi(&args);
+    return (char *) enter_swi(&args);
 }
 
 void Free(char *ptr) {
 	Args args;
 	args.code = FREE;
-    args.arg0 = ptr;
+    args.arg0 = (unsigned int) ptr;
     enter_swi(&args);
 }
