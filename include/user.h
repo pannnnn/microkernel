@@ -60,7 +60,7 @@ void Free(char *ptr);
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
 HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);
-void *put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value);
+void put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value);
 int remove(unsigned int (*hash_table)[2], int hash_size, char *key);
 
 void function_wrapper(void (*function)());

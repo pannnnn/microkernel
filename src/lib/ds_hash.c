@@ -44,7 +44,7 @@ HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key)
     return NULL;
 }
 
-void *put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value) 
+void put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value) 
 {
     bwprintf( COM2, "\n\rName Server put key <%s> value <%d>\n\r", key, value);
     HashEntry *entry;
@@ -67,7 +67,6 @@ void *put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigne
     } else {
         entry->value = value;
     }
-    return entry;
 }
 
 int remove(unsigned int (*hash_table)[2], int hash_size, char *key) {

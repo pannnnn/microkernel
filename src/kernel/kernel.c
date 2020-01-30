@@ -37,7 +37,21 @@ void k_main()
         // get the new task from the scheduler
         int tid = schedule();
 
-        if (tid == -1) return;
+        dump_queue(&_kernel_state.ready_queue);
+
+        if (tid == -1) {
+            // bwprintf( COM2, "\n\rNo ready task. Wating ...\n\r");
+            int live_tasks = 0;
+            for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
+                live_tasks += _kernel_state.td_user_stack_availability[i];
+            }
+            // bwprintf( COM2, "\n\r<%d> live tasks. Wating ...\n\r", live_tasks);
+            if (live_tasks > 0) {
+                continue;
+            } else {
+                return;
+            }
+        }
 
         // get the task descriptor from the task id
         TaskDescriptor *td = get_td(tid);
@@ -55,21 +69,21 @@ void k_main()
 
         // determine what the kernel needs to do based on the system code
         // that comes from the user task that was just switched away from
-        unsigned int result = 0xFFFFFFFF;
+        unsigned int result;
         switch (args->code) {
             case CREATE:
                 // create a new task; arg0 will hold the priority
                 // arg1 will hold the pointer to the new task's main function
                 // will return the id of the created task
                 result = sys_create(args->arg0, (void *) args->arg1);
-                task_return(td, result);
+                set_result(td, result);
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case TID:
                 // return the task id of the task that was just interrupted
                 result = sys_tid();
-                task_return(td, result);
+                set_result(td, result);
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
                 break;
@@ -77,13 +91,15 @@ void k_main()
                 // return the task id of the parent of the task
                 // that was just interrupted
                 result = sys_pid();
-                task_return(td, result);
+                set_result(td, result);
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case YIELD:
                 // does nothing
                 sys_yield();
+                // put the task back on the ready queue
+                pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case EXIT:
                 // removes the exiting task from all queues
@@ -98,16 +114,18 @@ void k_main()
                 sys_receive((int*)args->arg0, (int*)args->arg1, args->arg2);
                 break;
             case REPLY:
-                result = sys_reply(args->arg0, (int*)args->arg1, args->arg2);
-                task_return(td, result);
+                result = (unsigned int) sys_reply(args->arg0, (int*)args->arg1, args->arg2);
+                set_result(td, result);
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
+                break;
             case MALLOC:
-                // removes the exiting task from all queues
                 result = (unsigned int) sys_malloc(args->arg0);
+                set_result(td, result);
+                // put the task back on the ready queue
+                pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case FREE:
-                // removes the exiting task from all queues
                 sys_free((char *) args->arg0);
                 break;
             default:

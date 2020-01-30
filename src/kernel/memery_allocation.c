@@ -1,7 +1,6 @@
 #include <kernel.h>
 #include <user.h>
 #include <shared.h>
-#include <lib_mem.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;
@@ -11,22 +10,22 @@ void _get_heap_info(HeapInfo *heap_info, HEAP_TYPE heap_type) {
         case SMALL:
             heap_info->heap_block_size = S_HEAP_BLOCK_SIZE;
             heap_info->heap_block_count = S_HEAP_BLOCK_COUNT;
-            heap_info->heap_block_used = _kernel_state.s_block_used;
-            heap_info->heap_block_unused = _kernel_state.s_block_unused;
+            heap_info->heap_block_used = _kernel_state.block.s_block_used;
+            heap_info->heap_block_unused = _kernel_state.block.s_block_unused;
             heap_info->heap_region_addr = S_HEAP_REGION;
             break;
         case MEDIUM:
             heap_info->heap_block_size = M_HEAP_BLOCK_SIZE;
             heap_info->heap_block_count = M_HEAP_BLOCK_COUNT;
-            heap_info->heap_block_used = _kernel_state.m_block_used;
-            heap_info->heap_block_unused = _kernel_state.m_block_unused;
+            heap_info->heap_block_used = _kernel_state.block.m_block_used;
+            heap_info->heap_block_unused = _kernel_state.block.m_block_unused;
             heap_info->heap_region_addr = M_HEAP_REGION;
             break;
         case LARGE:
             heap_info->heap_block_size = L_HEAP_BLOCK_SIZE;
             heap_info->heap_block_count = L_HEAP_BLOCK_COUNT;
-            heap_info->heap_block_used = _kernel_state.l_block_used;
-            heap_info->heap_block_unused = _kernel_state.l_block_unused;
+            heap_info->heap_block_used = _kernel_state.block.l_block_used;
+            heap_info->heap_block_unused = _kernel_state.block.l_block_unused;
             heap_info->heap_region_addr = L_HEAP_REGION;
             break;
         default:
@@ -73,7 +72,8 @@ char *_mem_get_block(HEAP_TYPE heap_type)
 
 void mem_init_task_descriptors() 
 {
-    _kernel_state.td_queue_size = 0;
+    _kernel_state.ready_queue.size = 0;
+    _kernel_state.ready_queue.index = 0;
     for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
         _kernel_state.td_user_stack_availability[i] = 0;
     }
@@ -108,7 +108,7 @@ void mem_init_heap_region(HEAP_TYPE heap_type)
     tail_block_meta->next = head_block_meta;
 }
 
-void mem_free(char *ptr) 
+void sys_free(char *ptr) 
 {
     BlockMeta *block_meta = (BlockMeta *) ( ptr - sizeof(BlockMeta) );
     HeapInfo hi;
@@ -145,7 +145,7 @@ void mem_free(char *ptr)
     hi.heap_block_unused = (char *) block_meta;
 }
 
-char *mem_malloc(int size) 
+char *sys_malloc(int size) 
 {
     int requested_size = size + HEAP_META_SIZE;
     if (requested_size < S_HEAP_BLOCK_SIZE) {

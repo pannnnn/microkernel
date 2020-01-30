@@ -29,7 +29,7 @@ ASMSOURCES = $(wildcard src/kernel/*.S)
 ASMFILES = $(CSOURCES:.c=.s)
 OBJECTS = $(CSOURCES:.c=.o) $(ASMSOURCES:.S=.o)
 MAIN = main
-EXEC = k2
+EXEC = microkernel
 
 all: clean $(ASMFILES) $(OBJECTS) $(EXEC).elf
 

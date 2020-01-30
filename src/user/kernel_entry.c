@@ -34,21 +34,6 @@ void Yield() {
     enter_swi(&args);
 }
 
-int Send(int tid, const char *msg, int msglen, char *reply, int rplen)
-{
-	return 0;
-}
-
-int Receive(int *tid, char *msg, int msglen)
-{
-	return 0;
-}
-
-int Reply(int tid, const char *reply, int rplen)
-{
-	return 0;
-}
-
 // ends the task; enters kernel mode
 void Exit() {
 	Args args;
@@ -64,7 +49,6 @@ int Send(int tid, const char *msg, int msglen, char *reply, int rplen) {
 	args.arg2 = msglen;
 	args.arg3 = (unsigned int) reply;
 	args.arg4 = rplen;
-	enter_swi(&args);
 	return enter_swi(&args);
 }
 

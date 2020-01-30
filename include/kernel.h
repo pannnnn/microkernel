@@ -10,9 +10,9 @@
  * Macro definition
  */
 #define KERNEL_STACK_ADDR 0x2000000
-    #define KERNEL_STACK_TD_COUNT 8192
+    #define KERNEL_STACK_TD_COUNT 1024
     #define KERNEL_STACK_TD_LIMIT 128
-    #define KERNEL_STACK_TD_SIZE 128
+    #define KERNEL_STACK_TD_SIZE 1024
 #define HEAP_ADDR 0x1F00000
     #define HEAP_META_SIZE 12
     #define S_HEAP_REGION 0x1E00000
@@ -48,8 +48,9 @@ typedef enum
 typedef enum
 {
     READY = 0,
-    BLOCKED,
-    EXITED, 
+    SEND_WAIT,
+    RECEIVE_WAIT,
+    REPLY_WAIT
 } TASK_STATE;
 
 typedef enum
@@ -62,6 +63,19 @@ typedef enum
 /*
  * Struct definition
  */
+typedef struct {
+    union {
+        int *sent_message;
+        int *receive_message;
+    };
+    union {
+        int sent_message_length;
+        int receive_message_length;
+    };
+    int *replied_message;
+    int replied_message_length;
+} Message;
+
 typedef struct
 {
 	int id;
@@ -69,48 +83,56 @@ typedef struct
     // this is an increasing time related id
     int scheduled_count;
 	int priority;
-	int next_ready;    // not used yet
-	int next_send;     // not used yet
-	void *next_td;     // not used yet
 	TASK_STATE state;
-
+    
     // message passing
-    int *msg;           // message to send
-    int msglen;         // lenght of msg
-    int *rpl;           // reply buffer
-    int rpllen;         // len of repl buf
-    int *sender_id_ptr;     // for receiver; ptr to sender id
-    Queue sending;      // ol implementation
+    Message message;
+    // queue implementation
+    Queue inbox;
 
 	unsigned int stack_pointer;
 } TaskDescriptor;
 
-typedef struct 
-{
-    MACHINE_STATE machine_state;
+typedef struct _BlockMeta {
+    struct _BlockMeta *prev;
+    struct _BlockMeta *next;
+    int id;
+    HEAP_TYPE heap_type;
+} BlockMeta;
 
-    // task & scheduling mgmt
-    int id_counter;
-    int schedule_counter;
-    int scheduled_tid;
-
-    // task queues
-    Queue ready_queue;      // pq implementation
-    Queue send_queue;       // ul implementation
-    Queue receive_queue;    // ul implementation
-    Queue reply_queue;      // ul implementation
-
-    int td_queue_size;
-    int td_queue[KERNEL_STACK_TD_LIMIT + 1];
-    int td_user_stack_availability[KERNEL_STACK_TD_LIMIT];
-
+typedef struct {
     char *s_block_used;
     char *s_block_unused;
     char *m_block_used;
     char *m_block_unused;
     char *l_block_used;
     char *l_block_unused;
+} Block;
+
+typedef struct 
+{
+    MACHINE_STATE machine_state;
+
+    // task & scheduling mgmt
+    int schedule_counter;
+    int scheduled_tid;
+
+    // task queues
+    Queue ready_queue;
+
+    // malloced block
+    Block block;
+
+    int td_user_stack_availability[KERNEL_STACK_TD_LIMIT];
 } KernelState;
+
+typedef struct {
+    int heap_block_size;
+    int heap_block_count;
+    char *heap_block_used;
+    char *heap_block_unused;
+    unsigned int heap_region_addr;
+} HeapInfo;
 
 /*
  * Function definition
@@ -118,22 +140,28 @@ typedef struct
 void bootstrap();
 void k_main();
 
-// task creation & mgmt
+// task creation
 int sys_create(int priority, void (*function)());
 int sys_tid();
 int sys_pid();
 void sys_yield();
 void sys_exit();
-char *sys_malloc();
+
+// memory allocation
+char *sys_malloc(int size);
 void sys_free();
 
 // message passing
-int sys_send(int tid, int *msg, int msglen, int *reply, int rplen);
-int sys_receive(int *tid, int *msg, int msglen);
+void sys_send(int tid, int *msg, int msglen, int *reply, int rplen);
+void sys_receive(int *tid, int *msg, int msglen);
 int sys_reply(int tid, int *reply, int rplen);
 
-int _sys_create_td(int priority);
 TaskDescriptor *get_td(int id);
-void task_return(TaskDescriptor *td, int return_val);
+void set_result(TaskDescriptor *td, unsigned int return_val);
+
+void mem_init_task_descriptors();
+void mem_init_heap_region(HEAP_TYPE heap_type);
+void mem_free(char *ptr);
+char *mem_malloc(int size);
 
 #endif

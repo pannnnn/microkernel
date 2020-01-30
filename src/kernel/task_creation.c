@@ -1,6 +1,5 @@
 #include <kernel.h>
 #include <ds.h>
-#include <lib_mem.h>
 #include <lib_periph_bwio.h>
 
 // declared as global variable in main.c
@@ -13,12 +12,14 @@ extern void function_wrapper(void (*function)());
 int _sys_create_td(int priority) 
 {
     if (priority < MIN_PRIORITY || priority > MAX_PRIORITY) return -1;
-    if (_kernel_state.td_queue_size == KERNEL_STACK_TD_LIMIT) return -2;
+    if (_kernel_state.ready_queue.size >= KERNEL_STACK_TD_LIMIT) return -2;
     
     int tid = -1;
     for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
         if (_kernel_state.td_user_stack_availability[i] == 0) {
+            _kernel_state.td_user_stack_availability[i] = 1;
             tid = i;
+            break;
         }
     }
     if (tid == -1 ) return -2;
@@ -79,12 +80,4 @@ void sys_yield() {}
 // may need to do some clean up and relaim memory address
 void sys_exit() {
     _kernel_state.td_user_stack_availability[_kernel_state.scheduled_tid] = 0;
-}
-
-char *sys_malloc(int size) {
-    return mem_malloc(size);
-}
-
-void sys_free(char *ptr) {
-    mem_free(ptr);
 }

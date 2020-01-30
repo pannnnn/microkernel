@@ -1,3 +1,3 @@
 #!/bin/bash
 make
-cp k2.elf /u/cs452/tftp/ARM/lmcvitti/k2.elf
+cp microkernel.elf /u/cs452/tftp/ARM/y247pan/microkernel.elf

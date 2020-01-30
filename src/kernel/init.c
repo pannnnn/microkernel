@@ -1,7 +1,6 @@
 #include <kernel.h>
 #include <user.h>
 #include <shared.h>
-#include <lib_mem.h>
 #include <lib_periph_init.h>
 
 // defined in swi.S
@@ -23,9 +22,8 @@ static void init_kernel_state()
     _kernel_state.scheduled_tid = -1;
 
     _kernel_state.ready_queue.size = 0;
-    _kernel_state.send_queue.size = 0;
-    _kernel_state.receive_queue.size = 0;
-    _kernel_state.reply_queue.size = 0;
+    // Not necessary for priority queue
+    _kernel_state.ready_queue.index = 0;
 
     _kernel_state.schedule_counter = 0;
 

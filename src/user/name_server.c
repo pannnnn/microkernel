@@ -33,6 +33,7 @@ void NameServer() {
     NSMessage ns_message;
     HashEntry *entry;
     while (Receive(&client_tid, (char *) &ns_message, sizeof(ns_message))) {
+        bwprintf( COM2, "\n\rName Server: Receive Message %s\n\r", ns_message.name);
         switch (ns_message.operation)
         {
         case REGISTERAS:

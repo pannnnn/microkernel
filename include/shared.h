@@ -5,6 +5,7 @@
  * Macro definition
  */
 #define NULL 0
+#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 /*
  * Enum definition
