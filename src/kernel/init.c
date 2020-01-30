@@ -45,6 +45,7 @@ static void create_first_user_task()
 // initialize the peripherals
 static void init_peripheral() {
     init_uart();
+    init_timer();
 }
 
 // initialize the system
