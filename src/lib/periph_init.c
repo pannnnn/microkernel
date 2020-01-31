@@ -21,17 +21,20 @@ void init_timer() {
 }
 
 void cache_on() {
-    asm("mrc p15, 0, r0, c1, c0, 0\n\t"
+    asm("stmfd sp!, {r0}\n\t"
+        "mrc p15, 0, r0, c1, c0, 0\n\t"
         "orr r0, r0, #4096\n\t"
         "orr r0, r0, #4\n\t"
         "mcr p15, 0, r0, c1, c0, 0\n\t"
-        "mcr p15, 0, r0, c7, c7, 0\n\t");
+        "mcr p15, 0, r0, c7, c7, 0\n\t"
+        "ldmfd sp!, {r0}\n\t");
 }
 
 void cache_off() {
-    asm("mrc p15, 0, r0, c1, c0, 0\n\t"
+    asm("stmfd sp!, {r0}\n\t"
+        "mrc p15, 0, r0, c1, c0, 0\n\t"
         "bic r0, r0, #4096\n\t"
         "bic r0, r0, #4\n\t"
         "mcr p15, 0, r0, c1, c0, 0\n\t"
-        "mcr p15, 0, r0, c7, c7, 0\n\t");
+        "ldmfd sp!, {r0}\n\t");
 }

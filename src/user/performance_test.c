@@ -7,15 +7,11 @@ static char *cache_status_string[2] = {"cache", "nocache"};
 static char *execution_order_string[2] = {"S", "R"};
 
 void performance_task() {
-    bwprintf( COM2, "start performance test");
-    for (int cache = 0; cache < 2; cache++) {
-        // if (cache == 0) cache_on();
-        // else cache_off();
-        int message_size[3] = {4, 64, 256};
-        for (int execution_order = 0; execution_order < 2; execution_order++){
-            for (int j = 0; j < 3; j++) {
-                pf_send_receive_test(cache, execution_order, message_size[j]);
-            }
+    bwprintf( COM2, "\n\rstart performance test\n\r");
+    int message_size[3] = {4, 64, 256};
+    for (int execution_order = 0; execution_order < 2; execution_order++){
+        for (int j = 0; j < 3; j++) {
+            pf_send_receive_test(0, execution_order, message_size[j]);
         }
     }
 }
@@ -28,12 +24,12 @@ void pf_send_receive_test(CACHE_STATUS cache_status, PF_EXECUTION_ORDER executio
         switch (execution_order)
         {
         case SENDER_FIRST:
-            sender_priority = 10;
-            receiver_priority = 9;
+            sender_priority = 2;
+            receiver_priority = 1;
             break;
         case RECEIVER_FIRST:
-            sender_priority = 9;
-            receiver_priority = 10;
+            sender_priority = 1;
+            receiver_priority = 2;
             break;
         default:
             break;
@@ -58,9 +54,9 @@ void pf_send_receive_test(CACHE_STATUS cache_status, PF_EXECUTION_ORDER executio
         }
         
         unsigned int start_time = read_timer();
-        int send_tid = Create(sender_priority, sender_task);
-        int receiver_tid = Create(receiver_priority, receiver_task);
-        bwprintf( COM2, "\n\r%s %s %d %d\n\r", cache_status_string[cache_status], execution_order_string[execution_order], message_size, get_time_elaspsed(start_time));
+        Create(sender_priority, sender_task);
+        Create(receiver_priority, receiver_task);
+        bwprintf( COM2, "\n\r%s %s %d %d\n\r", cache_status_string[cache_status], execution_order_string[execution_order], message_size, get_time_elaspsed(start_time)/10);
 }
 
 void sender_task_4() {

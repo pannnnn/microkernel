@@ -40,17 +40,17 @@ static void create_first_user_task()
     sys_create(priority, user_task_0);
 }
 
-static void create_performance_task()
-{
-    int priority = 0;
-    sys_create(priority, performance_task);
-}
+// static void create_performance_task()
+// {
+//     int priority = 0;
+//     sys_create(priority, performance_task);
+// }
 
 // initialize the peripherals
 static void init_peripheral() {
     init_timer();
     init_uart();
-    init_timer();
+    cache_on();
 }
 
 // initialize the system
