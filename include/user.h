@@ -62,10 +62,12 @@ void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
 HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);
 void put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value);
 int remove(unsigned int (*hash_table)[2], int hash_size, char *key);
+void dump_hash_map(unsigned int (*hash_table)[2]);
 
 void function_wrapper(void (*function)());
 void user_task_0();
 void user_task_test();
-void game_server();
+void game_server1();
+void game_server2();
 
 #endif

@@ -36,22 +36,22 @@ void k_main()
     while(1) {
         // get the new task from the scheduler
         int tid = schedule();
+    
+        if (tid == -1) return;
 
-        dump_queue(&_kernel_state.ready_queue);
-
-        if (tid == -1) {
-            // bwprintf( COM2, "\n\rNo ready task. Wating ...\n\r");
-            int live_tasks = 0;
-            for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
-                live_tasks += _kernel_state.td_user_stack_availability[i];
-            }
-            // bwprintf( COM2, "\n\r<%d> live tasks. Wating ...\n\r", live_tasks);
-            if (live_tasks > 0) {
-                continue;
-            } else {
-                return;
-            }
-        }
+        // if (tid == -1) {
+        //     // bwprintf( COM2, "\n\rNo ready task. Wating ...\n\r");
+        //     int live_tasks = 0;
+        //     for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
+        //         live_tasks += _kernel_state.td_user_stack_availability[i];
+        //     }
+        //     // bwprintf( COM2, "\n\r<%d> live tasks. Wating ...\n\r", live_tasks);
+        //     if (live_tasks > 0) {
+        //         continue;
+        //     } else {
+        //         return;
+        //     }
+        // }
 
         // get the task descriptor from the task id
         TaskDescriptor *td = get_td(tid);
@@ -107,14 +107,14 @@ void k_main()
                 break;
             case SEND:
                 // try to send message
-                sys_send(args->arg0, (int*)args->arg1, args->arg2, (int*)args->arg3, args->arg4);
+                sys_send(args->arg0, (char*)args->arg1, args->arg2, (char*)args->arg3, args->arg4);
                 break;
             case RECEIVE:
                 // attempt to receive a sent message
-                sys_receive((int*)args->arg0, (int*)args->arg1, args->arg2);
+                sys_receive((int*)args->arg0, (char*)args->arg1, args->arg2);
                 break;
             case REPLY:
-                result = (unsigned int) sys_reply(args->arg0, (int*)args->arg1, args->arg2);
+                result = (unsigned int) sys_reply(args->arg0, (char*)args->arg1, args->arg2);
                 set_result(td, result);
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
@@ -127,6 +127,8 @@ void k_main()
                 break;
             case FREE:
                 sys_free((char *) args->arg0);
+                // put the task back on the ready queue
+                pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             default:
                 break;

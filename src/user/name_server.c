@@ -33,7 +33,7 @@ void NameServer() {
     NSMessage ns_message;
     HashEntry *entry;
     while (Receive(&client_tid, (char *) &ns_message, sizeof(ns_message))) {
-        bwprintf( COM2, "\n\rName Server: Receive Message %s\n\r", ns_message.name);
+        bwprintf( COM2, "\n\rName Server: get request of <%d> with key <%s> value <%d>\n\r", ns_message.operation,ns_message.name , ns_message.tid);
         switch (ns_message.operation)
         {
         case REGISTERAS:
@@ -54,5 +54,6 @@ void NameServer() {
         } else if(result == -2) {
             bwprintf( COM2, "\n\rName Server: send-receive-reply transaction could not be completed.\n\r");
         }
+        dump_hash_map(_hash_table);
     }
 }

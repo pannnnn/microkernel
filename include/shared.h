@@ -38,6 +38,6 @@ typedef struct
     unsigned int arg4;
 } Args;
 
-void charstr_copy(int *msg, int *buf, int length);
+void charstr_copy(char *msg, char *buf, int length);
 
 #endif

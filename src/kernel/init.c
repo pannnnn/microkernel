@@ -2,6 +2,7 @@
 #include <user.h>
 #include <shared.h>
 #include <lib_periph_init.h>
+#include <lib_periph_bwio.h>
 
 // defined in swi.S
 extern int enter_kernel();
@@ -21,13 +22,10 @@ static void init_kernel_state()
 {
     _kernel_state.scheduled_tid = -1;
 
-    _kernel_state.ready_queue.size = 0;
-    // Not necessary for priority queue
-    _kernel_state.ready_queue.index = 0;
-
     _kernel_state.schedule_counter = 0;
 
     mem_init_task_descriptors();
+    mem_init_all_heap_info();
     mem_init_heap_region(SMALL);
     mem_init_heap_region(MEDIUM);
     mem_init_heap_region(LARGE);
@@ -38,7 +36,7 @@ static void init_kernel_state()
 // create the first user task with priority 1
 static void create_first_user_task()
 {
-    int priority = 1;
+    int priority = 100;
     sys_create(priority, user_task_0);
 }
 

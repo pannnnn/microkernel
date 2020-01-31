@@ -10,12 +10,21 @@ void function_wrapper(void (*function)()) {
 // the main function of first task that is created (with priority 1)
 void user_task_0() {
     bwprintf( COM2, "\n\rTask Id <%d> Parent Task Id <%d>\n\r", 0, -1);
-    int name_server_tid = Create(2, NameServer);
+    // int task_1_id = Create(0, user_task_test);
+    // bwprintf( COM2, "\n\rCreated: <%d>\n\r", task_1_id);
+    // int task_2_id = Create(0, user_task_test);
+    // bwprintf( COM2, "\n\rCreated: <%d>\n\r", task_2_id);
+    // int task_3_id = Create(2, user_task_test);
+    // bwprintf( COM2, "\n\rCreated: <%d>\n\r", task_3_id);
+    // int task_4_id = Create(2, user_task_test);
+    // bwprintf( COM2, "\n\rCreated: <%d>\n\r", task_4_id);
+
+    int name_server_tid = Create(99, NameServer);
     bwprintf( COM2, "\n\rCreated Name Server: <%d>\n\r", name_server_tid);
-    int game_server1_tid = Create(3, game_server);
+    int game_server1_tid = Create(1, game_server1);
     bwprintf( COM2, "\n\rCreated Game Server 1: <%d>\n\r", game_server1_tid);
-    // int game_server2_tid = Create(3, game_server);
-    // bwprintf( COM2, "\n\rCreated Game Server 2: <%d>\n\r", game_server2_tid);
+    int game_server2_tid = Create(1, game_server2);
+    bwprintf( COM2, "\n\rCreated Game Server 2: <%d>\n\r", game_server2_tid);
     bwprintf( COM2, "\n\rFirstUserTask: exiting\n\r");
 }
 
@@ -33,8 +42,15 @@ void user_task_test() {
     bwprintf( COM2, "\n\rTask Id <%d> Parent Task Id <%d>\n\r", tid, pid);
 }
 
-void game_server() {
+void game_server1() {
     bwprintf( COM2, "\n\rGame Server 1 Id <%d> Parent Task Id <%d>\n\r", MyTid(), MyParentTid());
     RegisterAs("game_server_1");
+    bwprintf( COM2, "\n\rGame Server 2 Id: <%d>\n\r", WhoIs("game_server_2"));
+}
+
+
+void game_server2() {
+    bwprintf( COM2, "\n\rGame Server 2 Id <%d> Parent Task Id <%d>\n\r", MyTid(), MyParentTid());
+    RegisterAs("game_server_2");
     bwprintf( COM2, "\n\rGame Server 1 Id: <%d>\n\r", WhoIs("game_server_1"));
 }

@@ -1,70 +1,75 @@
 #include <kernel.h>
 #include <user.h>
 #include <shared.h>
+#include <lib_periph_bwio.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;
 
-void _get_heap_info(HeapInfo *heap_info, HEAP_TYPE heap_type) {
+void mem_init_all_heap_info() {
+    _kernel_state.s_heap_info.heap_block_size = S_HEAP_BLOCK_SIZE;
+    _kernel_state.s_heap_info.heap_block_count = S_HEAP_BLOCK_COUNT;
+    _kernel_state.s_heap_info.heap_block_used = NULL;
+    _kernel_state.s_heap_info.heap_block_unused = NULL;
+    _kernel_state.s_heap_info.heap_region_addr = S_HEAP_REGION;
+
+    _kernel_state.m_heap_info.heap_block_size = M_HEAP_BLOCK_SIZE;
+    _kernel_state.m_heap_info.heap_block_count = M_HEAP_BLOCK_COUNT;
+    _kernel_state.m_heap_info.heap_block_used = NULL;
+    _kernel_state.m_heap_info.heap_block_unused = NULL;
+    _kernel_state.m_heap_info.heap_region_addr = M_HEAP_REGION;
+
+    _kernel_state.l_heap_info.heap_block_size = L_HEAP_BLOCK_SIZE;
+    _kernel_state.l_heap_info.heap_block_count = L_HEAP_BLOCK_COUNT;
+    _kernel_state.l_heap_info.heap_block_used = NULL;
+    _kernel_state.l_heap_info.heap_block_unused = NULL;
+    _kernel_state.l_heap_info.heap_region_addr = L_HEAP_REGION;
+}
+
+unsigned int _get_heap_info(HEAP_TYPE heap_type) {
     switch (heap_type) {
         case SMALL:
-            heap_info->heap_block_size = S_HEAP_BLOCK_SIZE;
-            heap_info->heap_block_count = S_HEAP_BLOCK_COUNT;
-            heap_info->heap_block_used = _kernel_state.block.s_block_used;
-            heap_info->heap_block_unused = _kernel_state.block.s_block_unused;
-            heap_info->heap_region_addr = S_HEAP_REGION;
-            break;
+            return (unsigned int) &_kernel_state.s_heap_info;
         case MEDIUM:
-            heap_info->heap_block_size = M_HEAP_BLOCK_SIZE;
-            heap_info->heap_block_count = M_HEAP_BLOCK_COUNT;
-            heap_info->heap_block_used = _kernel_state.block.m_block_used;
-            heap_info->heap_block_unused = _kernel_state.block.m_block_unused;
-            heap_info->heap_region_addr = M_HEAP_REGION;
-            break;
+            return (unsigned int) &_kernel_state.m_heap_info;
         case LARGE:
-            heap_info->heap_block_size = L_HEAP_BLOCK_SIZE;
-            heap_info->heap_block_count = L_HEAP_BLOCK_COUNT;
-            heap_info->heap_block_used = _kernel_state.block.l_block_used;
-            heap_info->heap_block_unused = _kernel_state.block.l_block_unused;
-            heap_info->heap_region_addr = L_HEAP_REGION;
-            break;
+            return (unsigned int) &_kernel_state.l_heap_info;
         default:
-            break;
+            return NULL;
     }
 }
 
 char *_mem_get_block(HEAP_TYPE heap_type) 
 {
-    HeapInfo hi;
-    _get_heap_info(&hi, heap_type);
+    HeapInfo *heap_info = (HeapInfo *) _get_heap_info(heap_type);
 
-    if (hi.heap_block_unused == NULL) return NULL;
+    if (heap_info->heap_block_unused == NULL) return NULL;
 
-    char *block = (char *) hi.heap_block_unused;
+    char *block = (char *) heap_info->heap_block_unused;
     BlockMeta *block_meta = (BlockMeta *) block;
     
     BlockMeta *prev_block_meta = (BlockMeta *) block_meta->prev;
     BlockMeta *next_block_meta = (BlockMeta *) block_meta->next;
     if (prev_block_meta == next_block_meta) {
-        hi.heap_block_unused = NULL;
+        heap_info->heap_block_unused = NULL;
     } else {
         next_block_meta->prev = prev_block_meta;
         prev_block_meta->next = next_block_meta;
-        hi.heap_block_unused = (char *) next_block_meta;
+        heap_info->heap_block_unused = (unsigned int) next_block_meta;
     }
 
-    if (hi.heap_block_used == NULL) {
+    if (heap_info->heap_block_used == NULL) {
         block_meta->prev = block_meta;
         block_meta->next = block_meta;
     } else {
-        BlockMeta *used_block_meta = (BlockMeta *) hi.heap_block_used;
+        BlockMeta *used_block_meta = (BlockMeta *) heap_info->heap_block_used;
         BlockMeta *next_used_block_meta = used_block_meta->next;
         used_block_meta->next = block_meta;
         next_used_block_meta->prev = block_meta;
         block_meta->prev = used_block_meta;
         block_meta->next = next_used_block_meta;
     }
-    hi.heap_block_used = (char *) block_meta;
+    heap_info->heap_block_used = (unsigned int) block_meta;
 
     char *block_body = (char *) ( block + sizeof(BlockMeta));
     return block_body;
@@ -81,19 +86,19 @@ void mem_init_task_descriptors()
 
 void mem_init_heap_region(HEAP_TYPE heap_type)
 {
-    HeapInfo hi;
-    _get_heap_info(&hi, heap_type);
-    hi.heap_block_used = NULL;
+    HeapInfo *heap_info = (HeapInfo *) _get_heap_info(heap_type);
 
-    char *prev_block = (char *) ( hi.heap_region_addr - hi.heap_block_size );
-    hi.heap_block_unused = prev_block;
+    heap_info->heap_block_used = NULL;
+
+    unsigned int prev_block = heap_info->heap_region_addr - heap_info->heap_block_size;
+    heap_info->heap_block_unused = prev_block;
 
     BlockMeta *prev_block_meta = (BlockMeta *) prev_block;
     prev_block_meta->id = 1;
     prev_block_meta->heap_type = heap_type;
     prev_block_meta->prev = NULL;
-    for (int i = 2; i <= hi.heap_block_count; i++) {
-        BlockMeta *block_meta = (BlockMeta *) hi.heap_region_addr - i * hi.heap_block_size;
+    for (int i = 2; i <= heap_info->heap_block_count; i++) {
+        BlockMeta *block_meta = (BlockMeta *) (heap_info->heap_region_addr - i * heap_info->heap_block_size);
         prev_block_meta->next = block_meta;
         block_meta->id = i;
         block_meta->heap_type = heap_type;
@@ -102,7 +107,7 @@ void mem_init_heap_region(HEAP_TYPE heap_type)
     }
     prev_block_meta->next = NULL;
 
-    BlockMeta *head_block_meta = (BlockMeta *) hi.heap_block_unused;
+    BlockMeta *head_block_meta = (BlockMeta *) heap_info->heap_block_unused;
     BlockMeta *tail_block_meta = prev_block_meta;
     head_block_meta->prev = tail_block_meta;
     tail_block_meta->next = head_block_meta;
@@ -111,10 +116,9 @@ void mem_init_heap_region(HEAP_TYPE heap_type)
 void sys_free(char *ptr) 
 {
     BlockMeta *block_meta = (BlockMeta *) ( ptr - sizeof(BlockMeta) );
-    HeapInfo hi;
-    _get_heap_info(&hi, block_meta->heap_type);
+    HeapInfo *heap_info = (HeapInfo *) _get_heap_info(block_meta->heap_type);
 
-    BlockMeta *curr_block_meta = (BlockMeta *) hi.heap_block_used;
+    BlockMeta *curr_block_meta = (BlockMeta *) heap_info->heap_block_used;
     while(curr_block_meta != NULL && curr_block_meta->id != block_meta->id) {
         curr_block_meta = curr_block_meta->next;
     }
@@ -124,25 +128,25 @@ void sys_free(char *ptr)
     BlockMeta *next_block_meta = curr_block_meta->prev;
 
     if (prev_block_meta == next_block_meta) {
-        hi.heap_block_used = NULL;
+        heap_info->heap_block_used = NULL;
     } else {
         next_block_meta->prev = prev_block_meta;
         prev_block_meta->next = next_block_meta;
-        hi.heap_block_used = (char *) next_block_meta;
+        heap_info->heap_block_used = (unsigned int) next_block_meta;
     }
 
-    if (hi.heap_block_unused == NULL) {
+    if (heap_info->heap_block_unused == NULL) {
         block_meta->prev = block_meta;
         block_meta->next = block_meta;
     } else {
-        BlockMeta *unused_block_meta = (BlockMeta *) hi.heap_block_unused;
+        BlockMeta *unused_block_meta = (BlockMeta *) heap_info->heap_block_unused;
         BlockMeta *next_unused_block_meta = unused_block_meta->next;
         unused_block_meta->next = block_meta;
         next_unused_block_meta->prev = block_meta;
         block_meta->prev = unused_block_meta;
         block_meta->next = next_unused_block_meta;
     }
-    hi.heap_block_unused = (char *) block_meta;
+    heap_info->heap_block_unused = (unsigned int) block_meta;
 }
 
 char *sys_malloc(int size) 
@@ -156,5 +160,16 @@ char *sys_malloc(int size)
         return _mem_get_block(LARGE);
     } else {
         return NULL;
+    }
+}
+
+void dump_heap_used(HEAP_TYPE heap_type) {
+    HeapInfo *heap_info = (HeapInfo *) _get_heap_info(heap_type);
+
+    BlockMeta *block_meta = (BlockMeta *) heap_info->heap_block_used;
+
+    for (int i = 1; i <= heap_info->heap_block_count; i++) {
+        bwprintf( COM2, "\n\rHeap prev id<%d> id <%d> next id <%d>\n\r", block_meta->prev->id, block_meta->id, block_meta->next->id);
+        block_meta = block_meta->next;
     }
 }

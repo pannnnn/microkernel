@@ -15,16 +15,16 @@
     #define KERNEL_STACK_TD_SIZE 1024
 #define HEAP_ADDR 0x1F00000
     #define HEAP_META_SIZE 12
-    #define S_HEAP_REGION 0x1E00000
+    #define S_HEAP_REGION 0x1F00000
         #define S_HEAP_BLOCK_COUNT 16384
         #define S_HEAP_BLOCK_SIZE 64
-    #define M_HEAP_REGION 0x1D00000
+    #define M_HEAP_REGION 0x1E00000
         #define M_HEAP_BLOCK_COUNT 4096
         #define M_HEAP_BLOCK_SIZE 256
-    #define L_HEAP_REGION 0x1C00000
+    #define L_HEAP_REGION 0x1D00000
         #define L_HEAP_BLOCK_COUNT 1024
         #define L_HEAP_BLOCK_SIZE 1024
-#define USER_STACK_STACK_REGION 0x1B00000
+#define USER_STACK_STACK_REGION 0x1C00000
     #define USER_STACK_STACK_SIZE_PER_USER 0x10000
 
 #define SWI_HANDLER_ADDR   0x28
@@ -64,15 +64,16 @@ typedef enum
  * Struct definition
  */
 typedef struct {
+    int *receiver_reserved_sid;
     union {
-        int *sent_message;
-        int *receive_message;
+        char *sent_message;
+        char *receive_message;
     };
     union {
         int sent_message_length;
         int receive_message_length;
     };
-    int *replied_message;
+    char *replied_message;
     int replied_message_length;
 } Message;
 
@@ -93,21 +94,20 @@ typedef struct
 	unsigned int stack_pointer;
 } TaskDescriptor;
 
+typedef struct {
+    int heap_block_size;
+    int heap_block_count;
+    unsigned int heap_block_used;
+    unsigned int heap_block_unused;
+    unsigned int heap_region_addr;
+} HeapInfo;
+
 typedef struct _BlockMeta {
     struct _BlockMeta *prev;
     struct _BlockMeta *next;
     int id;
     HEAP_TYPE heap_type;
 } BlockMeta;
-
-typedef struct {
-    char *s_block_used;
-    char *s_block_unused;
-    char *m_block_used;
-    char *m_block_unused;
-    char *l_block_used;
-    char *l_block_unused;
-} Block;
 
 typedef struct 
 {
@@ -120,19 +120,14 @@ typedef struct
     // task queues
     Queue ready_queue;
 
-    // malloced block
-    Block block;
+    // heap management
+    HeapInfo s_heap_info;
+    HeapInfo m_heap_info;
+    HeapInfo l_heap_info;
 
     int td_user_stack_availability[KERNEL_STACK_TD_LIMIT];
 } KernelState;
 
-typedef struct {
-    int heap_block_size;
-    int heap_block_count;
-    char *heap_block_used;
-    char *heap_block_unused;
-    unsigned int heap_region_addr;
-} HeapInfo;
 
 /*
  * Function definition
@@ -152,16 +147,18 @@ char *sys_malloc(int size);
 void sys_free();
 
 // message passing
-void sys_send(int tid, int *msg, int msglen, int *reply, int rplen);
-void sys_receive(int *tid, int *msg, int msglen);
-int sys_reply(int tid, int *reply, int rplen);
+void sys_send(int tid, char *msg, int msglen, char *reply, int rplen);
+void sys_receive(int *tid, char *msg, int msglen);
+int sys_reply(int tid, char *reply, int rplen);
 
 TaskDescriptor *get_td(int id);
 void set_result(TaskDescriptor *td, unsigned int return_val);
 
+void mem_init_all_heap_info();
 void mem_init_task_descriptors();
 void mem_init_heap_region(HEAP_TYPE heap_type);
 void mem_free(char *ptr);
 char *mem_malloc(int size);
+void dump_heap(HEAP_TYPE heap_type);
 
 #endif

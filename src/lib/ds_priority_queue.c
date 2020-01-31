@@ -98,6 +98,5 @@ void dump_queue(Queue *queue_struct) {
     for (int i = 1; i <= queue_struct->size; i++) {
         bwprintf( COM2, " %d", queue_struct->queue[i]);
     }
-    queue_struct->size++;
     bwprintf( COM2, "\n\r");
 }
