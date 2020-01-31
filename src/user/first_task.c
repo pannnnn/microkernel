@@ -1,6 +1,7 @@
 #include <user.h>
 #include <shared.h>
 #include <lib_periph_init.h>
+#include <rps.h>
 #include <lib_periph_bwio.h>
 
 // provides a wrapper for the main function of the task
@@ -14,10 +15,18 @@ void user_task_0() {
     bwprintf( COM2, "\n\rTask Id <%d> Parent Task Id <%d>\n\r", 0, -1);
     int name_server_tid = Create(99, NameServer);
     bwprintf( COM2, "\n\rCreated Name Server: <%d>\n\r", name_server_tid);
-    int game_server1_tid = Create(1, game_server1);
-    bwprintf( COM2, "\n\rCreated Game Server 1: <%d>\n\r", game_server1_tid);
-    int game_server2_tid = Create(1, game_server2);
-    bwprintf( COM2, "\n\rCreated Game Server 2: <%d>\n\r", game_server2_tid);
+    // int game_server1_tid = Create(1, game_server1);
+    // bwprintf( COM2, "\n\rCreated Game Server 1: <%d>\n\r", game_server1_tid);
+    // int game_server2_tid = Create(1, game_server2);
+    // bwprintf( COM2, "\n\rCreated Game Server 2: <%d>\n\r", game_server2_tid);
+    int game_server1_tid = Create(2, rps_server_main);
+    bwprintf( COM2, "\n\rCreated RPS Server: <%d>\n\r", game_server1_tid);
+    for (int i=0; i<MAX_NUM_PLAYERS; i++) {
+        int player_tid = Create(1, rps_player_main);
+        bwprintf( COM2, "\n\rCreated RPS Player: <%d>\n\n", player_tid);
+    }
+    // int game_server2_tid = Create(3, game_server);
+    // bwprintf( COM2, "\n\rCreated Game Server 2: <%d>\n\r", game_server2_tid);
     bwprintf( COM2, "\n\rFirstUserTask: exiting\n\r");
 }
 

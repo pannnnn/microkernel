@@ -1,6 +1,9 @@
 #ifndef LMCVITTI_Y247PAN_SHARED
 #define LMCVITTI_Y247PAN_SHARED
 
+// in bytes/chars (each char is 1 byte)
+#define MESSAGE_SIZE    4
+
 /*
  * Macro definition
  */

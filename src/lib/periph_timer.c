@@ -65,8 +65,8 @@ int startTimer(int timer, int mode, int speed, int value) {
 	/* 
 	 * timer: timer-identifying constant: TIM1, TIM2, or TIM3
 	 * mode: the mode to execute the timer in
-	 * 	PER: periodic
-	 * 	FREE: free-running
+	 * 	TIM_PER: periodic
+	 * 	TIM_FREE: free-running
 	 * speed: the clock selection speed
 	 * 	HI: 508kHz
 	 * 	LO: 2kHz

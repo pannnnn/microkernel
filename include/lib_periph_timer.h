@@ -8,8 +8,8 @@
 #define LO 	0
 #define HI 	1
 
-#define FREE 	0
-#define PER 	1
+#define TIM_FREE 	0
+#define TIM_PER 	1
 
 #define TIMER1_BASE 	0x80810000
 #define TIMER2_BASE 	0x80810020
