@@ -50,6 +50,7 @@ static void create_performance_task()
 static void init_peripheral() {
     init_timer();
     init_uart();
+    init_timer();
 }
 
 // initialize the system

@@ -1,5 +1,6 @@
 #include <lib_ts7200.h>
 #include <lib_periph_bwio.h>
+#include <lib_periph_timer.h>
 
 // initializes the uarts so they can be communicated with
 void init_uart() {
