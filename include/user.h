@@ -20,6 +20,10 @@ typedef enum
     REGISTERAS = 0,
     WHOIS
 } NS_OPERATION;
+typedef enum {
+    CACHE_ON = 0,
+    CACHE_OFF = 1
+} CACHE_STATUS;
 
 typedef enum
 {
@@ -30,12 +34,6 @@ typedef enum
 /*
  * Struct definition
  */
-typedef struct 
-{
-    PF_EXECUTION_ORDER execution_order;
-    int message_size;
-} PerformanceTest;
-
 typedef struct 
 {
 	NS_OPERATION operation;
@@ -81,7 +79,14 @@ void user_task_0();
 void user_task_test();
 void game_server1();
 void game_server2();
+
+void sender_task_4();
+void sender_task_64();
+void sender_task_256();
+void receiver_task_4();
+void receiver_task_64();
+void receiver_task_256();
+void pf_send_receive_test(CACHE_STATUS cache_status, PF_EXECUTION_ORDER execution_order, int message_size);
 void performance_task();
-void pf_send_receive_test();
 
 #endif
