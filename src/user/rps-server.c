@@ -19,12 +19,13 @@ void _reply_paired(int id_1, int tid_1, int id_2, int tid_2) {
 }
 
 void _reply_results(int winner_tid, int loser_tid, int is_tie) {
-	if (is_tie == 1) bwprintf(COM2, "<%d> tied with <%d>", winner_tid, loser_tid);
-	else bwprintf(COM2, "<%d> won and <%d> lost this round", winner_tid, loser_tid);
-	char reply = (is_tie == 1) ? 't' : 'w';
-	Reply(winner_tid, &reply, 1);
-	reply = (is_tie == 1) ? 't' : 'l';
-	Reply(loser_tid, &reply, 1);
+	if (is_tie == 1) bwprintf(COM2, "<%d> tied with <%d>\n\r", winner_tid, loser_tid);
+	else bwprintf(COM2, "<%d> won and <%d> lost this round\n\r", winner_tid, loser_tid);
+	char reply[1];
+	reply[0] = (is_tie == 1) ? 't' : 'w';
+	Reply(winner_tid, reply, 1);
+	reply[0] = (is_tie == 1) ? 't' : 'l';
+	Reply(loser_tid, reply, 1);
 	bwgetc(COM2);
 }
 
@@ -44,23 +45,24 @@ void rps_server_main() {
 	int unpaired = -1;
 
 	while(num_players > 0) {
-		int *sender_id;
+		int sender_id;
 		char msg[MESSAGE_SIZE];
-		Receive(sender_id, msg, MESSAGE_SIZE);
+		Receive(&sender_id, msg, MESSAGE_SIZE);
 		int sender, partner;
 
 		switch (msg[0]) {
 			case 'a':
-				player_tids[num_registered++] = *sender_id;
-				sender = num_registered-1;
+				sender = num_registered++;
+				player_tids[sender] = sender_id;
 				if (unpaired == -1) {
 					unpaired = sender;
 					break;
 				}
-				pairings[unpaired] = sender;
-				pairings[sender] = unpaired;
+				partner = unpaired;
 				unpaired = -1;
-				_reply_paired(sender, *sender_id, unpaired, player_tids[unpaired]);
+				pairings[partner] = sender;
+				pairings[sender] = partner;
+				_reply_paired(sender, sender_id, partner, player_tids[partner]);
 				break;
 			case 'r':
 				sender = (int) msg[1];
@@ -136,7 +138,7 @@ void rps_server_main() {
 				partner = pairings[sender];
 				pairings[partner] = -1;
 				char reply = 'q';
-				Reply(*sender_id, &reply, 1);
+				Reply(sender_id, &reply, 1);
 				break;
 		}
 	}	

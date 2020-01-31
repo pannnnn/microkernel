@@ -94,7 +94,7 @@ void pq_remove(Queue *queue_struct, int tid)  {
 
 // flush the priority queue; used for debugging
 void dump_queue(Queue *queue_struct) {
-    bwprintf( COM2, "Queue");
+    bwprintf( COM2, "Queue:");
     for (int i = 1; i <= queue_struct->size; i++) {
         bwprintf( COM2, " %d", queue_struct->queue[i]);
     }

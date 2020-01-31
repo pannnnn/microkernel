@@ -2,15 +2,18 @@
 #include <ds.h>
 #include <shared.h>
 #include <lib_periph_bwio.h>
+#include <lib_ts7200.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;
 
 void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 	if (tid >= KERNEL_STACK_TD_LIMIT || tid <= 0 || _kernel_state.td_user_stack_availability[tid] == 0) {
+		bwprintf(COM2, "attempting to send to tid that doesn't exist\n\r");
 		set_result(get_td(_kernel_state.scheduled_tid), 0xFFFFFFFF);
 	}
 	if (tid == _kernel_state.scheduled_tid) {
+		bwprintf(COM2, "attempting to send to self\n\r");
 		set_result(get_td(_kernel_state.scheduled_tid), 0xFFFFFFFE);
 	};
 
@@ -21,6 +24,10 @@ void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 	sender_td->message.replied_message_length = rplen;
 
 	TaskDescriptor *receiver_td = get_td(tid);
+
+	sender_td->message.replied_message = reply;
+	sender_td->message.replied_message_length = rplen;
+
 	if (receiver_td->state == RECEIVE_WAIT) {
 		receiver_td->state = READY;
 		sender_td->state = REPLY_WAIT;
@@ -28,6 +35,7 @@ void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 		int copied_length = MIN(msglen, receiver_td->message.receive_message_length);
 		charstr_copy(msg, receiver_td->message.receive_message, copied_length);
 		pq_insert(&_kernel_state.ready_queue, receiver_td->id);
+		dump_queue(&_kernel_state.ready_queue);
 		set_result(receiver_td, copied_length);
 	} else {
 		sender_td->message.sent_message = msg;
