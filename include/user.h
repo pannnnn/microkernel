@@ -21,9 +21,21 @@ typedef enum
     WHOIS
 } NS_OPERATION;
 
+typedef enum
+{
+    SENDER_FIRST = 0,
+    RECEIVER_FIRST
+} PF_EXECUTION_ORDER;
+
 /*
  * Struct definition
  */
+typedef struct 
+{
+    PF_EXECUTION_ORDER execution_order;
+    int message_size;
+} PerformanceTest;
+
 typedef struct 
 {
 	NS_OPERATION operation;
@@ -69,5 +81,7 @@ void user_task_0();
 void user_task_test();
 void game_server1();
 void game_server2();
+void performance_task();
+void pf_send_receive_test();
 
 #endif

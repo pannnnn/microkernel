@@ -20,12 +20,4 @@ void dump_queue(Queue *queue_struct);
 void enqueue(Queue *queue_struct, int value);
 int deque(Queue *queue_struct);
 
-// unordered list implementation functions
-int ul_add(Queue *queue_struct, int tid);
-int ul_remove(Queue *queue_struct, int tid);
-
-// ordered list implementation functions
-void ol_add(Queue *queue_struct, int value);
-int ol_remove(Queue *queue_struct);
-
 #endif

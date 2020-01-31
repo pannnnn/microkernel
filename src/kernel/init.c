@@ -40,8 +40,15 @@ static void create_first_user_task()
     sys_create(priority, user_task_0);
 }
 
+static void create_performance_task()
+{
+    int priority = 100;
+    sys_create(priority, performance_task);
+}
+
 // initialize the peripherals
 static void init_peripheral() {
+    init_timer();
     init_uart();
 }
 
@@ -52,5 +59,5 @@ void bootstrap()
     register_swi_handler();
     init_kernel_state();
     create_first_user_task();
+    create_performance_task();
 }
-

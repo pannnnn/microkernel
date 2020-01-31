@@ -25,7 +25,7 @@ int WhoIs(const char *name) {
 }
 
 void NameServer() {
-    bwprintf( COM2, "\n\rName Server: Initializing ...\n\r");
+    // bwprintf( COM2, "\n\rName Server: Initializing ...\n\r");
     unsigned int _hash_table[HASHSIZE][2];
     init_hash_table(_hash_table, HASHSIZE);
     _name_server_tid = MyTid();
@@ -33,7 +33,7 @@ void NameServer() {
     NSMessage ns_message;
     HashEntry *entry;
     while (Receive(&client_tid, (char *) &ns_message, sizeof(ns_message))) {
-        bwprintf( COM2, "\n\rName Server: get request of <%d> with key <%s> value <%d>\n\r", ns_message.operation,ns_message.name , ns_message.tid);
+        // bwprintf( COM2, "\n\rName Server: get request of <%d> with key <%s> value <%d>\n\r", ns_message.operation,ns_message.name , ns_message.tid);
         switch (ns_message.operation)
         {
         case REGISTERAS:
@@ -48,12 +48,12 @@ void NameServer() {
         }
         result = Reply(client_tid, (const char *) &ns_message, sizeof(ns_message));
         if (result > -1) {
-            bwprintf( COM2, "\n\rName Server: result = <%d>\n\r", result);
+            // bwprintf( COM2, "\n\rName Server: result = <%d>\n\r", result);
         } else if(result == -1) {
-            bwprintf( COM2, "\n\rName Server: tid is not the task id of an existing task.\n\r");
+            // bwprintf( COM2, "\n\rName Server: tid is not the task id of an existing task.\n\r");
         } else if(result == -2) {
-            bwprintf( COM2, "\n\rName Server: send-receive-reply transaction could not be completed.\n\r");
+            // bwprintf( COM2, "\n\rName Server: send-receive-reply transaction could not be completed.\n\r");
         }
-        dump_hash_map(_hash_table);
+        // dump_hash_map(_hash_table);
     }
 }

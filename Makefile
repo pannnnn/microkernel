@@ -16,13 +16,13 @@ LD = $(XBINDIR)/arm-none-eabi-ld
 # -Wall: report all warnings
 # -mcpu=arm920t: generate code for the 920t architecture
 # -msoft-float: no FP co-processor
-CFLAGS = -g -S -fPIC -Wall -mcpu=arm920t -msoft-float -I. -I./include
+CFLAGS = -O3 -g -S -fPIC -Wall -mcpu=arm920t -msoft-float -I. -I./include
 
 # -static: force static linking
 # -e: set entry point
 # -nmagic: no page alignment
 # -T: use linker script
-LDFLAGS = -static -e main -nmagic -T linker.ld -L ./lib -L $(XLIBDIR2)
+LDFLAGS = -O3 -static -e main -nmagic -T linker.ld -L ./lib -L $(XLIBDIR1) -L $(XLIBDIR2)
 
 CSOURCES = $(wildcard src/lib/*.c) $(wildcard src/user/*.c)  $(wildcard src/kernel/*.c)
 ASMSOURCES = $(wildcard src/kernel/*.S)
@@ -40,7 +40,7 @@ $(MAIN).o: $(MAIN).s
 	$(AS) $(ASFLAGS) -o $(MAIN).o $(MAIN).s
 
 $(EXEC).elf: $(MAIN).o $(OBJECTS)
-	$(LD) $(LDFLAGS) -o $@ $^ -lgcc
+	$(LD) $(LDFLAGS) -o $@ $^ -lc -lgcc
 
 src/%.s: src/%.c
 	$(CC) -S $(CFLAGS) -o $@ $<
