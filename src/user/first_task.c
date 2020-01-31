@@ -19,8 +19,8 @@ void user_task_0() {
     // bwprintf( COM2, "\n\rCreated Game Server 1: <%d>\n\r", game_server1_tid);
     // int game_server2_tid = Create(1, game_server2);
     // bwprintf( COM2, "\n\rCreated Game Server 2: <%d>\n\r", game_server2_tid);
-    int game_server1_tid = Create(2, rps_server_main);
-    bwprintf( COM2, "\n\rCreated RPS Server: <%d>\n\r", game_server1_tid);
+    int rps_server_tid = Create(2, rps_server_main);
+    bwprintf( COM2, "\n\rCreated RPS Server: <%d>\n\r", rps_server_tid);
     for (int i=0; i<MAX_NUM_PLAYERS; i++) {
         int player_tid = Create(1, rps_player_main);
         bwprintf( COM2, "\n\rCreated RPS Player: <%d>\n\n", player_tid);
@@ -49,7 +49,6 @@ void game_server1() {
     RegisterAs("game_server_1");
     bwprintf( COM2, "\n\rGame Server 2 Id: <%d>\n\r", WhoIs("game_server_2"));
 }
-
 
 void game_server2() {
     bwprintf( COM2, "\n\rGame Server 2 Id <%d> Parent Task Id <%d>\n\r", MyTid(), MyParentTid());

@@ -5,7 +5,7 @@
 #include <lib_ts7200.h>
 
 void init_rps_server() {
-	//RegisterAs("rps_server");
+	RegisterAs("rps_server");
 }
 
 void _reply_paired(int id_1, int tid_1, int id_2, int tid_2) {

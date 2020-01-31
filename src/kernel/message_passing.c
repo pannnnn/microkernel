@@ -19,15 +19,10 @@ void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 
 	int sender_tid = _kernel_state.scheduled_tid;
 	TaskDescriptor *sender_td = get_td(sender_tid);
-
 	sender_td->message.replied_message = reply;
 	sender_td->message.replied_message_length = rplen;
 
 	TaskDescriptor *receiver_td = get_td(tid);
-
-	sender_td->message.replied_message = reply;
-	sender_td->message.replied_message_length = rplen;
-
 	if (receiver_td->state == RECEIVE_WAIT) {
 		receiver_td->state = READY;
 		sender_td->state = REPLY_WAIT;
@@ -35,7 +30,6 @@ void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 		int copied_length = MIN(msglen, receiver_td->message.receive_message_length);
 		charstr_copy(msg, receiver_td->message.receive_message, copied_length);
 		pq_insert(&_kernel_state.ready_queue, receiver_td->id);
-		dump_queue(&_kernel_state.ready_queue);
 		set_result(receiver_td, copied_length);
 	} else {
 		sender_td->message.sent_message = msg;

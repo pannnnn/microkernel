@@ -7,7 +7,7 @@
 
 int _rps_signup(int rps_server_id) {
 	char msg[] = "a";
-	volatile char reply[MESSAGE_SIZE];
+	char reply[MESSAGE_SIZE];
 	int result = Send(rps_server_id, (const char*) &msg, 1, reply, MESSAGE_SIZE);
 	if (result < 0) {
 		return 0;
@@ -35,7 +35,7 @@ char _rps_play(int rps_server_id, char my_id) {
 	int my_tid = MyTid();
 	bwprintf(COM2, "<%d> plays <%c>\n\r", my_tid, msg[0]);
 
-	volatile char reply[MESSAGE_SIZE];
+	char reply[MESSAGE_SIZE];
 	Send(rps_server_id, msg, 2, reply, MESSAGE_SIZE);	
 	return reply[0];
 }
@@ -44,7 +44,7 @@ void _rps_quit(int rps_server_id, char my_id) {
 	char msg[2];
 	msg[0] = 'q';
 	msg[1] = my_id;
-	volatile char reply[MESSAGE_SIZE];
+	char reply[MESSAGE_SIZE];
 	Send(rps_server_id, (const char*) msg, 2, reply, MESSAGE_SIZE);
 	Exit();
 }
@@ -52,8 +52,8 @@ void _rps_quit(int rps_server_id, char my_id) {
 void rps_player_main() {
 	int win = 0, tie = 0, loss = 0;
 
-	//int rps_server_id = WhoIs("rps_server");
-	int rps_server_id = 1;
+	int rps_server_id = WhoIs("rps_server");
+	// int rps_server_id = 2;
 	
 	char my_id = _rps_signup(rps_server_id); // BLOCKING
 

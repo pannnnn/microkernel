@@ -59,6 +59,6 @@ void bootstrap()
     init_peripheral();
     register_swi_handler();
     init_kernel_state();
-    // create_first_user_task();
-    create_performance_task();
+    create_first_user_task();
+    // create_performance_task();
 }
