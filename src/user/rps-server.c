@@ -136,8 +136,9 @@ void rps_server_main() {
 			case 'q':
 				sender = (int) msg[1];
 				partner = pairings[sender];
-				pairings[partner] = -1;
+				if (partner >= 0) pairings[partner] = -1;
 				char reply = 'q';
+				num_players--;
 				Reply(sender_id, &reply, 1);
 				break;
 		}

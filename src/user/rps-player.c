@@ -78,6 +78,6 @@ void rps_player_main() {
 		}
 	}
 	// print something?
-	bwprintf(COM2, "game record w: %d t: %d l: %d", win, tie, loss);
+	bwprintf(COM2, "<%d> game record w: %d t: %d l: %d\n\r", MyTid(), win, tie, loss);
 	_rps_quit(rps_server_id, my_id); // DESTROYS TASK
 }
