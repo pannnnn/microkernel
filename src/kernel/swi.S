@@ -41,15 +41,37 @@ leave_kernel:
     @ restore user state spsr and lr back from user stack
     ldmfd   r0!, {r1, lr}
     msr     spsr, r1
-
     @ go into system mode | 0xDF = 0b11011111
     msr     cpsr_c, #0xDF
     @ restore user stack pointer from r0 (i.e. the first argument of leave_kernel)
     mov     sp, r0
     @ restore r0-r12 and lr from user stack
     ldmfd   sp!, {r0-r12, lr}
-
     @ go into supervisor mode | 0xD3 = 0b11010011
     msr     cpsr_c, #0xD3
     @ branch to lr and go into user mode | reference: A2-55
     movs    pc, lr
+
+
+.global enter_interrupt
+.type   enter_interrupt, %function
+    @ go into system mode with IRQ and FIQ off | 0xDF = 0b11011111
+    msr     cpsr_c, #0xDF
+    @ store r0-r12 and lr in the user stack
+    stmfd   sp!, {r0-r12, lr}
+    @ store user stack pointer in unbanked register r0, will be return value of leave_kernel()
+    mov     r0, sp
+    @ go into interrupt mode by only changing mode bits | reference: A4-78
+    mrs     r2, cpsr
+    bic     r2, r2, #0x1F
+    orr     r2, r2, #0x12
+    msr     cpsr_c, r2
+    @ descrement lr by 4 to offset pipeline effect
+    sub     lr, lr, #4
+    @ store user state cpsr(spsr) and interrupt lr in the user stack
+    mrs     r2, spsr
+    stmfd   r0!, {r2, lr}
+    @ go into supervisor mode | 0xD3 = 0b11010011
+    msr     cpsr_c, #0xD3
+    @ restore r1-r12 and resume kernel execution by change pc back to kernel lr
+    ldmfd   sp!, {r1-r12, pc}

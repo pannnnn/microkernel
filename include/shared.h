@@ -25,7 +25,8 @@ typedef enum
     RECEIVE,
     REPLY,
     MALLOC,
-    FREE
+    FREE,
+    INTERRUPT
 } SYS_CODE;
 
 /*

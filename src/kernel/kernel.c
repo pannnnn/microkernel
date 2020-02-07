@@ -55,8 +55,8 @@ void k_main()
         TaskDescriptor *td = get_td(tid);
 
         Args *args;
-        Args emptyArg = {};
-        args = &emptyArg;
+        Args interruptArg = {.code = INTERRUPT};
+        args = &interruptArg;
 
         // switch out of kernel mode and run the scheduled task
         unsigned int stack_pointer = leave_kernel(td->stack_pointer, &args);
@@ -127,6 +127,9 @@ void k_main()
                 sys_free((char *) args->arg0);
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
+                break;
+            case INTERRUPT:
+                interrupt_handler();
                 break;
             default:
                 break;
