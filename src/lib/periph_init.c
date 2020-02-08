@@ -13,8 +13,8 @@ void init_uart() {
 }
 
 void init_timer() {
-    int *timer_control;
-	timer_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
+    volatile int *timer_control;
+	timer_control = (int *)( TIMER3_BASE + CRTL_OFFSET );
 
 	*timer_control = ENABLE_MASK | CLKSEL_MASK;
 }
@@ -22,30 +22,30 @@ void init_timer() {
 
 void init_interrupt() {
     volatile int *timer_clear, *timer_load, *timer_control;
-    timer_clear = (int *) ( TIMER3_BASE + CLR_OFFSET );
-    timer_load = (int *)( TIMER3_BASE + LDR_OFFSET );
-	timer_control = (int *)( TIMER3_BASE + CRTL_OFFSET );
+    timer_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
+    timer_load = (int *)( TIMER2_BASE + LDR_OFFSET );
+	timer_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
     *timer_clear = 0;
     *timer_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_508K;
     *timer_control = ENABLE_MASK | MODE_MASK | CLKSEL_MASK;
 
     volatile int *vic_mode_selection, *vic_control_clear, *vic_control;
-    vic_mode_selection = (int *) ( VIC2 + VICxIntSelect );
-    vic_control_clear = (int *) ( VIC2 + VICxIntEnClear );
-    vic_control = (int *) ( VIC2 + VICxIntEnable );
+    vic_mode_selection = (int *) ( VIC1 + VICxIntSelect );
+    vic_control_clear = (int *) ( VIC1 + VICxIntEnClear );
+    vic_control = (int *) ( VIC1 + VICxIntEnable );
     *vic_mode_selection = VIC_IRQ_MODE;
     *vic_control_clear = 0;
-    *vic_control = 1 << TC3UI;
+    *vic_control = 1 << TC2UI;
 }
 
 void disable_interrupt() {
     volatile int *timer_control, *timer_clear;
-	timer_control = (int *)( TIMER3_BASE + CRTL_OFFSET );
-    timer_clear = (int *) ( TIMER3_BASE + CLR_OFFSET );
+	timer_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
+    timer_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
     *timer_control = 0;
     *timer_clear = 0;
 
-    volatile int *vic_control = (int *)( VIC2 + VICxIntEnable );
+    volatile int *vic_control = (int *)( VIC1 + VICxIntEnable );
     *vic_control = 0;
 }
 

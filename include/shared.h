@@ -9,6 +9,7 @@
 #define NULL 0
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define CHECK_BIT(x, y) (x & (1 << y))
+#define UNUSED(x) (void)(x)
 
 /*
  * Enum definition

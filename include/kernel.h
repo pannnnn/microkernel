@@ -66,6 +66,17 @@ typedef enum
 /*
  * Struct definition
  */
+typedef struct
+{
+    int idle_task_tid;
+    unsigned int kernel_init_count_down_ticks;
+    unsigned int kernel_ticks;
+    unsigned int idle_task_count_down_ticks;
+    unsigned int idle_task_ticks;
+
+    int idle_thousandth;
+} PerformanceMetric;
+
 typedef struct {
     int *receiver_reserved_sid;
     union {
@@ -119,6 +130,8 @@ typedef struct
     // task & scheduling mgmt
     int schedule_counter;
     int scheduled_tid;
+    
+    PerformanceMetric performance_metric;
 
     // priority queue implementation
     Queue ready_queue;

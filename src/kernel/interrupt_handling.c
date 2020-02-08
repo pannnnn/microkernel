@@ -5,15 +5,15 @@
 
 extern KernelState _kernel_state;
 
-static volatile int *timer_clear = (int *) ( TIMER3_BASE + CLR_OFFSET );
-static volatile int *vic2_status = (int *) ( VIC2 + VICxIRQStatus );
+static volatile int *timer_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
+static volatile int *vic1_status = (int *) ( VIC1 + VICxIRQStatus );
 
 int _check_bit(int bits, int position) {
     return (1 << position) & bits;
 }
 
 void interrupt_handler() {
-    if (CHECK_BIT(*vic2_status, TC3UI) != 0) {
+    if (CHECK_BIT(*vic1_status, TC2UI) != 0) {
         int tid = -1;
         while ((tid = deque(&_kernel_state.await_queues[TIMER_EVENT])) != -1) {
             TaskDescriptor *td = get_td(tid);

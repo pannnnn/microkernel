@@ -61,6 +61,9 @@ static void init_kernel_state()
     mem_init_heap_region(MEDIUM);
     mem_init_heap_region(LARGE);
 
+    _kernel_state.performance_metric.kernel_init_count_down_ticks = read_timer();
+    _kernel_state.performance_metric.kernel_ticks = 0;
+    _kernel_state.performance_metric.idle_task_ticks = 0;
     _kernel_state.machine_state = NORMAL;
 }
 
@@ -70,7 +73,8 @@ static void create_first_user_task()
     int highest_priority = 0;
     sys_create(highest_priority, user_task_0);
     int lowest_priority = 100;
-    sys_create(lowest_priority, idle_task);
+    int idle_task_tid = sys_create(lowest_priority, idle_task);
+    _kernel_state.performance_metric.idle_task_tid = idle_task_tid;
 }
 
 // static void create_performance_task()

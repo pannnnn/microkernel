@@ -4,7 +4,7 @@
 
 unsigned int read_timer() {
 	unsigned int *timer_value;
-	timer_value = (unsigned int *)( TIMER2_BASE + VAL_OFFSET );
+	timer_value = (unsigned int *)( TIMER3_BASE + VAL_OFFSET );
 
 	unsigned int value = *timer_value;
 	return value;

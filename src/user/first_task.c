@@ -1,6 +1,6 @@
 #include <user.h>
 #include <shared.h>
-#include <lib_periph_init.h>
+#include <lib_ts7200.h>
 #include <rps.h>
 #include <stdio.h>
 
@@ -52,11 +52,13 @@ void client_task() {
 }
 
 void idle_task() {
-    // int a = 1;
+    volatile int *sys_sw_lock, *device_cfg, *halt;
+    sys_sw_lock = (int *) ( SysSWLock );
+    device_cfg = (int *) ( DeviceCfg );
+    halt = (int *) ( Halt );
     while (1) {
-        // if ((a % 100000000) == 0) {
-        //     log("This is a idle task {%d}", a);
-        // }
-        // a++;
+         *sys_sw_lock = *sys_sw_lock || 1;
+         *device_cfg = *device_cfg || 1;
+         *halt;
     }
 }
