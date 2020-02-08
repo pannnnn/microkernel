@@ -160,7 +160,7 @@ void dump_heap_used(HEAP_TYPE heap_type) {
     BlockMeta *block_meta = (BlockMeta *) heap_info->heap_block_used;
 
     for (int i = 1; i <= heap_info->heap_block_count; i++) {
-        bwprintf( COM2, "\n\rHeap prev id<%d> id <%d> next id <%d>\n\r", block_meta->prev->id, block_meta->id, block_meta->next->id);
+        bwprintf( COM2, "Heap prev id<%d> id <%d> next id <%d>", block_meta->prev->id, block_meta->id, block_meta->next->id);
         block_meta = block_meta->next;
     }
 }

@@ -9,11 +9,11 @@ extern KernelState _kernel_state;
 
 void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 	if (tid >= KERNEL_STACK_TD_LIMIT || tid <= 0 || _kernel_state.td_user_stack_availability[tid] == 0) {
-		// debug("\n\rattempting to send to tid that doesn't exist\n\r");
+		// debug("attempting to send to tid that doesn't exist");
 		set_result(get_td(_kernel_state.scheduled_tid), (unsigned int) -1);
 	}
 	if (tid == _kernel_state.scheduled_tid) {
-		// debug("\n\rattempting to send to self\n\r");
+		// debug("attempting to send to self");
 		set_result(get_td(_kernel_state.scheduled_tid), (unsigned int) -2);
 	};
 

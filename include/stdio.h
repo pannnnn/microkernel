@@ -6,11 +6,10 @@
 #define putstr(str)                 bwputstr(COM2, str)
 #define getc()                      bwgetc(COM2)
 
-
-#define log(f, ...)                 { printf(f, ## __VA_ARGS__); }
-#define error(f, ...)               { putstr("\033[31m"); printf(f, ## __VA_ARGS__); putstr("\033[0m"); }
+#define log(f, ...)                 { printf(f, ## __VA_ARGS__); putstr("\n\r"); }
+#define error(f, ...)               { putstr("\033[31m"); printf(f, ## __VA_ARGS__); putstr("\033[0m\n\r"); }
 #if DEBUG
-    #define debug(f, ...)           { putstr("\033[33m"); printf(f, ## __VA_ARGS__); putstr("\033[0m"); }
+    #define debug(f, ...)           { putstr("\033[33m"); printf(f, ## __VA_ARGS__); putstr("\033[0m\n\r"); }
 #else
     #define debug(f, ...)           { }
 #endif

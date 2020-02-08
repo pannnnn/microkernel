@@ -12,7 +12,7 @@ int _rps_signup(int rps_server_id) {
 	if (result < 0) {
 		return 0;
 	}
-	if (result > 6) debug("unexpected message length from server: %s\n\r", reply);
+	if (result > 6) debug("unexpected message length from server: %s", reply);
 	return reply[1];
 }
 
@@ -33,7 +33,7 @@ char _rps_play(int rps_server_id, char my_id) {
 			break;
 	}
 	int my_tid = MyTid();
-	debug("<%d> plays <%c>\n\r", my_tid, msg[0]);
+	debug("<%d> plays <%c>", my_tid, msg[0]);
 
 	char reply[MESSAGE_SIZE];
 	Send(rps_server_id, msg, 2, reply, MESSAGE_SIZE);	
@@ -78,6 +78,6 @@ void rps_player_main() {
 		}
 	}
 	// print something?
-	debug("<%d> game record w: %d t: %d l: %d\n\r", MyTid(), win, tie, loss);
+	debug("<%d> game record w: %d t: %d l: %d", MyTid(), win, tie, loss);
 	_rps_quit(rps_server_id, my_id); // DESTROYS TASK
 }

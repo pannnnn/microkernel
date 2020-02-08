@@ -9,7 +9,7 @@ void _init_rps_server() {
 }
 
 void _reply_paired(int id_1, int tid_1, int id_2, int tid_2) {
-	debug("<%d> partners with <%d>\n\r", tid_1, tid_2);
+	debug("<%d> partners with <%d>", tid_1, tid_2);
 	char reply[2];
 	reply[0] = 'm';
 	reply[1] = (char) id_1;
@@ -20,9 +20,9 @@ void _reply_paired(int id_1, int tid_1, int id_2, int tid_2) {
 
 void _reply_results(int winner_tid, int loser_tid, int is_tie) {
 	if (is_tie == 1) {
-		debug("<%d> tied with <%d>\n\r", winner_tid, loser_tid);
+		debug("<%d> tied with <%d>", winner_tid, loser_tid);
 	} else {
-		debug("<%d> won and <%d> lost this round\n\r", winner_tid, loser_tid);
+		debug("<%d> won and <%d> lost this round", winner_tid, loser_tid);
 	}
 	char reply[1];
 	reply[0] = (is_tie == 1) ? 't' : 'w';

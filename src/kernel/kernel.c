@@ -54,7 +54,7 @@ void k_main()
         int tid = schedule();
 
         // dump_queue(&_kernel_state.ready_queue);
-        // debug("\n\rschedule tid <%d>\n\r", tid);
+        // debug("schedule tid <%d>", tid);
         if (tid == -1)  {
             if (_exists_live_task() == 0) return;
             continue;
@@ -138,7 +138,7 @@ void k_main()
                 pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case AWAIT_EVENT:
-                // debug("\n\rAwait event\n\r");
+                // debug("Await event");
                 sys_await_event((int) args->arg0);
                 break;
             case INTERRUPT:

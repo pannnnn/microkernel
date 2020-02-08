@@ -58,7 +58,7 @@ void clock_notifier()
     while (AwaitEvent(TIMER_EVENT) > -1) {
         int result = Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
         if (result < 0) {
-            bwprintf( COM2, "\n\rsomething went wrong here\n\r");
+            bwprintf( COM2, "something went wrong here");
         }
     }
 }
@@ -72,14 +72,14 @@ void clock_server()
     ClockRequest clock_request;
     int clock_notifier_tid = Create(2, clock_notifier);
     if (clock_notifier_tid < 0) {
-        bwprintf( COM2, "\n\rfailed to create clock notiifer\n\r");
+        bwprintf( COM2, "failed to create clock notiifer");
     }
     int client_tid, result, ticks = 0;
     while (Receive(&client_tid, (char *) &clock_request, sizeof(clock_request))) {
         switch ( clock_request.type ) {
         case TICK:
             // check result error
-            // debug("\n\rTicks <%d>\n\r", ticks);
+            debug("Ticks <%d>", ticks);
             ticks++;
             result = Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
             int blocked_tid = -1;
