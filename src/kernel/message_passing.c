@@ -1,7 +1,7 @@
 #include <kernel.h>
 #include <ds.h>
 #include <shared.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 #include <lib_ts7200.h>
 
 // declared as global variable in main.c
@@ -9,12 +9,12 @@ extern KernelState _kernel_state;
 
 void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 	if (tid >= KERNEL_STACK_TD_LIMIT || tid <= 0 || _kernel_state.td_user_stack_availability[tid] == 0) {
-		// bwprintf(COM2, "\n\rattempting to send to tid that doesn't exist\n\r");
-		set_result(get_td(_kernel_state.scheduled_tid), 0xFFFFFFFF);
+		// debug("\n\rattempting to send to tid that doesn't exist\n\r");
+		set_result(get_td(_kernel_state.scheduled_tid), (unsigned int) -1);
 	}
 	if (tid == _kernel_state.scheduled_tid) {
-		// bwprintf(COM2, "\n\rattempting to send to self\n\r");
-		set_result(get_td(_kernel_state.scheduled_tid), 0xFFFFFFFE);
+		// debug("\n\rattempting to send to self\n\r");
+		set_result(get_td(_kernel_state.scheduled_tid), (unsigned int) -2);
 	};
 
 	int sender_tid = _kernel_state.scheduled_tid;
@@ -62,7 +62,7 @@ void sys_receive(int *tid, char *msg, int msglen) {
 }
 
 int sys_reply(int tid, char *reply, int rplen) {
-	if (tid >= KERNEL_STACK_TD_LIMIT || tid <= 0 || _kernel_state.td_user_stack_availability[tid] == 0) {
+	if (tid >= KERNEL_STACK_TD_LIMIT || tid < 0 || _kernel_state.td_user_stack_availability[tid] == 0) {
 		return -1;
 	}
 	TaskDescriptor *sender_td = get_td(tid);

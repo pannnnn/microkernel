@@ -28,6 +28,8 @@
     #define USER_STACK_STACK_SIZE_PER_USER 0x10000
 
 #define SWI_HANDLER_ADDR   0x28
+#define IRQ_HANDLER_ADDR   0x38
+    #define INTERRUPT_COUNT 1
 
 #define USER_MODE_DEFAULT 0x10
 
@@ -50,7 +52,8 @@ typedef enum
     READY = 0,
     SEND_WAIT,
     RECEIVE_WAIT,
-    REPLY_WAIT
+    REPLY_WAIT,
+    EVENT_WAIT
 } TASK_STATE;
 
 typedef enum
@@ -88,8 +91,8 @@ typedef struct
     
     // message passing
     Message message;
-    // queue implementation
-    Queue inbox;
+    // fifo queue implementation
+    Queue inbox;    
 
 	unsigned int stack_pointer;
 } TaskDescriptor;
@@ -117,8 +120,10 @@ typedef struct
     int schedule_counter;
     int scheduled_tid;
 
-    // task queues
+    // priority queue implementation
     Queue ready_queue;
+    // fifo queue implementaiton, await event list (k3 timer only)
+    Queue await_queues[INTERRUPT_COUNT];
 
     // heap management
     HeapInfo s_heap_info;
@@ -151,11 +156,14 @@ void sys_send(int tid, char *msg, int msglen, char *reply, int rplen);
 void sys_receive(int *tid, char *msg, int msglen);
 int sys_reply(int tid, char *reply, int rplen);
 
+// interrupt
+void sys_await_event(int eventid);
+void interrupt_handler();
+
 TaskDescriptor *get_td(int id);
 void set_result(TaskDescriptor *td, unsigned int return_val);
 
 void mem_init_all_heap_info();
-void mem_init_task_descriptors();
 void mem_init_heap_region(HEAP_TYPE heap_type);
 void mem_free(char *ptr);
 char *mem_malloc(int size);

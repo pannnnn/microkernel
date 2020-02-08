@@ -6,7 +6,7 @@
  */
 
 #include <lib_ts7200.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 
 /*
  * The UARTs are initialized by RedBoot to the following state

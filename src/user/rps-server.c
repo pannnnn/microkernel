@@ -1,15 +1,15 @@
 #include <rps.h>
 #include <user.h>
 #include <shared.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 #include <lib_ts7200.h>
 
-void init_rps_server() {
+void _init_rps_server() {
 	RegisterAs("rps_server");
 }
 
 void _reply_paired(int id_1, int tid_1, int id_2, int tid_2) {
-	bwprintf(COM2, "<%d> partners with <%d>\n\r", tid_1, tid_2);
+	debug("<%d> partners with <%d>\n\r", tid_1, tid_2);
 	char reply[2];
 	reply[0] = 'm';
 	reply[1] = (char) id_1;
@@ -19,8 +19,11 @@ void _reply_paired(int id_1, int tid_1, int id_2, int tid_2) {
 }
 
 void _reply_results(int winner_tid, int loser_tid, int is_tie) {
-	if (is_tie == 1) bwprintf(COM2, "<%d> tied with <%d>\n\r", winner_tid, loser_tid);
-	else bwprintf(COM2, "<%d> won and <%d> lost this round\n\r", winner_tid, loser_tid);
+	if (is_tie == 1) {
+		debug("<%d> tied with <%d>\n\r", winner_tid, loser_tid);
+	} else {
+		debug("<%d> won and <%d> lost this round\n\r", winner_tid, loser_tid);
+	}
 	char reply[1];
 	reply[0] = (is_tie == 1) ? 't' : 'w';
 	Reply(winner_tid, reply, 1);
@@ -30,7 +33,7 @@ void _reply_results(int winner_tid, int loser_tid, int is_tie) {
 }
 
 void rps_server_main() {
-	init_rps_server();
+	_init_rps_server();
 	int num_registered = 0;
 	int num_players = MAX_NUM_PLAYERS;
 

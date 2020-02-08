@@ -33,6 +33,9 @@ EXEC = k2
 
 all: clean $(ASMFILES) $(OBJECTS) $(EXEC).elf
 
+debug: CFLAGS += -DDEBUG=1
+debug: all
+
 $(MAIN).s: $(MAIN).c
 	$(CC) -S $(CFLAGS) $(MAIN).c
 

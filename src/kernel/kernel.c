@@ -1,7 +1,8 @@
 #include <kernel.h>
 #include <shared.h>
 #include <ds.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
+#include <lib_periph_init.h>
 
 // defined in swi.S
 extern int leave_kernel(int sp, Args **args);
@@ -9,6 +10,21 @@ extern int swi_exit(int sp, void** tf);
 
 // defined as global variable in main.c
 extern KernelState _kernel_state;
+
+
+int _exists_live_task() {
+    for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
+        if (_kernel_state.td_user_stack_availability[i] == 1) {
+            return 1;
+        }
+    }
+    for (int i = 0; i < INTERRUPT_COUNT; i++) {
+        if (_kernel_state.await_queues[i].size != 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 // get the next task to be run
 // reschedule the tasks in the priority queue
@@ -20,7 +36,7 @@ int schedule()
     
     // get the next scheduled task
     int scheduled_tid = pq_pop(&_kernel_state.ready_queue);
-
+    
     // rescheduling
     _kernel_state.schedule_counter +=2;
     TaskDescriptor *td = get_td(scheduled_tid);
@@ -36,19 +52,12 @@ void k_main()
     while(1) {
         // get the new task from the scheduler
         int tid = schedule();
-    
-        if (tid == -1) {
-            // bwprintf( COM2, "\n\rNo ready task. Wating ...\n\r");
-            int live_tasks = 0;
-            for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
-                live_tasks += _kernel_state.td_user_stack_availability[i];
-            }
-            // bwprintf( COM2, "\n\r<%d> live tasks. Wating ...\n\r", live_tasks);
-            if (live_tasks > 0) {
-                continue;
-            } else {
-                return;
-            }
+
+        // dump_queue(&_kernel_state.ready_queue);
+        // debug("\n\rschedule tid <%d>\n\r", tid);
+        if (tid == -1)  {
+            if (_exists_live_task() == 0) return;
+            continue;
         }
 
         // get the task descriptor from the task id
@@ -128,8 +137,13 @@ void k_main()
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
                 break;
+            case AWAIT_EVENT:
+                // debug("\n\rAwait event\n\r");
+                sys_await_event((int) args->arg0);
+                break;
             case INTERRUPT:
                 interrupt_handler();
+                pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             default:
                 break;

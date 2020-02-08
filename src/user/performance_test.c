@@ -1,7 +1,7 @@
 #include <user.h>
 #include <shared.h>
 #include <lib_periph_init.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 
 static char *cache_status_string[2] = {"cache", "nocache"};
 static char *execution_order_string[2] = {"S", "R"};

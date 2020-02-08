@@ -2,10 +2,11 @@
 #include <user.h>
 #include <shared.h>
 #include <lib_periph_init.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 
 // defined in swi.S
 extern int enter_kernel();
+extern int enter_interrupt();
 
 // defined as a global variable in main.c
 extern KernelState _kernel_state;
@@ -17,6 +18,35 @@ static void register_swi_handler()
     *swiHandlerAddr = (unsigned int) enter_kernel;
 }
 
+static void register_irq_handler() 
+{
+    unsigned int *irqHandlerAddr = (unsigned int*) IRQ_HANDLER_ADDR;
+    *irqHandlerAddr = (unsigned int) enter_interrupt;
+}
+
+int _ready_queue_comparator1(int param) {
+    return get_td(param)->priority;
+}
+
+int _ready_queue_comparator2(int param) {
+    return get_td(param)->scheduled_count;
+}
+
+void _init_kernel_queues() 
+{
+    _kernel_state.ready_queue.size = 0;
+    _kernel_state.ready_queue.index = 0;
+    _kernel_state.ready_queue.get_arg1 = _ready_queue_comparator1;
+    _kernel_state.ready_queue.get_arg2 = _ready_queue_comparator2;
+    for (int i = 0; i < INTERRUPT_COUNT; i++) {
+        _kernel_state.await_queues[i].size = 0;
+        _kernel_state.await_queues[i].index = 0;
+    }
+    for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
+        _kernel_state.td_user_stack_availability[i] = 0;
+    }
+}
+
 // initialize _kernel_state with starting values
 static void init_kernel_state()
 {
@@ -24,7 +54,8 @@ static void init_kernel_state()
 
     _kernel_state.schedule_counter = 0;
 
-    mem_init_task_descriptors();
+    _init_kernel_queues();
+    
     mem_init_all_heap_info();
     mem_init_heap_region(SMALL);
     mem_init_heap_region(MEDIUM);
@@ -36,8 +67,10 @@ static void init_kernel_state()
 // create the first user task with priority 1
 static void create_first_user_task()
 {
-    int priority = 100;
-    sys_create(priority, user_task_0);
+    int highest_priority = 0;
+    sys_create(highest_priority, user_task_0);
+    int lowest_priority = 100;
+    sys_create(lowest_priority, idle_task);
 }
 
 // static void create_performance_task()
@@ -50,14 +83,16 @@ static void create_first_user_task()
 static void init_peripheral() {
     init_timer();
     init_uart();
+    init_interrupt();
     cache_on();
 }
 
 // initialize the system
 void bootstrap()
 {
-    init_peripheral();
     register_swi_handler();
+    register_irq_handler();
+    init_peripheral();
     init_kernel_state();
     create_first_user_task();
     // create_performance_task();
