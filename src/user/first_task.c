@@ -57,10 +57,10 @@ void idle_task() {
     sys_sw_lock = (int *) ( SysSWLock );
     device_cfg = (int *) ( DeviceCfg );
     halt = (int *) ( Halt );
+    *sys_sw_lock = *sys_sw_lock | 0xAA;
+    *device_cfg = *device_cfg | 1;
     while (1) {
-        // log("Halting...");
-        *sys_sw_lock = *sys_sw_lock || 1;
-        *device_cfg = *device_cfg || 1;
+        log("Halting...");
         *halt;
     }
 }
