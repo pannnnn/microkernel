@@ -45,6 +45,7 @@ void client_task() {
     Send(MyParentTid(), (const char *) &client_test_data, sizeof(client_test_data), (char *)&client_test_data, sizeof(client_test_data));
     int clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
     int tid = MyTid();
+    // log("Current ticks <%d>", Time(clock_server_tid));
     for (int i = 0; i < client_test_data.number_of_delays; i++) {
         Delay(clock_server_tid, client_test_data.delay_interval);
         log("Task Id <%d> Delay Interval <%d> Number Of Delay <%d>", tid, client_test_data.delay_interval, i);
@@ -57,8 +58,9 @@ void idle_task() {
     device_cfg = (int *) ( DeviceCfg );
     halt = (int *) ( Halt );
     while (1) {
-         *sys_sw_lock = *sys_sw_lock || 1;
-         *device_cfg = *device_cfg || 1;
-         *halt;
+        // log("Halting...");
+        *sys_sw_lock = *sys_sw_lock || 1;
+        *device_cfg = *device_cfg || 1;
+        *halt;
     }
 }

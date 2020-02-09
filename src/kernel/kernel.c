@@ -58,7 +58,7 @@ void post_measure_performance(int tid) {
         _kernel_state.performance_metric.idle_task_ticks += _kernel_state.performance_metric.idle_task_count_down_ticks - read_timer();
         int integer = _kernel_state.performance_metric.idle_thousandth / 10;
         int fractional = _kernel_state.performance_metric.idle_thousandth % 10;
-        log("I:<%d> F:<%d>", integer, fractional);
+        // log("I:<%d> F:<%d>", integer, fractional);
         // log("T:<%d>", _kernel_state.performance_metric.idle_thousandth);
         // log("I:<%u> F:<%u>", _kernel_state.performance_metric.kernel_ticks, _kernel_state.performance_metric.idle_task_ticks);
         // usage_notification("CPU idle percentage <%d>.<%d>", integer, fractional);

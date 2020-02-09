@@ -26,8 +26,8 @@ void init_interrupt() {
     timer_load = (int *)( TIMER2_BASE + LDR_OFFSET );
 	timer_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
     *timer_clear = 0;
-    *timer_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_508K;
-    *timer_control = ENABLE_MASK | MODE_MASK | CLKSEL_MASK;
+    *timer_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K * 100;
+    *timer_control = ENABLE_MASK | MODE_MASK;
 
     volatile int *vic_mode_selection, *vic_control_clear, *vic_control;
     vic_mode_selection = (int *) ( VIC1 + VICxIntSelect );
