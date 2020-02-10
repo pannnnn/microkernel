@@ -6,10 +6,13 @@ KernelState _kernel_state;
 int main() {
 	// initialize the system
     bootstrap();
-    // initialize the user task
 
     // start the main kernel loop
     k_main();
+
+    // clear up
+    clear_up();
+
     // exit the program
     return 0;
 }

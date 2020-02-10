@@ -29,9 +29,12 @@ ASMSOURCES = $(wildcard src/kernel/*.S)
 ASMFILES = $(CSOURCES:.c=.s)
 OBJECTS = $(CSOURCES:.c=.o) $(ASMSOURCES:.S=.o)
 MAIN = main
-EXEC = k2
+EXEC = k3
 
 all: clean $(ASMFILES) $(OBJECTS) $(EXEC).elf
+
+debug: CFLAGS += -DDEBUG=1
+debug: all
 
 $(MAIN).s: $(MAIN).c
 	$(CC) -S $(CFLAGS) $(MAIN).c

@@ -70,6 +70,13 @@ int Reply(int tid, const char *reply, int rplen) {
 	return enter_swi(&args);
 }
 
+int AwaitEvent(int eventid) {
+	Args args;
+	args.code = AWAIT_EVENT;
+	args.arg0 = eventid;
+	return enter_swi(&args);
+}
+
 char *Malloc(int size) {
 	Args args;
 	args.code = MALLOC;

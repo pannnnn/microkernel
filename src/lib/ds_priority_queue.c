@@ -1,7 +1,6 @@
 #include <kernel.h>
 #include <ds.h>
-#include <lib_periph_bwio.h>
-
+#include <stdio.h>
 
 // bubble up: sorting the heap after removing a node
 void percolate_up(Queue *queue_struct, int index) {
@@ -9,11 +8,14 @@ void percolate_up(Queue *queue_struct, int index) {
     if (index > queue_struct->size) return;
     while (index/2 > 0) {
         int tid = queue[index];
-        TaskDescriptor *td = get_td(tid);
         int parent_tid = queue[index/2];
-        TaskDescriptor *parent_td = get_td(parent_tid);
-        if (td->priority > parent_td->priority || 
-            (td->priority == parent_td->priority && td->scheduled_count < parent_td->scheduled_count)) {
+
+        int child_arg1 = queue_struct->get_arg1(tid);
+        int parent_arg1 = queue_struct->get_arg1(parent_tid);
+        int child_arg2 = queue_struct->get_arg2(tid);
+        int parent_arg2 = queue_struct->get_arg2(parent_tid);
+
+        if (child_arg1 < parent_arg1 || (child_arg1 == parent_arg1 && child_arg2 < parent_arg2)) {
             queue[index/2] = tid;
             queue[index] = parent_tid;
         }
@@ -30,13 +32,15 @@ int min_child(Queue *queue_struct, int index) {
 
     int *queue = queue_struct->queue;
     int left_child_tid = queue[left_child_index];
-    TaskDescriptor *left_child_td = get_td(left_child_tid);
     int right_child_tid = queue[right_child_index];
-    TaskDescriptor *right_child_td = get_td(right_child_tid);
 
-    if (left_child_td->priority > right_child_td->priority || 
-        (left_child_td->priority == right_child_td->priority && 
-        left_child_td->scheduled_count < right_child_td->scheduled_count)) {
+    int left_child_arg1 = queue_struct->get_arg1(left_child_tid);
+    int right_child_arg1 = queue_struct->get_arg1(right_child_tid);
+    int left_child_arg2 = queue_struct->get_arg2(left_child_tid);
+    int right_child_arg2 = queue_struct->get_arg2(right_child_tid);
+
+    if (left_child_arg1 < right_child_arg1 || 
+        (left_child_arg1 == right_child_arg1 && left_child_arg2 < right_child_arg2)) {
             return left_child_index;
     }
 
@@ -49,12 +53,16 @@ void percolate_down(Queue *queue_struct, int index) {
     if (index >= queue_struct->size) return;
     while (index * 2 <= queue_struct->size) {
         int tid = queue[index];
-        TaskDescriptor *td = get_td(tid);
         int min_child_index = min_child(queue_struct, index);
         int min_child_tid = queue[min_child_index];
-        TaskDescriptor *min_child_td = get_td(min_child_tid);
-        if (td->priority < min_child_td->priority || 
-            (td->priority == min_child_td->priority && td->scheduled_count > min_child_td->scheduled_count)) {
+
+        int parent_arg1 = queue_struct->get_arg1(tid);
+        int min_child_arg1 = queue_struct->get_arg1(min_child_tid);
+        int parent_arg2 = queue_struct->get_arg2(tid);
+        int min_child_arg2 = queue_struct->get_arg2(min_child_tid);
+        
+        if (parent_arg1 > min_child_arg1 || 
+            (parent_arg1 == min_child_arg1 && parent_arg2 > min_child_arg2)) {
             queue[min_child_index] = tid;
             queue[index] = min_child_tid;
         }
@@ -98,5 +106,5 @@ void dump_queue(Queue *queue_struct) {
     for (int i = 1; i <= queue_struct->size; i++) {
         bwprintf( COM2, " %d", queue_struct->queue[i]);
     }
-    bwprintf( COM2, "\n\r");
+    bwprintf( COM2, "");
 }

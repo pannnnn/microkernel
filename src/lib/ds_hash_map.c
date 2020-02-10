@@ -1,6 +1,6 @@
 #include <user.h>
 #include <shared.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size) {
     for (int i = 0; i < hash_size; i++) {
@@ -93,11 +93,11 @@ int remove(unsigned int (*hash_table)[2], int hash_size, char *key) {
 
 void dump_hash_map(unsigned int (*hash_table)[2]) {
     HashEntry *entry;
-    bwprintf( COM2, "\n\rHash map");
+    bwprintf( COM2, "Hash map");
     for (int i = 0; i < HASHSIZE; i++) {
         for (entry = (HashEntry *) hash_table[i][0]; entry != NULL; entry = entry->next) {
-            bwprintf( COM2, "\n\rkey [%s] value [%d]", entry->key, entry->value);
+            bwprintf( COM2, "key [%s] value [%d]", entry->key, entry->value);
         }
     }
-    bwprintf( COM2, "\n\r");
+    bwprintf( COM2, "");
 }

@@ -1,7 +1,9 @@
 #include <kernel.h>
 #include <shared.h>
 #include <ds.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
+#include <lib_periph_init.h>
+#include <user.h>
 
 // defined in swi.S
 extern int leave_kernel(int sp, Args **args);
@@ -9,6 +11,7 @@ extern int swi_exit(int sp, void** tf);
 
 // defined as global variable in main.c
 extern KernelState _kernel_state;
+
 
 // get the next task to be run
 // reschedule the tasks in the priority queue
@@ -20,7 +23,7 @@ int schedule()
     
     // get the next scheduled task
     int scheduled_tid = pq_pop(&_kernel_state.ready_queue);
-
+    
     // rescheduling
     _kernel_state.schedule_counter +=2;
     TaskDescriptor *td = get_td(scheduled_tid);
@@ -31,24 +34,31 @@ int schedule()
     return scheduled_tid;
 }
 
+void task_performance(int tid) {
+    unsigned int curr_time = read_timer();
+    unsigned int runtime = _kernel_state.performance.task_start_time - curr_time;
+    _kernel_state.performance.total_ticks += runtime;
+    _kernel_state.performance.task_start_time = curr_time;
+
+    // increment idle counter if just-finished task was idle task
+    if (tid == _kernel_state.performance.idle_task_tid) _kernel_state.performance.idle_ticks += runtime;
+
+    // calculate the percentage for the idle task to print performacen metrics
+    percent_idle = (_kernel_state.performance.idle_ticks) / (_kernel_state.performance.total_ticks / 1000);
+}
+
 void k_main() 
 {
     while(1) {
         // get the new task from the scheduler
         int tid = schedule();
-    
-        if (tid == -1) {
-            // bwprintf( COM2, "\n\rNo ready task. Wating ...\n\r");
-            int live_tasks = 0;
-            for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
-                live_tasks += _kernel_state.td_user_stack_availability[i];
-            }
-            // bwprintf( COM2, "\n\r<%d> live tasks. Wating ...\n\r", live_tasks);
-            if (live_tasks > 0) {
-                continue;
-            } else {
+
+        if (tid == -1 || tid == _kernel_state.performance.idle_task_tid) {
+            if (_kernel_state.num_active_tasks <= NUM_ALWAYS_LIVE_TASKS) {
+                log("Exiting");
                 return;
             }
+            if (tid == -1) {debug("no ready tasks"); continue;}
         }
 
         // get the task descriptor from the task id
@@ -58,8 +68,14 @@ void k_main()
         Args interruptArg = {.code = INTERRUPT};
         args = &interruptArg;
 
+        // measure time of kernel activity & print idle percentage
+        task_performance(-1);
+
         // switch out of kernel mode and run the scheduled task
         unsigned int stack_pointer = leave_kernel(td->stack_pointer, &args);
+
+        // measure time of task activity & print idle percentage
+        task_performance(tid);
 
         // store the new location of the task's stack pointer into
         // the task's task descriptor
@@ -128,8 +144,13 @@ void k_main()
                 // put the task back on the ready queue
                 pq_insert(&_kernel_state.ready_queue, tid);
                 break;
+            case AWAIT_EVENT:
+                // debug("Await event");
+                sys_await_event((int) args->arg0);
+                break;
             case INTERRUPT:
                 interrupt_handler();
+                pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             default:
                 break;

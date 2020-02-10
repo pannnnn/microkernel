@@ -86,4 +86,27 @@
 #define UART_HDLCRIB_OFFSET	0x218
 #define UART_HDLCSTS_OFFSET	0x21c
 
+
+// Specific to interrupt
+#define VIC1 0x800B0000
+	#define TC2UI 5
+#define VIC2 0x800C0000
+#define VICxIntEnable		0x10
+#define VICxIntEnClear		0x14
+#define VICxIRQStatus		0x00
+#define VICxRawIntr			0x08
+#define VICxIntSelect		0x0c
+#define VICxSoftInt			0x18
+#define VICxSoftIntClear	0x1c
+#define VICxProtection		0x20
+#define VICxVectAddr		0x30
+#define VIC_IRQ_MODE		0x0
+#define VIC_TIMER_INTR_INTERVAL 10
+
+
+// Specific to idle mode
+#define SysSWLock 			0x809300C0
+#define DeviceCfg 			0x80930080
+#define Halt 				0x80930008
+
 #endif

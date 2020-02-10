@@ -1,14 +1,15 @@
 #ifndef LMCVITTI_Y247PAN_SHARED
 #define LMCVITTI_Y247PAN_SHARED
 
-// in bytes/chars (each char is 1 byte)
-#define MESSAGE_SIZE    4
-
 /*
  * Macro definition
  */
+// in bytes/chars (each char is 1 byte)
+#define MESSAGE_SIZE    4
 #define NULL 0
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define CHECK_BIT(x, y) (x & (1 << y))
+#define UNUSED(x) (void)(x)
 
 /*
  * Enum definition
@@ -26,8 +27,15 @@ typedef enum
     REPLY,
     MALLOC,
     FREE,
-    INTERRUPT
+    INTERRUPT,
+    AWAIT_EVENT
 } SYS_CODE;
+
+typedef enum
+{
+    TIMER_EVENT = 0,
+    UART_EVENT
+} EVENT_TYPE;
 
 /*
  * Struct definition
@@ -42,6 +50,15 @@ typedef struct
     unsigned int arg4;
 } Args;
 
+/*
+ *  Shared global integer
+ */
+
+int percent_idle;
+
+/*
+ * Function definition
+ */
 void charstr_copy(char *msg, char *buf, int length);
 unsigned int read_timer();
 unsigned int get_time_elaspsed(unsigned int start_time);

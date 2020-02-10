@@ -3,6 +3,9 @@
 
 void init_uart();
 void init_timer();
+void init_interrupt();
+void init_terminal();
+void disable_interrupt();
 void cache_on();
 void cache_off();
 

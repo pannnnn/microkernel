@@ -1,9 +1,9 @@
 #include <shared.h>
 #include <lib_ts7200.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 
 unsigned int read_timer() {
-	unsigned int *timer_value;
+	volatile unsigned int *timer_value;
 	timer_value = (unsigned int *)( TIMER3_BASE + VAL_OFFSET );
 
 	unsigned int value = *timer_value;

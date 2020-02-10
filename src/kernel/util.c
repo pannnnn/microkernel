@@ -1,5 +1,5 @@
 #include <kernel.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 
 extern KernelState _kernel_state;
 

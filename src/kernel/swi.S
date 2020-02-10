@@ -55,6 +55,7 @@ leave_kernel:
 
 .global enter_interrupt
 .type   enter_interrupt, %function
+enter_interrupt:
     @ go into system mode with IRQ and FIQ off | 0xDF = 0b11011111
     msr     cpsr_c, #0xDF
     @ store r0-r12 and lr in the user stack

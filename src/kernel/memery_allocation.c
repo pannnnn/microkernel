@@ -1,7 +1,7 @@
 #include <kernel.h>
 #include <user.h>
 #include <shared.h>
-#include <lib_periph_bwio.h>
+#include <stdio.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;
@@ -73,15 +73,6 @@ char *_mem_get_block(HEAP_TYPE heap_type)
 
     char *block_body = (char *) ( block + sizeof(BlockMeta));
     return block_body;
-}
-
-void mem_init_task_descriptors() 
-{
-    _kernel_state.ready_queue.size = 0;
-    _kernel_state.ready_queue.index = 0;
-    for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
-        _kernel_state.td_user_stack_availability[i] = 0;
-    }
 }
 
 void mem_init_heap_region(HEAP_TYPE heap_type)
@@ -169,7 +160,7 @@ void dump_heap_used(HEAP_TYPE heap_type) {
     BlockMeta *block_meta = (BlockMeta *) heap_info->heap_block_used;
 
     for (int i = 1; i <= heap_info->heap_block_count; i++) {
-        bwprintf( COM2, "\n\rHeap prev id<%d> id <%d> next id <%d>\n\r", block_meta->prev->id, block_meta->id, block_meta->next->id);
+        bwprintf( COM2, "Heap prev id<%d> id <%d> next id <%d>", block_meta->prev->id, block_meta->id, block_meta->next->id);
         block_meta = block_meta->next;
     }
 }

@@ -5,12 +5,14 @@
  * Include section
  */
 
-
 /*
  * Macro definition
  */
 #define HASHSIZE 101
 #define STRING_MAX_LENGTH 256
+#define NAME_SERVER_NAME "name_server"
+#define RPS_SERVER_NAME "rps_server"
+#define CLOCK_SERVER_NAME "clock_server"
 
 /*
  * Enum definition
@@ -20,6 +22,15 @@ typedef enum
     REGISTERAS = 0,
     WHOIS
 } NS_OPERATION;
+
+typedef enum
+{
+    TICK,
+    TIME,
+    DELAY,
+    DELAY_UNTIL
+} CR_Type;
+
 typedef enum {
     CACHE_ON = 0,
     CACHE_OFF = 1
@@ -34,6 +45,11 @@ typedef enum
 /*
  * Struct definition
  */
+typedef struct {
+    CR_Type type;
+    int ticks;
+} ClockRequest;
+
 typedef struct 
 {
 	NS_OPERATION operation;
@@ -60,13 +76,19 @@ void Exit();
 int Send(int tid, const char *msg, int msglen, char *reply, int rplen);
 int Receive(int *tid, char *msg, int msglen);
 int Reply(int tid, const char *reply, int rplen);
+int AwaitEvent(int eventid);
+char *Malloc(int size);
+void Free(char *ptr);
 
-void NameServer();
+void name_server();
 int RegisterAs(const char *name);
 int WhoIs(const char *name);
 
-char *Malloc(int size);
-void Free(char *ptr);
+void clock_server();
+void clock_notifier();
+int Time(int tid);
+int Delay(int tid, int ticks);
+int DelayUntil(int tid, int ticks);
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
 HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);
@@ -76,9 +98,8 @@ void dump_hash_map(unsigned int (*hash_table)[2]);
 
 void function_wrapper(void (*function)());
 void user_task_0();
-void user_task_test();
-void game_server1();
-void game_server2();
+void client_task();
+void idle_task();
 
 void sender_task_4();
 void sender_task_64();
