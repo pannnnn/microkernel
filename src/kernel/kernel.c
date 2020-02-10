@@ -3,6 +3,7 @@
 #include <ds.h>
 #include <stdio.h>
 #include <lib_periph_init.h>
+#include <user.h>
 
 // defined in swi.S
 extern int leave_kernel(int sp, Args **args);
@@ -11,20 +12,6 @@ extern int swi_exit(int sp, void** tf);
 // defined as global variable in main.c
 extern KernelState _kernel_state;
 
-
-int _exists_live_task() {
-    for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
-        if (_kernel_state.td_user_stack_availability[i] == 1) {
-            return 1;
-        }
-    }
-    for (int i = 0; i < INTERRUPT_COUNT; i++) {
-        if (_kernel_state.await_queues[i].size != 0) {
-            return 1;
-        }
-    }
-    return 0;
-}
 
 // get the next task to be run
 // reschedule the tasks in the priority queue
@@ -47,27 +34,20 @@ int schedule()
     return scheduled_tid;
 }
 
-void pre_measure_performance(int tid) {
-    if (tid == _kernel_state.performance_metric.idle_task_tid) {
-        _kernel_state.performance_metric.idle_task_count_down_ticks = read_timer();
-    }
-}
+void task_performance(int tid) {
+    unsigned int curr_time = read_timer();
+    unsigned int runtime = _kernel_state.performance.task_start_time - curr_time;
+    if (runtime == 0) log("runtime 0 ticks from task <%d>", tid);
+    _kernel_state.performance.task_start_time = curr_time;
+    
+    // increment idle counter if just-finished task was idle task
+    if (tid == _kernel_state.performance.idle_task_tid) _kernel_state.performance.idle_ticks += runtime;
+    _kernel_state.performance.total_ticks += runtime;
 
-void post_measure_performance(int tid) {
-    if (tid == _kernel_state.performance_metric.idle_task_tid) {
-        _kernel_state.performance_metric.idle_task_ticks += _kernel_state.performance_metric.idle_task_count_down_ticks - read_timer();
-        int integer = _kernel_state.performance_metric.idle_thousandth / 10;
-        int fractional = _kernel_state.performance_metric.idle_thousandth % 10;
-        // log("I:<%d> F:<%d>", integer, fractional);
-        // log("T:<%d>", _kernel_state.performance_metric.idle_thousandth);
-        // log("I:<%u> F:<%u>", _kernel_state.performance_metric.kernel_ticks, _kernel_state.performance_metric.idle_task_ticks);
-        // usage_notification("CPU idle percentage <%d>.<%d>", integer, fractional);
-    }
-    _kernel_state.performance_metric.kernel_ticks = _kernel_state.performance_metric.kernel_init_count_down_ticks - read_timer();
-    _kernel_state.performance_metric.idle_thousandth = _kernel_state.performance_metric.idle_task_ticks / (_kernel_state.performance_metric.kernel_ticks / 1000);
-    // int integer = _kernel_state.performance_metric.idle_thousandth / 10;
-    // int fractional = _kernel_state.performance_metric.idle_thousandth % 10;
-    // log("I:<%d> F:<%d>", integer, fractional);
+    unsigned int percent_idle = (_kernel_state.performance.idle_ticks) / (_kernel_state.performance.total_ticks / 100);
+
+    // print percent idle time if just-finished task was idle task
+    if (tid == _kernel_state.performance.idle_task_tid) usage_notification("percent idle: %d", percent_idle);
 }
 
 void k_main() 
@@ -76,11 +56,13 @@ void k_main()
         // get the new task from the scheduler
         int tid = schedule();
 
-        // dump_queue(&_kernel_state.ready_queue);
-        // debug("schedule tid <%d>", tid);
-        if (tid == -1)  {
-            if (_exists_live_task() == 0) return;
-            continue;
+        //if (tid == -1) {
+        if (tid == -1 || tid == _kernel_state.performance.idle_task_tid) {
+            if (_kernel_state.num_active_tasks <= NUM_ALWAYS_LIVE_TASKS) {
+               log("Exiting");
+               return;
+            }
+            if (tid == -1) {debug("no ready tasks"); continue;}
         }
 
         // get the task descriptor from the task id
@@ -90,13 +72,14 @@ void k_main()
         Args interruptArg = {.code = INTERRUPT};
         args = &interruptArg;
 
+        // measure time of kernel activity & print idle percentage
+        task_performance(-1);
+
         // switch out of kernel mode and run the scheduled task
-
-        pre_measure_performance(tid);
-
         unsigned int stack_pointer = leave_kernel(td->stack_pointer, &args);
 
-        post_measure_performance(tid);
+        // measure time of task activity & print idle percentage
+        task_performance(tid);
 
         // store the new location of the task's stack pointer into
         // the task's task descriptor

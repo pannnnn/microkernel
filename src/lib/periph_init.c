@@ -1,5 +1,6 @@
 #include <lib_ts7200.h>
 #include <lib_periph_bwio.h>
+#include <stdio.h>
 
 // initializes the uarts so they can be communicated with
 void init_uart() {
@@ -19,6 +20,10 @@ void init_timer() {
 	*timer_control = ENABLE_MASK | CLKSEL_MASK;
 }
 
+void init_terminal() {
+    // clear terminal  
+    putstr("\033[2J");
+}
 
 void init_interrupt() {
     volatile int *timer_clear, *timer_load, *timer_control;
@@ -26,7 +31,7 @@ void init_interrupt() {
     timer_load = (int *)( TIMER2_BASE + LDR_OFFSET );
 	timer_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
     *timer_clear = 0;
-    *timer_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K * 100;
+    *timer_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K;
     *timer_control = ENABLE_MASK | MODE_MASK;
 
     volatile int *vic_mode_selection, *vic_control_clear, *vic_control;

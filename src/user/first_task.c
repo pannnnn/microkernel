@@ -1,7 +1,6 @@
 #include <user.h>
 #include <shared.h>
 #include <lib_ts7200.h>
-#include <rps.h>
 #include <stdio.h>
 
 typedef struct 
@@ -47,8 +46,8 @@ void client_task() {
     int tid = MyTid();
     // log("Current ticks <%d>", Time(clock_server_tid));
     for (int i = 0; i < client_test_data.number_of_delays; i++) {
-        Delay(clock_server_tid, client_test_data.delay_interval);
-        log("Task Id <%d> Delay Interval <%d> Number Of Delay <%d>", tid, client_test_data.delay_interval, i);
+        int ticks = Delay(clock_server_tid, client_test_data.delay_interval);
+        log("Task Id <%d>, Delay Interval <%d>, Delay Number <%d>, Ticks <%d>", tid, client_test_data.delay_interval, i+1, ticks);
     }
 }
 
@@ -60,7 +59,7 @@ void idle_task() {
     *sys_sw_lock = *sys_sw_lock | 0xAA;
     *device_cfg = *device_cfg | 1;
     while (1) {
-        log("Halting...");
+        //log("Halting...");
         *halt;
     }
 }

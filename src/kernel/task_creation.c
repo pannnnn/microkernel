@@ -58,6 +58,7 @@ int sys_create(int priority, void (*function)())
     td->stack_pointer = (unsigned int) stack_pointer_addr;
 
     pq_insert(&_kernel_state.ready_queue, td_id);
+    _kernel_state.num_active_tasks++;
     return td_id;
 }
 
@@ -80,4 +81,5 @@ void sys_yield() {}
 // may need to do some clean up and relaim memory address
 void sys_exit() {
     _kernel_state.td_user_stack_availability[_kernel_state.scheduled_tid] = 0;
+    _kernel_state.num_active_tasks--;
 }

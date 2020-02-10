@@ -38,6 +38,9 @@
 #define MIN_PRIORITY 0
 #define MAX_PRIORITY 100
 
+// KEEP UPDATED
+#define NUM_ALWAYS_LIVE_TASKS   4
+
 /*
  * Enum definition
  */
@@ -69,12 +72,10 @@ typedef enum
 typedef struct
 {
     int idle_task_tid;
-    unsigned int kernel_init_count_down_ticks;
-    unsigned int kernel_ticks;
-    unsigned int idle_task_count_down_ticks;
-    unsigned int idle_task_ticks;
+    unsigned int idle_ticks;
+    unsigned int total_ticks;
+    unsigned int task_start_time;
 
-    int idle_thousandth;
 } PerformanceMetric;
 
 typedef struct {
@@ -130,8 +131,9 @@ typedef struct
     // task & scheduling mgmt
     int schedule_counter;
     int scheduled_tid;
+    int num_active_tasks;
     
-    PerformanceMetric performance_metric;
+    PerformanceMetric performance;
 
     // priority queue implementation
     Queue ready_queue;

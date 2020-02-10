@@ -24,12 +24,12 @@ static void register_irq_handler()
     *irqHandlerAddr = (unsigned int) enter_interrupt;
 }
 
-int _ready_queue_comparator1(int param) {
-    return get_td(param)->priority;
+int _ready_queue_comparator1(int tid) {
+    return get_td(tid)->priority;
 }
 
-int _ready_queue_comparator2(int param) {
-    return get_td(param)->scheduled_count;
+int _ready_queue_comparator2(int tid) {
+    return get_td(tid)->scheduled_count;
 }
 
 void _init_kernel_queues() 
@@ -51,8 +51,8 @@ void _init_kernel_queues()
 static void init_kernel_state()
 {
     _kernel_state.scheduled_tid = -1;
-
     _kernel_state.schedule_counter = 0;
+    _kernel_state.num_active_tasks = 0;
 
     _init_kernel_queues();
     
@@ -61,9 +61,9 @@ static void init_kernel_state()
     mem_init_heap_region(MEDIUM);
     mem_init_heap_region(LARGE);
 
-    _kernel_state.performance_metric.kernel_init_count_down_ticks = read_timer();
-    _kernel_state.performance_metric.kernel_ticks = 0;
-    _kernel_state.performance_metric.idle_task_ticks = 0;
+    _kernel_state.performance.task_start_time = read_timer();
+    _kernel_state.performance.total_ticks = 0;
+    _kernel_state.performance.idle_ticks = 0;
     _kernel_state.machine_state = NORMAL;
 }
 
@@ -74,14 +74,8 @@ static void create_first_user_task()
     sys_create(highest_priority, user_task_0);
     int lowest_priority = 100;
     int idle_task_tid = sys_create(lowest_priority, idle_task);
-    _kernel_state.performance_metric.idle_task_tid = idle_task_tid;
+    _kernel_state.performance.idle_task_tid = idle_task_tid;
 }
-
-// static void create_performance_task()
-// {
-//     int priority = 0;
-//     sys_create(priority, performance_task);
-// }
 
 // initialize the peripherals
 static void init_peripheral() {
@@ -89,6 +83,7 @@ static void init_peripheral() {
     init_uart();
     init_interrupt();
     cache_on();
+    init_terminal();
 }
 
 // initialize the system
@@ -99,5 +94,4 @@ void bootstrap()
     init_peripheral();
     init_kernel_state();
     create_first_user_task();
-    // create_performance_task();
 }

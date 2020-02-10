@@ -56,10 +56,10 @@ void clock_notifier()
     ClockRequest clock_request;
     clock_request.type = TICK;
     while (AwaitEvent(TIMER_EVENT) > -1) {
-        log("awake every one tick (one sec)");
+        debug("awake every one tick (one sec)");
         int result = Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
         if (result < 0) {
-            log("something went wrong here");
+            debug("something went wrong here");
         }
     }
 }
@@ -73,7 +73,7 @@ void clock_server()
     ClockRequest clock_request;
     int clock_notifier_tid = Create(2, clock_notifier);
     if (clock_notifier_tid < 0) {
-        debug("failed to create clock notiifer");
+        debug("failed to create clock notifier");
     }
     int client_tid, result, ticks = 0;
     while (Receive(&client_tid, (char *) &clock_request, sizeof(clock_request))) {
