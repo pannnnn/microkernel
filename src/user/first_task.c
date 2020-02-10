@@ -59,7 +59,7 @@ void idle_task() {
     *sys_sw_lock = *sys_sw_lock | 0xAA;
     *device_cfg = *device_cfg | 1;
     while (1) {
-        //log("Halting...");
+        // log("Halting...");
         *halt;
     }
 }
