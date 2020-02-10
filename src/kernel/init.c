@@ -80,10 +80,10 @@ static void create_first_user_task()
 // initialize the peripherals
 static void init_peripheral() {
     init_timer();
+    init_terminal();
     init_uart();
     init_interrupt();
     cache_on();
-    init_terminal();
 }
 
 // initialize the system
@@ -94,4 +94,8 @@ void bootstrap()
     init_peripheral();
     init_kernel_state();
     create_first_user_task();
+}
+
+void clear_up() {
+    disable_interrupt();
 }

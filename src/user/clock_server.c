@@ -12,9 +12,9 @@ void _init_clock_server()
     _clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
 }
 
-int _await_queue_comparator1(int param) 
+int _await_queue_comparator1(int tid) 
 {
-    return _tid_to_ticks[param];
+    return _tid_to_ticks[tid];
 }
 
 int _await_queue_comparator2(int dummy_value) 
@@ -27,7 +27,7 @@ int Time(int tid)
     if (tid != _clock_server_tid) return -1;
     ClockRequest clock_request;
     clock_request.type = TIME;
-    int result = Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
+    Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
     return clock_request.ticks;
 }
 
@@ -37,7 +37,7 @@ int Delay(int tid, int ticks)
     ClockRequest clock_request;
     clock_request.type = DELAY;
     clock_request.ticks = ticks;
-    int result = Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
+    Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
     return clock_request.ticks;
 }
 
@@ -47,7 +47,7 @@ int DelayUntil(int tid, int ticks)
     ClockRequest clock_request;
     clock_request.type = DELAY_UNTIL;
     clock_request.ticks = ticks;
-    int result = Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
+    Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
     return clock_request.ticks;
 }
 
@@ -75,14 +75,14 @@ void clock_server()
     if (clock_notifier_tid < 0) {
         debug("failed to create clock notifier");
     }
-    int client_tid, result, ticks = 0;
+    int client_tid, ticks = 0;
     while (Receive(&client_tid, (char *) &clock_request, sizeof(clock_request))) {
         switch ( clock_request.type ) {
         case TICK:
             // check result error
             debug("Ticks <%d>", ticks);
             ticks++;
-            result = Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
+            Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
             int blocked_tid = -1;
             clock_request.ticks = ticks;
             while ((blocked_tid = pq_pop(&blocked_tids)) != -1) {
@@ -91,17 +91,17 @@ void clock_server()
                     break;
                 }
                 _tid_to_ticks[blocked_tid] = 0;
-                result = Reply(blocked_tid, (const char *) &clock_request, sizeof(clock_request));
+                Reply(blocked_tid, (const char *) &clock_request, sizeof(clock_request));
             }
             break;
         case TIME:
             clock_request.ticks = ticks;
-            result = Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
+            Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
             break;
         case DELAY:
             if (clock_request.ticks < 0) {
                 clock_request.ticks = -2;
-                result = Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
+                Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
             } else {
                 _tid_to_ticks[client_tid] = ticks + clock_request.ticks;
                 pq_insert(&blocked_tids, client_tid);
@@ -110,7 +110,7 @@ void clock_server()
         case DELAY_UNTIL:
             if (clock_request.ticks < ticks) {
                 clock_request.ticks = -2;
-                result = Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
+                Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
             } else {
                 _tid_to_ticks[client_tid] = clock_request.ticks;
                 pq_insert(&blocked_tids, client_tid);

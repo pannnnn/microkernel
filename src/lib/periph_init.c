@@ -21,8 +21,9 @@ void init_timer() {
 }
 
 void init_terminal() {
-    // clear terminal  
+    // clear terminal 
     putstr("\033[2J");
+    putstr("\033[2r");
 }
 
 void init_interrupt() {
@@ -44,14 +45,17 @@ void init_interrupt() {
 }
 
 void disable_interrupt() {
+    volatile int * vic_control_clear, *vic_control;
+    vic_control_clear = (int *) ( VIC1 + VICxIntEnClear );
+    vic_control = (int *) ( VIC1 + VICxIntEnable );
+    *vic_control = 0;
+    *vic_control_clear = 0;
+
     volatile int *timer_control, *timer_clear;
 	timer_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
     timer_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
     *timer_control = 0;
     *timer_clear = 0;
-
-    volatile int *vic_control = (int *)( VIC1 + VICxIntEnable );
-    *vic_control = 0;
 }
 
 void cache_on() {

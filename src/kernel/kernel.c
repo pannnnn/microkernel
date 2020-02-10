@@ -37,17 +37,14 @@ int schedule()
 void task_performance(int tid) {
     unsigned int curr_time = read_timer();
     unsigned int runtime = _kernel_state.performance.task_start_time - curr_time;
-    if (runtime == 0) log("runtime 0 ticks from task <%d>", tid);
+    _kernel_state.performance.total_ticks += runtime;
     _kernel_state.performance.task_start_time = curr_time;
-    
+
     // increment idle counter if just-finished task was idle task
     if (tid == _kernel_state.performance.idle_task_tid) _kernel_state.performance.idle_ticks += runtime;
-    _kernel_state.performance.total_ticks += runtime;
 
-    unsigned int percent_idle = (_kernel_state.performance.idle_ticks) / (_kernel_state.performance.total_ticks / 100);
-
-    // print percent idle time if just-finished task was idle task
-    if (tid == _kernel_state.performance.idle_task_tid) usage_notification("percent idle: %d", percent_idle);
+    // calculate the percentage for the idle task to print performacen metrics
+    percent_idle = (_kernel_state.performance.idle_ticks) / (_kernel_state.performance.total_ticks / 1000);
 }
 
 void k_main() 
@@ -56,11 +53,10 @@ void k_main()
         // get the new task from the scheduler
         int tid = schedule();
 
-        //if (tid == -1) {
         if (tid == -1 || tid == _kernel_state.performance.idle_task_tid) {
             if (_kernel_state.num_active_tasks <= NUM_ALWAYS_LIVE_TASKS) {
-               log("Exiting");
-               return;
+                log("Exiting");
+                return;
             }
             if (tid == -1) {debug("no ready tasks"); continue;}
         }

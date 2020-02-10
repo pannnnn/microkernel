@@ -23,12 +23,12 @@ void user_task_0() {
     int clock_server_tid = Create(2, clock_server);
     log("Created Clock Server: <%d>", clock_server_tid);
     int priority_base = 3, number_of_tasks = 4;
-    int data[4][2] = {{10, 20}, {23, 9}, {33, 6}, {71, 3}};
     for (int i = 0; i < number_of_tasks; i++) {
         int client_task_tid = Create(priority_base + i, client_task);
         log("Created Client Task 1 with id: <%d>", client_task_tid);
     }
     int client_tid = -1;
+    int data[4][2] = {{10, 20}, {23, 9}, {33, 6}, {71, 3}};
     ClientTestData client_test_data;
     for (int i = 0; i < number_of_tasks; i++) {
         Receive(&client_tid, (char *) &client_test_data, sizeof(client_test_data));
@@ -44,7 +44,6 @@ void client_task() {
     Send(MyParentTid(), (const char *) &client_test_data, sizeof(client_test_data), (char *)&client_test_data, sizeof(client_test_data));
     int clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
     int tid = MyTid();
-    // log("Current ticks <%d>", Time(clock_server_tid));
     for (int i = 0; i < client_test_data.number_of_delays; i++) {
         int ticks = Delay(clock_server_tid, client_test_data.delay_interval);
         log("Task Id <%d>, Delay Interval <%d>, Delay Number <%d>, Ticks <%d>", tid, client_test_data.delay_interval, i+1, ticks);
@@ -58,7 +57,11 @@ void idle_task() {
     halt = (int *) ( Halt );
     *sys_sw_lock = *sys_sw_lock | 0xAA;
     *device_cfg = *device_cfg | 1;
+    putstr("\033[s\033[HIdle Percentage:\033[u"); 
     while (1) {
+        unsigned int percent_integer = percent_idle / 10;
+        unsigned int percent_fractional = percent_idle % 10;
+        usage_notification("%d.%d", percent_integer, percent_fractional);
         // log("Halting...");
         *halt;
     }

@@ -50,6 +50,15 @@ typedef struct
     unsigned int arg4;
 } Args;
 
+/*
+ *  Shared global integer
+ */
+
+int percent_idle;
+
+/*
+ * Function definition
+ */
 void charstr_copy(char *msg, char *buf, int length);
 unsigned int read_timer();
 unsigned int get_time_elaspsed(unsigned int start_time);

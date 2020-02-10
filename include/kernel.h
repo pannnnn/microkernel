@@ -75,7 +75,6 @@ typedef struct
     unsigned int idle_ticks;
     unsigned int total_ticks;
     unsigned int task_start_time;
-
 } PerformanceMetric;
 
 typedef struct {
@@ -154,6 +153,7 @@ typedef struct
  */
 void bootstrap();
 void k_main();
+void clear_up();
 
 // task creation
 int sys_create(int priority, void (*function)());
