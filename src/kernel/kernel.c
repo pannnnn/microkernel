@@ -18,9 +18,6 @@ extern KernelState _kernel_state;
 // returns the id of the task to be run
 int schedule() 
 {
-    // nothing to be run; 
-    if (_kernel_state.ready_queue.size == 0) return -1;
-    
     // get the next scheduled task
     int scheduled_tid = pq_pop(&_kernel_state.ready_queue);
     

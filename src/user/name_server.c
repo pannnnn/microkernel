@@ -25,11 +25,11 @@ int WhoIs(const char *name) {
 }
 
 void name_server() {
-    // debug("Name Server: Initializing ...");
+    // log("Name Server: Initializing ...");
     unsigned int _hash_table[HASHSIZE][2];
     init_hash_table(_hash_table, HASHSIZE);
     _name_server_tid = MyTid();
-    bwprintf( COM2, "Name server tid <%d>", _name_server_tid);
+    log("Name server tid <%d>", _name_server_tid);
     int client_tid, result;
     NSMessage ns_message;
     HashEntry *entry;

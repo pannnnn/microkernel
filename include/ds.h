@@ -16,7 +16,8 @@ typedef struct
 // priority queue heap implementation functions
 void pq_insert(Queue *queue_struct, int tid);
 int pq_pop(Queue *queue_struct);
-void pq_remove(Queue *queue_struct, int tid) ;
+void pq_remove(Queue *queue_struct, int tid);
+int pq_get_min(Queue *queue_struct);
 
 // fifo queue implementation functions
 void enqueue(Queue *queue_struct, int value);

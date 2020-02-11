@@ -85,11 +85,11 @@ void clock_server()
             Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
             int blocked_tid = -1;
             clock_request.ticks = ticks;
-            while ((blocked_tid = pq_pop(&blocked_tids)) != -1) {
+            while ((blocked_tid = pq_get_min(&blocked_tids)) != -1) {
                 if (_tid_to_ticks[blocked_tid] > ticks) {
-                    pq_insert(&blocked_tids, blocked_tid);
                     break;
                 }
+                pq_pop(&blocked_tids);
                 _tid_to_ticks[blocked_tid] = 0;
                 Reply(blocked_tid, (const char *) &clock_request, sizeof(clock_request));
             }

@@ -1,4 +1,4 @@
 #!/bin/bash
 make
-cp k3.elf /u/cs452/tftp/ARM/y247pan/k3.elf
-chmod o=r /u/cs452/tftp/ARM/y247pan/k3.elf
+cp k4.elf /u/cs452/tftp/ARM/y247pan/k4.elf
+chmod o=r /u/cs452/tftp/ARM/y247pan/k4.elf

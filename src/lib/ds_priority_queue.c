@@ -80,6 +80,7 @@ void pq_insert(Queue *queue_struct, int tid) {
 
 // return the top (root) node from the priority queue
 int pq_pop(Queue *queue_struct) {
+    if (queue_struct->size == 0) return -1;
     int *queue = queue_struct->queue;
     int result = queue[1];
     queue[1] = queue[queue_struct->size--];
@@ -100,11 +101,16 @@ void pq_remove(Queue *queue_struct, int tid)  {
     }
 }
 
+int pq_get_min(Queue *queue_struct) {
+    if (queue_struct->size == 0) return -1;
+    return (queue_struct->queue)[1];
+}
+
 // flush the priority queue; used for debugging
 void dump_queue(Queue *queue_struct) {
     bwprintf( COM2, "Queue:");
     for (int i = 1; i <= queue_struct->size; i++) {
         bwprintf( COM2, " %d", queue_struct->queue[i]);
     }
-    bwprintf( COM2, "");
+    bwprintf( COM2, "\r\n");
 }
