@@ -74,6 +74,10 @@
 	#define RXFF_MASK	0x40	// Receive buffer full
 	#define TXFE_MASK	0x80	// Transmit buffer empty
 #define UART_INTR_OFFSET	0x1c
+	#define MIS			0x1
+	#define RIS			0x2
+	#define TIS			0x4
+	#define RTIS		0x8
 #define UART_DMAR_OFFSET	0x28
 
 // Specific to UART1
@@ -89,8 +93,10 @@
 
 // Specific to interrupt
 #define VIC1 0x800B0000
-	#define TC2UI 5
+	#define TC2UI_MASK 0x10
 #define VIC2 0x800C0000
+	#define UART1_INT_MASK 0xF0000
+	#define UART2_INT_MASK 0x200000
 #define VICxIntEnable		0x10
 #define VICxIntEnClear		0x14
 #define VICxIRQStatus		0x00

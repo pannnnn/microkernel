@@ -29,7 +29,7 @@
 
 #define SWI_HANDLER_ADDR   0x28
 #define IRQ_HANDLER_ADDR   0x38
-    #define INTERRUPT_COUNT 1
+    #define INTERRUPT_COUNT 5
 
 #define USER_MODE_DEFAULT 0x10
 
@@ -174,6 +174,10 @@ int sys_reply(int tid, char *reply, int rplen);
 // interrupt
 void sys_await_event(int eventid);
 void interrupt_handler();
+
+// UART
+void sys_getc(int tid, int channel);
+void sys_putc(int tid, int channel, char ch);
 
 TaskDescriptor *get_td(int id);
 void set_result(TaskDescriptor *td, unsigned int return_val);

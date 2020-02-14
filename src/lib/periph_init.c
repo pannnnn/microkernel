@@ -9,15 +9,15 @@ void init_uart() {
 	bwsetstopbits( COM1, 2 );
 
 	bwsetspeed( COM2, 115200 );
-	bwsetfifo( COM2, OFF );
+	bwsetfifo( COM2, ON );
 	bwsetstopbits( COM2, 1 );
 }
 
 void init_timer() {
-    volatile int *timer_control;
-	timer_control = (int *)( TIMER3_BASE + CRTL_OFFSET );
+    volatile int *timer2_control;
+	timer2_control = (int *)( TIMER3_BASE + CRTL_OFFSET );
 
-	*timer_control = ENABLE_MASK | CLKSEL_MASK;
+	*timer2_control = ENABLE_MASK | CLKSEL_MASK;
 }
 
 void init_terminal() {
@@ -27,35 +27,57 @@ void init_terminal() {
 }
 
 void init_interrupt() {
-    volatile int *timer_clear, *timer_load, *timer_control;
-    timer_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
-    timer_load = (int *)( TIMER2_BASE + LDR_OFFSET );
-	timer_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
-    *timer_clear = 0;
-    *timer_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K;
-    *timer_control = ENABLE_MASK | MODE_MASK;
+    volatile int *timer2_clear, *timer2_load, *timer2_control;
+    timer2_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
+    timer2_load = (int *)( TIMER2_BASE + LDR_OFFSET );
+	timer2_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
+    *timer2_clear = 0;
+    *timer2_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K;
+    *timer2_control = ENABLE_MASK | MODE_MASK;
 
-    volatile int *vic_mode_selection, *vic_control_clear, *vic_control;
-    vic_mode_selection = (int *) ( VIC1 + VICxIntSelect );
-    vic_control_clear = (int *) ( VIC1 + VICxIntEnClear );
-    vic_control = (int *) ( VIC1 + VICxIntEnable );
-    *vic_mode_selection = VIC_IRQ_MODE;
-    *vic_control_clear = 0;
-    *vic_control = 1 << TC2UI;
+    volatile int *vic1_int_select, *vic1_int_enable_clear, *vic1_int_enable;
+    vic1_int_select = (int *) ( VIC1 + VICxIntSelect );
+    vic1_int_enable_clear = (int *) ( VIC1 + VICxIntEnClear );
+    vic1_int_enable = (int *) ( VIC1 + VICxIntEnable );
+    *vic1_int_select = VIC_IRQ_MODE;
+    *vic1_int_enable_clear = 0;
+    *vic1_int_enable = (1 << TC2UI);
+
+    volatile int *uart1_control;
+    uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
+    uart1_control = RIEN_MASK | RIEN_MASK;
+
+    volatile int *vic2_int_select, *vic2_int_enable_clear, *vic2_int_enable;
+    vic2_int_select = (int *) ( VIC2 + VICxIntSelect );
+    vic2_int_enable_clear = (int *) ( VIC2 + VICxIntEnClear );
+    vic2_int_enable = (int *) ( VIC2 + VICxIntEnable );
+    *vic2_int_select = VIC_IRQ_MODE;
+    *vic2_int_enable_clear = 0;
+    *vic2_int_enable = (1 << UART1_INTERRUPT);
 }
 
 void disable_interrupt() {
-    volatile int * vic_control_clear, *vic_control;
-    vic_control_clear = (int *) ( VIC1 + VICxIntEnClear );
-    vic_control = (int *) ( VIC1 + VICxIntEnable );
-    *vic_control = 0;
-    *vic_control_clear = 0;
+    volatile int * vic1_int_enable_clear, *vic1_int_enable;
+    vic1_int_enable_clear = (int *) ( VIC1 + VICxIntEnClear );
+    vic1_int_enable = (int *) ( VIC1 + VICxIntEnable );
+    *vic1_int_enable = 0;
+    *vic1_int_enable_clear = 0;
 
-    volatile int *timer_control, *timer_clear;
-	timer_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
-    timer_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
-    *timer_control = 0;
-    *timer_clear = 0;
+    volatile int *timer2_control, *timer2_clear;
+	timer2_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
+    timer2_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
+    *timer2_control = 0;
+    *timer2_clear = 0;
+
+    volatile int * vic2_int_enable_clear, *vic2_int_enable;
+    vic2_int_enable_clear = (int *) ( VIC2 + VICxIntEnClear );
+    vic2_int_enable = (int *) ( VIC2 + VICxIntEnable );
+    *vic2_int_enable = 0;
+    *vic2_int_enable_clear = 0;
+
+    volatile int *uart1_control;
+    uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
+    uart1_control = 0;
 }
 
 void cache_on() {

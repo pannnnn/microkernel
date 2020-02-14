@@ -28,13 +28,18 @@ typedef enum
     MALLOC,
     FREE,
     INTERRUPT,
-    AWAIT_EVENT
+    AWAIT_EVENT,
+    GETC,
+    PUTC
 } SYS_CODE;
 
 typedef enum
 {
     TIMER_EVENT = 0,
-    UART_EVENT
+    UART1_RX_EVENT,
+    UART1_TX_EVENT,
+    UART2_RX_EVENT,
+    UART2_TX_EVENT
 } EVENT_TYPE;
 
 /*

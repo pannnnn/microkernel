@@ -13,23 +13,35 @@
 #define NAME_SERVER_NAME "name_server"
 #define RPS_SERVER_NAME "rps_server"
 #define CLOCK_SERVER_NAME "clock_server"
+#define UART1_RX_SERVER_NAME "uart1_rx_server"
+#define UART1_TX_SERVER_NAME "uart1_tx_server"
+#define UART2_RX_SERVER_NAME "uart2_rx_server"
+#define UART2_TX_SERVER_NAME "uart2_tx_server"
 
 /*
  * Enum definition
  */
 typedef enum
 {
-    REGISTERAS = 0,
-    WHOIS
-} NS_OPERATION;
+    UART1_RECEIVE_BYTE = 0,
+    UART1_TRANSMIT_BYTE,
+    UART2_RECEIVE_BYTE,
+    UART2_TRANSMIT_BYTE
+} UM_TYPE;
 
 typedef enum
 {
-    TICK,
+    TICK = 0,
     TIME,
     DELAY,
     DELAY_UNTIL
-} CR_Type;
+} CR_TYPE;
+
+typedef enum
+{
+    REGISTERAS = 0,
+    WHOIS
+} NS_OPERATION;
 
 typedef enum {
     CACHE_ON = 0,
@@ -46,9 +58,14 @@ typedef enum
  * Struct definition
  */
 typedef struct {
-    CR_Type type;
+    UM_TYPE type;
+    int data;
+} UartMessage;
+
+typedef struct {
+    CR_TYPE type;
     int ticks;
-} ClockRequest;
+} ClockMessage;
 
 typedef struct 
 {
@@ -89,6 +106,9 @@ void clock_notifier();
 int Time(int tid);
 int Delay(int tid, int ticks);
 int DelayUntil(int tid, int ticks);
+
+int Getc(int tid, int channel);
+int Putc(int tid, int channel, char ch);
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
 HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);
