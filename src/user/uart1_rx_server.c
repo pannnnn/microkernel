@@ -26,9 +26,9 @@ void uart1_rx_notifier()
 
 void uart1_rx_server() 
 {
-    _init_clock_server();
-    Queue blocked_tids = {.size = 0, .index = 0};
-    UartMessage uart_message;
+    _init_uart1_rx_server();
+    // Queue blocked_tids = {.size = 0, .index = 0};
+    // UartMessage uart_message;
     int clock_notifier_tid = Create(2, uart1_rx_notifier);
     if (clock_notifier_tid < 0) {
         debug("failed to create uart1 rx notifier");

@@ -119,7 +119,6 @@ typedef struct {
 typedef struct _BlockMeta {
     struct _BlockMeta *prev;
     struct _BlockMeta *next;
-    int id;
     HEAP_TYPE heap_type;
 } BlockMeta;
 
@@ -186,6 +185,6 @@ void mem_init_all_heap_info();
 void mem_init_heap_region(HEAP_TYPE heap_type);
 void mem_free(char *ptr);
 char *mem_malloc(int size);
-void dump_heap(HEAP_TYPE heap_type);
+void dump_heap_used(HEAP_TYPE heap_type);
 
 #endif

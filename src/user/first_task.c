@@ -66,3 +66,24 @@ void idle_task() {
         *halt;
     }
 }
+
+void malloc_test() {
+    for (int i = 0; i < 16384; i++) {
+        // log("Malloc 52: %x", Malloc(52));
+        // Malloc(52);
+        Free(Malloc(52));
+    }
+    log("Malloc 52: %x", Malloc(52));
+    for (int i = 0; i < 4096; i++) {
+        // log("Malloc 244: %x", Malloc(244));
+        // Malloc(244);
+        Free(Malloc(244));
+    }
+    log("Malloc 244: %x", Malloc(244));
+    for (int i = 0; i < 1024; i++) {
+        // log("Malloc 1024: %x", Malloc(1012));
+        // Malloc(1012);
+        Free(Malloc(1012));
+    }
+    log("Malloc 1024: %x", Malloc(1012));
+}

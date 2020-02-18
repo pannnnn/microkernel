@@ -82,7 +82,7 @@ int Getc(int tid, int channel) {
 	args.code = GETC;
     args.arg0 = tid;
     args.arg1 = channel;
-    return (char *) enter_swi(&args);
+    return enter_swi(&args);
 }
 
 int Putc(int tid, int channel, char ch) {
@@ -91,7 +91,7 @@ int Putc(int tid, int channel, char ch) {
     args.arg0 = tid;
     args.arg1 = channel;
     args.arg2 = ch;
-    return (char *) enter_swi(&args);
+    return enter_swi(&args);
 }
 
 char *Malloc(int size) {

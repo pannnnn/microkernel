@@ -45,7 +45,7 @@ void init_interrupt() {
 
     volatile int *uart1_control;
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
-    uart1_control = RIEN_MASK | RIEN_MASK;
+    *uart1_control = RIEN_MASK | RIEN_MASK;
 
     volatile int *vic2_int_select, *vic2_int_enable_clear, *vic2_int_enable;
     vic2_int_select = (int *) ( VIC2 + VICxIntSelect );
@@ -77,7 +77,7 @@ void disable_interrupt() {
 
     volatile int *uart1_control;
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
-    uart1_control = 0;
+    *uart1_control = 0;
 }
 
 void cache_on() {
