@@ -13,6 +13,8 @@
 #define NAME_SERVER_NAME "name_server"
 #define RPS_SERVER_NAME "rps_server"
 #define CLOCK_SERVER_NAME "clock_server"
+#define UART_BUFFER_SIZE 4096
+    #define UART_BUFFER_MASK 0xFFF
 #define UART1_RX_SERVER_NAME "uart1_rx_server"
 #define UART1_TX_SERVER_NAME "uart1_tx_server"
 #define UART2_RX_SERVER_NAME "uart2_rx_server"
@@ -21,14 +23,12 @@
 /*
  * Enum definition
  */
-typedef enum
+typedef enum 
 {
-    UART1_RECEIVE_BYTE = 0,
-    UART1_TRANSMIT_BYTE,
-    UART2_RECEIVE_BYTE,
-    UART2_TRANSMIT_BYTE
-} UM_TYPE;
-
+    FROM_USER,
+    FROM_SERVER,
+    FROM_DEVICE
+} UM_SOURCE;
 typedef enum
 {
     TICK = 0,
@@ -58,8 +58,14 @@ typedef enum
  * Struct definition
  */
 typedef struct {
-    UM_TYPE type;
-    int data;
+	unsigned char buffer[UART_BUFFER_SIZE];
+	int start;
+	int end;
+} RingBuffer;
+
+typedef struct {
+    UM_SOURCE source;
+    unsigned char data;
 } UartMessage;
 
 typedef struct {
@@ -107,6 +113,15 @@ int Time(int tid);
 int Delay(int tid, int ticks);
 int DelayUntil(int tid, int ticks);
 
+
+void uart1_rx_notifier();
+void uart1_rx_server();
+void uart1_tx_notifier();
+void uart1_tx_server();
+void uart2_rx_notifier();
+void uart2_rx_server();
+void uart2_tx_notifier();
+void uart2_tx_server();
 int Getc(int tid, int channel);
 int Putc(int tid, int channel, char ch);
 
@@ -120,14 +135,5 @@ void function_wrapper(void (*function)());
 void user_task_0();
 void client_task();
 void idle_task();
-
-void sender_task_4();
-void sender_task_64();
-void sender_task_256();
-void receiver_task_4();
-void receiver_task_64();
-void receiver_task_256();
-void pf_send_receive_test(CACHE_STATUS cache_status, PF_EXECUTION_ORDER execution_order, int message_size);
-void performance_task();
 
 #endif

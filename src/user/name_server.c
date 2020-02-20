@@ -49,12 +49,11 @@ void name_server() {
         }
         result = Reply(client_tid, (const char *) &ns_message, sizeof(ns_message));
         if (result > -1) {
-            // debug("Name Server: result = <%d>", result);
+            debug("Name Server: result = <%d>", result);
         } else if(result == -1) {
-            // debug("Name Server: tid is not the task id of an existing task.");
+            debug("Name Server: tid is not the task id of an existing task.");
         } else if(result == -2) {
-            // debug("Name Server: send-receive-reply transaction could not be completed.");
+            debug("Name Server: send-receive-reply transaction could not be completed.");
         }
-        // dump_hash_map(_hash_table);
     }
 }

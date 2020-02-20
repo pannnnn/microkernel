@@ -10,6 +10,22 @@
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define CHECK_BIT(x, y) (x & (1 << y))
 #define UNUSED(x) (void)(x)
+#define INTERRUPT_COUNT 5
+
+#define INIT_TASK_PRIORITY 0
+#define IDLE_TASK_PRIORITY 100
+#define NAME_SERVER_PRIORITY 1
+#define CLOCK_NOTIFIER_PRIORITY 2
+#define CLOCK_SERVER_PRIORITY 3
+#define UART1_RX_NOTIFIER_PRIORITY 10
+#define UART1_RX_SERVER_PRIORITY 11
+#define UART1_TX_NOTIFIER_PRIORITY 12
+#define UART1_TX_SERVER_PRIORITY 13
+#define UART2_RX_NOTIFIER_PRIORITY 14
+#define UART2_RX_SERVER_PRIORITY 15
+#define UART2_TX_NOTIFIER_PRIORITY 16
+#define UART2_TX_SERVER_PRIORITY 17
+#define CLIENT_TASK_PRIORITY 20
 
 /*
  * Enum definition
@@ -39,7 +55,9 @@ typedef enum
     UART1_RX_EVENT,
     UART1_TX_EVENT,
     UART2_RX_EVENT,
-    UART2_TX_EVENT
+    UART2_TX_EVENT,
+    CTS_NEG,
+    CTS_AST
 } EVENT_TYPE;
 
 /*
@@ -58,8 +76,8 @@ typedef struct
 /*
  *  Shared global integer
  */
-
-int percent_idle;
+extern int percent_idle;
+extern int event_notifier_registrar[INTERRUPT_COUNT];
 
 /*
  * Function definition

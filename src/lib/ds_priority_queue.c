@@ -73,6 +73,10 @@ void percolate_down(Queue *queue_struct, int index) {
 // add a node into the priority queue
 void pq_insert(Queue *queue_struct, int tid) {
     int *queue = queue_struct->queue;
+    // to prevent duplicate tids
+    for (int i = 1; i < queue_struct->size; i++) {
+        if (queue[i] == tid) return;        
+    }
     int index = ++queue_struct->size;
     queue[index] = tid;
     percolate_up(queue_struct, index);

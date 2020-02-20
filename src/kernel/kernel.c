@@ -142,7 +142,6 @@ void k_main()
                 pq_insert(&_kernel_state.ready_queue, tid);
                 break;
             case AWAIT_EVENT:
-                // debug("Await event");
                 sys_await_event((int) args->arg0);
                 break;
             case INTERRUPT:

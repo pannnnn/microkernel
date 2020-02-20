@@ -77,23 +77,6 @@ int AwaitEvent(int eventid) {
 	return enter_swi(&args);
 }
 
-int Getc(int tid, int channel) {
-	Args args;
-	args.code = GETC;
-    args.arg0 = tid;
-    args.arg1 = channel;
-    return enter_swi(&args);
-}
-
-int Putc(int tid, int channel, char ch) {
-	Args args;
-	args.code = PUTC;
-    args.arg0 = tid;
-    args.arg1 = channel;
-    args.arg2 = ch;
-    return enter_swi(&args);
-}
-
 char *Malloc(int size) {
 	Args args;
 	args.code = MALLOC;

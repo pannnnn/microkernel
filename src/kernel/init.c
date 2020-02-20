@@ -11,6 +11,9 @@ extern int enter_interrupt();
 // defined as a global variable in main.c
 extern KernelState _kernel_state;
 
+int percent_idle = 0;
+int event_notifier_registrar[INTERRUPT_COUNT] = {-1};
+
 // set enter_kernel as the software interrupt handler
 static void register_swi_handler()
 {
@@ -38,10 +41,6 @@ void _init_kernel_queues()
     _kernel_state.ready_queue.index = 0;
     _kernel_state.ready_queue.get_arg1 = _ready_queue_comparator1;
     _kernel_state.ready_queue.get_arg2 = _ready_queue_comparator2;
-    for (int i = 0; i < INTERRUPT_COUNT; i++) {
-        _kernel_state.await_queues[i].size = 0;
-        _kernel_state.await_queues[i].index = 0;
-    }
     for (int i = 0; i < KERNEL_STACK_TD_LIMIT; i++) {
         _kernel_state.td_user_stack_availability[i] = 0;
     }
@@ -70,10 +69,8 @@ static void init_kernel_state()
 // create the first user task with priority 1
 static void create_first_user_task()
 {
-    int highest_priority = 0;
-    sys_create(highest_priority, user_task_0);
-    int lowest_priority = 100;
-    int idle_task_tid = sys_create(lowest_priority, idle_task);
+    sys_create(INIT_TASK_PRIORITY, user_task_0);
+    int idle_task_tid = sys_create(IDLE_TASK_PRIORITY, idle_task);
     _kernel_state.performance.idle_task_tid = idle_task_tid;
 }
 
