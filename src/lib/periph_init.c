@@ -45,7 +45,7 @@ void init_interrupt() {
 
     volatile int *uart1_control;
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
-    *uart1_control = MSIEN_MASK | RIEN_MASK | UARTEN_MASK;
+    *uart1_control = RIEN_MASK | UARTEN_MASK;
 
     volatile int *vic2_int_select, *vic2_int_enable_clear, *vic2_int_enable;
     vic2_int_select = (int *) ( VIC2 + VICxIntSelect );

@@ -30,16 +30,18 @@ void interrupt_handler() {
         event_notifier_awaited[TIMER_EVENT] = 0;
     } else if ( *vic2_status & UART1_INT_MASK) {
         if ( *uart1_status & MIS ) {
+            debug("CTS: cts status change");
+            *uart1_control &= ~MSIEN_MASK;
             // clear the interrupt
-            debug("mis interrupt");
             *uart1_status = 0;
-            // tid = event_notifier_registrar[UART1_TX_EVENT];
-            // TaskDescriptor *td = get_td(tid);
-            // td->state = READY;
-            // pq_insert(&_kernel_state.ready_queue, tid);
-            // set_result(td, (unsigned int) 0);
+            tid = event_notifier_registrar[UART1_TX_EVENT];
+            TaskDescriptor *td = get_td(tid);
+            td->state = READY;
+            pq_insert(&_kernel_state.ready_queue, tid);
+            set_result(td, (unsigned int) 0);
         } else if ( *uart1_status & RIS )  {
             if (!event_notifier_awaited[UART1_RX_EVENT]) return;
+            debug("RIS: ris status change");
             tid = event_notifier_registrar[UART1_RX_EVENT];
             TaskDescriptor *td = get_td(tid);
             td->state = READY;
@@ -47,7 +49,8 @@ void interrupt_handler() {
             set_result(td, (unsigned int) *uart1_data);
             event_notifier_awaited[UART1_RX_EVENT] = 0;
         } else if ( *uart1_status & TIS )  {
-            // if (!event_notifier_awaited[UART1_TX_EVENT]) return;
+            if (!event_notifier_awaited[UART1_TX_EVENT]) return;
+            debug("TIS: tis status change");
             /*
             TID tid = deque();
             if (cts is asserted) {
@@ -58,17 +61,13 @@ void interrupt_handler() {
             }
             */
             // Disable transmit interrupt in UART
-            // debug("before uart1_flags %x", *uart1_flags);
-            // *uart1_control &= ~TIEN_MASK;
-            // debug("after uart1_flags %x", *uart1_flags);
-            // if ( *uart1_flags & CTS_MASK ) {
-            //     tid = event_notifier_registrar[UART1_TX_EVENT];
-            //     TaskDescriptor *td = get_td(tid);
-            //     td->state = READY;
-            //     pq_insert(&_kernel_state.ready_queue, tid);
-            //     set_result(td, (unsigned int) 0);
-            //     event_notifier_awaited[UART1_TX_EVENT] = 0;
-            // }
+            *uart1_control &= ~TIEN_MASK;
+            tid = event_notifier_registrar[UART1_TX_EVENT];
+            TaskDescriptor *td = get_td(tid);
+            td->state = READY;
+            pq_insert(&_kernel_state.ready_queue, tid);
+            set_result(td, (unsigned int) 0);
+            event_notifier_awaited[UART1_TX_EVENT] = 0;
         } else {
             error("something went wrong here")
         }
@@ -85,15 +84,17 @@ void sys_await_event(int eventid) {
         td->state = EVENT_WAIT;
         if ( eventid == UART1_TX_EVENT || eventid == UART2_TX_EVENT ) {
             // Enable transmit interrupt in UART
-            // debug("before uart1_flags %x", *uart1_flags);
-            // *uart1_control |= TIEN_MASK;
-            // debug("after uart1_flags %x", *uart1_flags);
+            *uart1_control |= TIEN_MASK;
         }
     } else if ( eventid == CTS_AST ) {
         if ( *uart1_flags & CTS_MASK ) {
+            debug("INTR: cts already asserted");
             td->state = READY;
             pq_insert(&_kernel_state.ready_queue, tid);
             set_result(td, (unsigned int) 0);
+        } else {
+            debug("INTR: wait for cts asserted");
+            *uart1_control |= MSIEN_MASK;
         }
     } else if ( eventid == CTS_NEG ) {
         /*
@@ -107,9 +108,13 @@ void sys_await_event(int eventid) {
             }
         */
         if ( !(*uart1_flags & CTS_MASK) ) {
+            debug("INTR: cts already negated");
             td->state = READY;
             pq_insert(&_kernel_state.ready_queue, tid);
             set_result(td, (unsigned int) 0);
+        } else {
+            debug("INTR: wait for cts negated");
+            *uart1_control |= MSIEN_MASK;
         }
     } else {
         pq_insert(&_kernel_state.ready_queue, tid);

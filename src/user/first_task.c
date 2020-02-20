@@ -18,12 +18,13 @@ void function_wrapper(void (*function)())
 
 void uart1_client() {
     int uart1_rx_server_tid = WhoIs(UART1_RX_SERVER_NAME);
-    log("receive a byte %d", Getc(uart1_rx_server_tid, COM1));
-    log("receive a byte %d", Getc(uart1_rx_server_tid, COM1));
-    log("receive a byte %d", Getc(uart1_rx_server_tid, COM1));
-    log("receive a byte %d", Getc(uart1_rx_server_tid, COM1));
-    log("receive a byte %d", Getc(uart1_rx_server_tid, COM1));
-    log("receive a byte %d", Getc(uart1_rx_server_tid, COM1));
+    int uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
+    for (int i = 0; i < 26; i++) {
+        log("put a byte %d", Putc(uart1_tx_server_tid, COM1, 'a' + i));
+    }
+    for (int i = 0; i < 26; i++) {
+        log("get a byte %d", Getc(uart1_rx_server_tid, COM1));
+    }
 }
 
 void user_task_0() {
@@ -35,8 +36,8 @@ void user_task_0() {
     log("Created Clock Server: <%d>", clock_server_tid);
     int uart1_rx_server_tid = Create(UART1_RX_SERVER_PRIORITY, uart1_rx_server);
     log("Created UART1 RX Server: <%d>", uart1_rx_server_tid);
-    // int uart1_tx_server_tid = Create(UART1_TX_SERVER_PRIORITY, uart1_tx_server);
-    // log("Created UART1 TX Server: <%d>", uart1_tx_server_tid);
+    int uart1_tx_server_tid = Create(UART1_TX_SERVER_PRIORITY, uart1_tx_server);
+    log("Created UART1 TX Server: <%d>", uart1_tx_server_tid);
     int uart1_client_tid = Create(CLIENT_TASK_PRIORITY, uart1_client);
     log("Created UART1 Client: <%d>", uart1_client_tid);
     // int priority_base = 4, number_of_tasks = 4;

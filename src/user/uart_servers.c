@@ -23,7 +23,7 @@ int Getc(int tid, int channel)
 
 int Putc(int tid, int channel, char ch) 
 {
-    if (channel != COM1 || channel != COM2) return -1;
+    if (channel != COM1 && channel != COM2) return -1;
     if (channel == COM1 && tid != _uart1_tx_server_tid) return -1;
     if (channel == COM2 && tid != _uart2_tx_server_tid) return -1;
     int uart_server_tid = channel == COM1 ? _uart1_tx_server_tid : _uart2_tx_server_tid;
@@ -75,15 +75,16 @@ void uart1_rx_server()
             byte_buffer.buffer[byte_buffer.end++] = uart1_rx_message.data;
             byte_buffer.end &= UART_BUFFER_MASK;
             if (  client_queue.index != client_queue.size ) {
-                debug("get byte from uart1 rx server and send to waiting clients");
+                debug("get byte from uart1 rx notifier and send to waiting clients");
                 uart1_rx_message.data = byte_buffer.buffer[byte_buffer.start++];
                 byte_buffer.start &= UART_BUFFER_MASK;
                 while((replied_tid = deque(&client_queue)) != -1) {
                     Reply(replied_tid, (const char *) &uart1_rx_message, sizeof(uart1_rx_message));
                 }
             } else {
-                debug("get byte from uart1 rx server and add to buffer");
+                debug("get byte from uart1 rx notifier and add to buffer");
             }
+            uart1_rx_message.source = FROM_SERVER;
             Reply(uart1_rx_notifier_tid, (const char *) &uart1_rx_message, sizeof(uart1_rx_message));
             break;
         case FROM_USER:
@@ -120,14 +121,20 @@ void uart1_tx_notifier()
     UartMessage uart1_tx_message;
     uart1_tx_message.source = FROM_DEVICE;
     while ((uart1_tx_message.data = AwaitEvent(UART1_TX_EVENT)) > -1) {
-        debug("uart1 tx notifier");
+        debug("notifier: await cts ast");
         AwaitEvent(CTS_AST);
+        debug("notifier: cts asserted");
+        uart1_tx_message.source = FROM_DEVICE;
         int result = Send(_uart1_tx_server_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message), (char *)&uart1_tx_message, sizeof(uart1_tx_message));
         if (result < 0) {
             error("something went wrong here");
         } else {
+            debug("notifier: tries to put char %c", uart1_tx_message.data);
             *uart1_data = uart1_tx_message.data;
+            // TODO: write a state machine, if status already triggered, clear intr, a state, if not, another state
+            debug("notifier: await cts neg");
             AwaitEvent(CTS_NEG);
+            debug("notifier: cts negated");
         }
     }
 }
@@ -141,32 +148,36 @@ void uart1_tx_server()
     if (uart1_tx_notifier_tid < 0) {
         error("failed to create uart1 tx notifier");
     }
-    int client_tid, notifier_tid = -1;
+    int client_tid, put_ready = 0;
     while (Receive(&client_tid, (char *) &uart1_tx_message, sizeof(uart1_tx_message))) {
         switch ( uart1_tx_message.source )
         {
         case FROM_DEVICE:
             if (byte_buffer.start == byte_buffer.end) {
-                notifier_tid = client_tid;
+                debug("server: register notifier %d", client_tid);
+                put_ready = 1;
             } else {
                 uart1_tx_message.data = byte_buffer.buffer[byte_buffer.start++];
                 byte_buffer.start &= UART_BUFFER_MASK;
                 // to differentiate if the notifier has been waiting or not
                 uart1_tx_message.source = FROM_SERVER;
-                Reply(notifier_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message));
+                debug("server: put char %c to notifier from buffer %d", uart1_tx_message.data, uart1_tx_notifier_tid);
+                Reply(uart1_tx_notifier_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message));
             }
             break;
         case FROM_USER:
             byte_buffer.buffer[byte_buffer.end++] = uart1_tx_message.data;
             byte_buffer.end &= UART_BUFFER_MASK;
-            if (notifier_tid != -1) {
+            if (put_ready) {
                 uart1_tx_message.data = byte_buffer.buffer[byte_buffer.start++];
                 byte_buffer.start &= UART_BUFFER_MASK;
-                Reply(notifier_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message));
-                notifier_tid = -1;
+                debug("server: put char %c to notifier from user", uart1_tx_message.data);
+                Reply(uart1_tx_notifier_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message));
+                put_ready = 0;
                 uart1_tx_message.source = FROM_DEVICE;
             } else {
                 // to differentiate if the client has been waiting or not
+                debug("server: tx not ready reply back");
                 uart1_tx_message.source = FROM_SERVER;
             }
             Reply(client_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message));
