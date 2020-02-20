@@ -11,6 +11,7 @@
 #define CHECK_BIT(x, y) (x & (1 << y))
 #define UNUSED(x) (void)(x)
 #define INTERRUPT_COUNT 5
+#define CTS_INTERRUPT_COUNT 2
 
 #define INIT_TASK_PRIORITY 0
 #define IDLE_TASK_PRIORITY 100

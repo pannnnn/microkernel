@@ -5,6 +5,7 @@
  * Include section
  */
 #include <ds.h>
+#include <shared.h>
 
 /*
  * Macro definition
@@ -145,6 +146,10 @@ typedef struct
     int td_user_stack_availability[KERNEL_STACK_TD_LIMIT];
 } KernelState;
 
+/*
+ *  Shared global integer
+ */
+extern int event_notifier_awaited[INTERRUPT_COUNT + CTS_INTERRUPT_COUNT];
 
 /*
  * Function definition

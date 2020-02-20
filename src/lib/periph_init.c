@@ -1,6 +1,9 @@
+#include <kernel.h>
 #include <lib_ts7200.h>
 #include <lib_periph_bwio.h>
 #include <stdio.h>
+
+int event_notifier_awaited[INTERRUPT_COUNT + CTS_INTERRUPT_COUNT] = {0};
 
 // initializes the uarts so they can be communicated with
 void init_uart() {
@@ -27,21 +30,21 @@ void init_terminal() {
 }
 
 void init_interrupt() {
-    // volatile int *timer2_clear, *timer2_load, *timer2_control;
-    // timer2_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
-    // timer2_load = (int *)( TIMER2_BASE + LDR_OFFSET );
-	// timer2_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
-    // *timer2_clear = 0;
-    // *timer2_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K;
-    // *timer2_control = ENABLE_MASK | MODE_MASK;
+    volatile int *timer2_clear, *timer2_load, *timer2_control;
+    timer2_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
+    timer2_load = (int *)( TIMER2_BASE + LDR_OFFSET );
+	timer2_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
+    *timer2_clear = 0;
+    *timer2_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K;
+    *timer2_control = ENABLE_MASK | MODE_MASK;
 
-    // volatile int *vic1_int_select, *vic1_int_enable_clear, *vic1_int_enable;
-    // vic1_int_select = (int *) ( VIC1 + VICxIntSelect );
-    // vic1_int_enable_clear = (int *) ( VIC1 + VICxIntEnClear );
-    // vic1_int_enable = (int *) ( VIC1 + VICxIntEnable );
-    // *vic1_int_select = VIC_IRQ_MODE;
-    // *vic1_int_enable_clear = 0;
-    // *vic1_int_enable = (1 << TC2UI);
+    volatile int *vic1_int_select, *vic1_int_enable_clear, *vic1_int_enable;
+    vic1_int_select = (int *) ( VIC1 + VICxIntSelect );
+    vic1_int_enable_clear = (int *) ( VIC1 + VICxIntEnClear );
+    vic1_int_enable = (int *) ( VIC1 + VICxIntEnable );
+    *vic1_int_select = VIC_IRQ_MODE;
+    *vic1_int_enable_clear = 0;
+    *vic1_int_enable = (1 << TC2UI);
 
     volatile int *uart1_control;
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
@@ -57,17 +60,17 @@ void init_interrupt() {
 }
 
 void disable_interrupt() {
-    // volatile int * vic1_int_enable_clear, *vic1_int_enable;
-    // vic1_int_enable_clear = (int *) ( VIC1 + VICxIntEnClear );
-    // vic1_int_enable = (int *) ( VIC1 + VICxIntEnable );
-    // *vic1_int_enable = 0;
-    // *vic1_int_enable_clear = 0;
+    volatile int * vic1_int_enable_clear, *vic1_int_enable;
+    vic1_int_enable_clear = (int *) ( VIC1 + VICxIntEnClear );
+    vic1_int_enable = (int *) ( VIC1 + VICxIntEnable );
+    *vic1_int_enable = 0;
+    *vic1_int_enable_clear = 0;
 
-    // volatile int *timer2_control, *timer2_clear;
-	// timer2_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
-    // timer2_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
-    // *timer2_control = 0;
-    // *timer2_clear = 0;
+    volatile int *timer2_control, *timer2_clear;
+	timer2_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
+    timer2_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
+    *timer2_control = 0;
+    *timer2_clear = 0;
 
     volatile int * vic2_int_enable_clear, *vic2_int_enable;
     vic2_int_enable_clear = (int *) ( VIC2 + VICxIntEnClear );

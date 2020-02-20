@@ -11,6 +11,7 @@
 
 #define usage_notification(f, ...)  { putstr("\033[s\033[1;18H"); printf(f, ## __VA_ARGS__); putstr("\033[u");}
 #define log(f, ...)                 { printf(f, ## __VA_ARGS__); putstr("\n\r"); }
+#define highlight(f, ...)           { putstr("\033[32m"); printf(f, ## __VA_ARGS__); putstr("\033[0m\n\r"); }
 #define error(f, ...)               { putstr("\033[31m"); printf(f, ## __VA_ARGS__); putstr("\033[0m\n\r"); }
 
 #if DEBUG

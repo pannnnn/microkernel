@@ -8,6 +8,7 @@ static int _uart1_tx_server_tid = -1;
 static int _uart2_rx_server_tid = -1;
 static int _uart2_tx_server_tid = -1;
 static volatile int *uart1_data = (int *)( UART1_BASE + UART_DATA_OFFSET );
+static volatile int *uart1_flags = (int *) ( UART1_BASE + UART_FLAG_OFFSET );
 
 int Getc(int tid, int channel) 
 {
@@ -122,7 +123,12 @@ void uart1_tx_notifier()
     uart1_tx_message.source = FROM_DEVICE;
     while ((uart1_tx_message.data = AwaitEvent(UART1_TX_EVENT)) > -1) {
         debug("notifier: await cts ast");
-        AwaitEvent(CTS_AST);
+        // To speed up
+        if ( !(*uart1_flags & CTS_MASK) ) {
+            AwaitEvent(CTS_AST);
+        } else {
+            highlight("notifier: cts already asserted");
+        }
         debug("notifier: cts asserted");
         uart1_tx_message.source = FROM_DEVICE;
         int result = Send(_uart1_tx_server_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message), (char *)&uart1_tx_message, sizeof(uart1_tx_message));
@@ -131,9 +137,13 @@ void uart1_tx_notifier()
         } else {
             debug("notifier: tries to put char %c", uart1_tx_message.data);
             *uart1_data = uart1_tx_message.data;
-            // TODO: write a state machine, if status already triggered, clear intr, a state, if not, another state
             debug("notifier: await cts neg");
-            AwaitEvent(CTS_NEG);
+            // To speed up
+            if ( *uart1_flags & CTS_MASK ) {
+                AwaitEvent(CTS_NEG);
+            } else {
+                highlight("notifier: cts already negated");
+            }
             debug("notifier: cts negated");
         }
     }

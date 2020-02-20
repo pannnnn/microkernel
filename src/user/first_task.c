@@ -19,12 +19,12 @@ void function_wrapper(void (*function)())
 void uart1_client() {
     int uart1_rx_server_tid = WhoIs(UART1_RX_SERVER_NAME);
     int uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
-    for (int i = 0; i < 26; i++) {
+    for (int i = 0; i < 5; i++) {
         log("put a byte %d", Putc(uart1_tx_server_tid, COM1, 'a' + i));
     }
-    for (int i = 0; i < 26; i++) {
-        log("get a byte %d", Getc(uart1_rx_server_tid, COM1));
-    }
+    // for (int i = 0; i < 26; i++) {
+    //     log("get a byte %d", Getc(uart1_rx_server_tid, COM1));
+    // }
 }
 
 void user_task_0() {
