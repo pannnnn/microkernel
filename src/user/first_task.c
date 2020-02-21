@@ -19,12 +19,20 @@ void function_wrapper(void (*function)())
 void uart1_client() {
     int uart1_rx_server_tid = WhoIs(UART1_RX_SERVER_NAME);
     int uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
-    for (int i = 0; i < 5; i++) {
+    int uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
+    int uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
+    for (int i = 0; i < 26; i++) {
         log("put a byte %d", Putc(uart1_tx_server_tid, COM1, 'a' + i));
     }
-    // for (int i = 0; i < 26; i++) {
-    //     log("get a byte %d", Getc(uart1_rx_server_tid, COM1));
-    // }
+    for (int i = 0; i < 26; i++) {
+        log("put a byte %d", Putc(uart2_tx_server_tid, COM2, 'a' + i));
+    }
+    for (int i = 0; i < 26; i++) {
+        log("get a byte %d", Getc(uart1_rx_server_tid, COM1));
+    }
+    for (int i = 0; i < 26; i++) {
+        log("get a byte %d", Getc(uart2_rx_server_tid, COM2));
+    }
 }
 
 void user_task_0() {
@@ -38,6 +46,10 @@ void user_task_0() {
     log("Created UART1 RX Server: <%d>", uart1_rx_server_tid);
     int uart1_tx_server_tid = Create(UART1_TX_SERVER_PRIORITY, uart1_tx_server);
     log("Created UART1 TX Server: <%d>", uart1_tx_server_tid);
+    int uart2_rx_server_tid = Create(UART2_RX_SERVER_PRIORITY, uart2_rx_server);
+    log("Created UART2 RX Server: <%d>", uart2_rx_server_tid);
+    int uart2_tx_server_tid = Create(UART2_TX_SERVER_PRIORITY, uart2_tx_server);
+    log("Created UART2 TX Server: <%d>", uart2_tx_server_tid);
     int uart1_client_tid = Create(CLIENT_TASK_PRIORITY, uart1_client);
     log("Created UART1 Client: <%d>", uart1_client_tid);
     // int priority_base = 4, number_of_tasks = 4;
@@ -70,9 +82,9 @@ void client_task() {
 
 void idle_task() {
     volatile int *sys_sw_lock, *device_cfg, *halt;
-    sys_sw_lock = (int *) ( SysSWLock );
-    device_cfg = (int *) ( DeviceCfg );
-    halt = (int *) ( Halt );
+    sys_sw_lock = (int *) ( SYS_SW_LOCK );
+    device_cfg = (int *) ( DEVICE_CFG );
+    halt = (int *) ( HALT );
     *sys_sw_lock = *sys_sw_lock | 0xAA;
     *device_cfg = *device_cfg | 1;
     // putstr("\033[s\033[HIdle Percentage:\033[u"); 

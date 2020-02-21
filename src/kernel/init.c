@@ -11,8 +11,8 @@ extern int enter_interrupt();
 // defined as a global variable in main.c
 extern KernelState _kernel_state;
 
-int percent_idle = 0;
-int event_notifier_registrar[INTERRUPT_COUNT] = {-1};
+// global variable
+int percent_idle;
 
 // set enter_kernel as the software interrupt handler
 static void register_swi_handler()
@@ -72,6 +72,7 @@ static void create_first_user_task()
     sys_create(INIT_TASK_PRIORITY, user_task_0);
     int idle_task_tid = sys_create(IDLE_TASK_PRIORITY, idle_task);
     _kernel_state.performance.idle_task_tid = idle_task_tid;
+    percent_idle = 0;
 }
 
 // initialize the peripherals

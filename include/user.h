@@ -15,10 +15,12 @@
 #define CLOCK_SERVER_NAME "clock_server"
 #define UART_BUFFER_SIZE 4096
     #define UART_BUFFER_MASK 0xFFF
+#define UART2_FIFO_SIZE 16
 #define UART1_RX_SERVER_NAME "uart1_rx_server"
 #define UART1_TX_SERVER_NAME "uart1_tx_server"
 #define UART2_RX_SERVER_NAME "uart2_rx_server"
 #define UART2_TX_SERVER_NAME "uart2_tx_server"
+#define COMMAND_SERVER_NAME "command_server"
 
 /*
  * Enum definition

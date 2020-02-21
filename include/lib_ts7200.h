@@ -98,6 +98,7 @@
 #define VIC2 0x800C0000
 	#define UART1_INTERRUPT 20
 	#define UART1_INT_MASK 0x100000
+	#define UART2_INTERRUPT 22
 	#define UART2_INT_MASK 0x400000
 #define VICxIntEnable		0x10
 #define VICxIntEnClear		0x14
@@ -113,8 +114,11 @@
 
 
 // Specific to idle mode
-#define SysSWLock 			0x809300C0
-#define DeviceCfg 			0x80930080
-#define Halt 				0x80930008
+#define SYS_SW_LOCK 		0x809300C0
+#define DEVICE_CFG 			0x80930080
+#define HALT 				0x80930008
+
+// Specific to terminal
+#define TERMINAL_ENTER_KEY_CODE 13
 
 #endif

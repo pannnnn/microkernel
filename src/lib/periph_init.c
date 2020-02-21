@@ -1,9 +1,11 @@
 #include <kernel.h>
+#include <shared.h>
 #include <lib_ts7200.h>
 #include <lib_periph_bwio.h>
 #include <stdio.h>
 
-int event_notifier_awaited[INTERRUPT_COUNT + CTS_INTERRUPT_COUNT] = {0};
+int event_notifier_awaited[INTERRUPT_COUNT + CTS_INTERRUPT_COUNT];
+int event_notifier_registrar[INTERRUPT_COUNT];
 
 // initializes the uarts so they can be communicated with
 void init_uart() {
@@ -30,6 +32,9 @@ void init_terminal() {
 }
 
 void init_interrupt() {
+    for (int i = 0; i < INTERRUPT_COUNT + CTS_INTERRUPT_COUNT; i++) event_notifier_awaited[i] = 0;
+    for (int i = 0; i < INTERRUPT_COUNT; i++) event_notifier_registrar[i] = -1;
+
     volatile int *timer2_clear, *timer2_load, *timer2_control;
     timer2_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
     timer2_load = (int *)( TIMER2_BASE + LDR_OFFSET );
@@ -50,13 +55,17 @@ void init_interrupt() {
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
     *uart1_control = RIEN_MASK | UARTEN_MASK;
 
+    volatile int *uart2_control;
+    uart2_control = (int *) (UART2_BASE + UART_CTLR_OFFSET);
+    *uart2_control = RIEN_MASK | RTIEN_MASK | UARTEN_MASK;
+
     volatile int *vic2_int_select, *vic2_int_enable_clear, *vic2_int_enable;
     vic2_int_select = (int *) ( VIC2 + VICxIntSelect );
     vic2_int_enable_clear = (int *) ( VIC2 + VICxIntEnClear );
     vic2_int_enable = (int *) ( VIC2 + VICxIntEnable );
     *vic2_int_select = VIC_IRQ_MODE;
     *vic2_int_enable_clear = 0;
-    *vic2_int_enable = (1 << UART1_INTERRUPT);
+    *vic2_int_enable = (1 << UART1_INTERRUPT) | (1 << UART2_INTERRUPT);
 }
 
 void disable_interrupt() {
@@ -81,6 +90,10 @@ void disable_interrupt() {
     volatile int *uart1_control;
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
     *uart1_control = 0;
+
+    volatile int *uart2_control;
+    uart2_control = (int *) (UART2_BASE + UART_CTLR_OFFSET);
+    *uart2_control = 0;
 }
 
 void cache_on() {
