@@ -128,6 +128,9 @@ void uart2_tx_server();
 int Getc(int tid, int channel);
 int Putc(int tid, int channel, char ch);
 
+void train_server();
+void command_server();
+
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
 HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);
 void put(unsigned int (*hash_table)[2], int hash_size, const char *key, unsigned int value);

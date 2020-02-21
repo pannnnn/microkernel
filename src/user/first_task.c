@@ -50,12 +50,12 @@ void user_task_0() {
     log("Created UART2 RX Server: <%d>", uart2_rx_server_tid);
     int uart2_tx_server_tid = Create(UART2_TX_SERVER_PRIORITY, uart2_tx_server);
     log("Created UART2 TX Server: <%d>", uart2_tx_server_tid);
-    int command_server_tid = Create(COMMAND_SERVER_PRIORITY, command_server_tid);
-    log("Created Command Server: <%d>", command_server_tid);
-    int train_server_tid = Create(TRAIN_SERVER_PRIORITY, train_server_tid);
+    int train_server_tid = Create(TRAIN_SERVER_PRIORITY, train_server);
     log("Created Train Server: <%d>", train_server_tid);
-    int uart1_client_tid = Create(CLIENT_TASK_PRIORITY, uart1_client);
-    log("Created UART1 Client: <%d>", uart1_client_tid);
+    int command_server_tid = Create(COMMAND_SERVER_PRIORITY, command_server);
+    log("Created Command Server: <%d>", command_server_tid);
+    // int uart1_client_tid = Create(CLIENT_TASK_PRIORITY, uart1_client);
+    // log("Created UART1 Client: <%d>", uart1_client_tid);
 
     // int priority_base = 4, number_of_tasks = 4;
     // for (int i = 0; i < number_of_tasks; i++) {

@@ -316,12 +316,14 @@ void uart2_tx_server()
                 debug("uart2 server: register notifier %d", client_tid);
                 put_ready = 1;
             } else {
-                for (int i = byte_buffer.start, count = 0; 
+                int count = 0;
+                for (int i = byte_buffer.start;
                     byte_buffer.start != byte_buffer.end && !(*uart2_flags & TXFF_MASK); 
-                    i++, count++) {
+                    i++) {
                     // highlight("buffer %c", byte_buffer.buffer[byte_buffer.start]);
                     *uart2_data = byte_buffer.buffer[byte_buffer.start++];
                     byte_buffer.start &= UART_BUFFER_MASK;
+                    count++;
                 }
                 // to differentiate if the notifier has been waiting or not
                 uart2_tx_message.source = FROM_SERVER;
