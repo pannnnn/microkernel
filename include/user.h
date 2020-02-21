@@ -15,6 +15,7 @@
 #define CLOCK_SERVER_NAME "clock_server"
 #define UART_BUFFER_SIZE 4096
     #define UART_BUFFER_MASK 0xFFF
+#define COMMAND_MAX_LEN 8
 #define UART2_FIFO_SIZE 16
 #define UART1_RX_SERVER_NAME "uart1_rx_server"
 #define UART1_TX_SERVER_NAME "uart1_tx_server"

@@ -118,7 +118,30 @@
 #define DEVICE_CFG 			0x80930080
 #define HALT 				0x80930008
 
-// Specific to terminal
+// terminal
 #define TERMINAL_ENTER_KEY_CODE 13
+
+// train
+#define TRAIN_START 96
+#define TRAIN_STOP 97
+#define TRAIN_MIN_SPEED 0
+#define TRAIN_MAX_SPEED 14
+#define TRAIN_REVERSE_DIRECTION 15
+#define TRAIN_LIGHTS_OFF 0
+#define TRAIN_LIGHTS_ON 16
+
+// rail
+#define SWITCH_END 32
+	#define SWITCH_END_DELAY_IN_TEN_MILLSEC 8
+#define SWITCH_STRAIGHT 33
+#define SWITCH_BRANCH 34
+#define SWITCH_ONE_WAY_COUNT 18
+#define SWITCH_TWO_WAY_1a 153
+#define SWITCH_TWO_WAY_1b 154
+#define SWITCH_TWO_WAY_2a 155
+#define SWITCH_TWO_WAY_2b 156
+#define SENSOR_DATA_BASE 128
+	#define SENSOR_DATA_MODULE_SIZE 5
+	#define SENSOR_DATA_BYTES_PER_MODULE 2
 
 #endif
