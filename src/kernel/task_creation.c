@@ -31,6 +31,8 @@ int _sys_create_td(int priority)
     td->pid = _kernel_state.scheduled_tid;
     td->priority = priority;
     td->state = READY;
+    td->inbox.index = 0;
+    td->inbox.size = 0;
     return tid;
 }
 

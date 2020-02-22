@@ -51,7 +51,7 @@ void k_main()
         int tid = schedule();
 
         if (tid == -1 || tid == _kernel_state.performance.idle_task_tid) {
-            if (_kernel_state.num_active_tasks <= NUM_ALWAYS_LIVE_TASKS) {
+            if (_kernel_state.num_active_tasks < NUM_ALWAYS_LIVE_TASKS) {
                 log("Exiting");
                 return;
             }

@@ -3,25 +3,22 @@
 #include <lib_ts7200.h>
 #include <stdio.h>
 
-static int _command_server_tid = -1;
-
 typedef struct
 {
     char content[COMMAND_MAX_LEN];
     int len;
 } Command;
 
+static int _clock_server_tid = -1;
 static int _uart1_rx_server_tid = -1;
 static int _uart1_tx_server_tid = -1;
 static int _uart2_rx_server_tid = -1;
 static int _uart2_tx_server_tid = -1;
-static int _clock_server_tid = -1;
 static int _train_speed = 0;
 
 void _process_command(Command *cmd) {
     if (cmd->content[0] == 'q' && cmd->len == 1) {
-        // TODO: exit kernel
-        // Exit();
+        Exit();
     }
     if (cmd->content[2] != ' ') return;
     if (cmd->content[3] < '0' && cmd->content[3] > '9') return;
@@ -108,24 +105,21 @@ void _process_command(Command *cmd) {
 void _init_command_server() 
 {
 	RegisterAs(COMMAND_SERVER_NAME);
-    _command_server_tid = WhoIs(COMMAND_SERVER_NAME);
-}
-
-void train_server() 
-{
-    _uart1_rx_server_tid = WhoIs(UART1_RX_SERVER_NAME);
-    _uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
-    _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
-    _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
-    Putc(_uart1_tx_server_tid, COM1, TRAIN_START);
-}
-
-void command_server() {
     _clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
     _uart1_rx_server_tid = WhoIs(UART1_RX_SERVER_NAME);
     _uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
     _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
     _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
+    _train_speed = 0;
+}
+
+void train_server() 
+{
+    Putc(_uart1_tx_server_tid, COM1, TRAIN_START);
+}
+
+void command_server() {
+    _init_command_server();
     unsigned char c;
     Command cmd = {.content = {0}, .len = 0};
     while ( (c = Getc(_uart2_rx_server_tid, COM2)) > -1) {

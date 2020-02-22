@@ -21,7 +21,7 @@ void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 	TaskDescriptor *sender_td = get_td(sender_tid);
 	sender_td->message.replied_message = reply;
 	sender_td->message.replied_message_length = rplen;
-
+	
 	TaskDescriptor *receiver_td = get_td(tid);
 	if (receiver_td->state == RECEIVE_WAIT) {
 		receiver_td->state = READY;

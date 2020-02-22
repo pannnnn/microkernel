@@ -40,7 +40,7 @@ void init_interrupt() {
     timer2_load = (int *)( TIMER2_BASE + LDR_OFFSET );
 	timer2_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
     *timer2_clear = 0;
-    *timer2_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K;
+    *timer2_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K * 10;
     *timer2_control = ENABLE_MASK | MODE_MASK;
 
     volatile int *vic1_int_select, *vic1_int_enable_clear, *vic1_int_enable;
@@ -89,11 +89,11 @@ void disable_interrupt() {
 
     volatile int *uart1_control;
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
-    *uart1_control = 0;
+    *uart1_control = UARTEN_MASK;
 
     volatile int *uart2_control;
     uart2_control = (int *) (UART2_BASE + UART_CTLR_OFFSET);
-    *uart2_control = 0;
+    *uart2_control = UARTEN_MASK;
 }
 
 void cache_on() {

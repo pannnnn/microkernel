@@ -10,22 +10,22 @@
 /*
  * Macro definition
  */
-#define KERNEL_STACK_ADDR 0x2000000
+#define KERNEL_STACK_ADDR 0x1F00000
     #define KERNEL_STACK_TD_COUNT 1024
     #define KERNEL_STACK_TD_LIMIT 128
     #define KERNEL_STACK_TD_SIZE 1024
-#define HEAP_ADDR 0x1F00000
+#define HEAP_ADDR 0x1E00000
     #define HEAP_META_SIZE 12
-    #define S_HEAP_REGION 0x1F00000
+    #define S_HEAP_REGION 0x1E00000
         #define S_HEAP_BLOCK_COUNT 16384
         #define S_HEAP_BLOCK_SIZE 64
-    #define M_HEAP_REGION 0x1E00000
+    #define M_HEAP_REGION 0x1D00000
         #define M_HEAP_BLOCK_COUNT 4096
         #define M_HEAP_BLOCK_SIZE 256
-    #define L_HEAP_REGION 0x1D00000
+    #define L_HEAP_REGION 0x1C00000
         #define L_HEAP_BLOCK_COUNT 1024
         #define L_HEAP_BLOCK_SIZE 1024
-#define USER_STACK_STACK_REGION 0x1C00000
+#define USER_STACK_STACK_REGION 0x1B00000
     #define USER_STACK_STACK_SIZE_PER_USER 0x10000
 
 #define SWI_HANDLER_ADDR   0x28
@@ -40,7 +40,7 @@
 #define MAX_PRIORITY 100
 
 // KEEP UPDATED
-#define NUM_ALWAYS_LIVE_TASKS   4
+#define NUM_ALWAYS_LIVE_TASKS   13
 
 /*
  * Enum definition
