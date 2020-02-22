@@ -10,6 +10,9 @@ void _init_clock_server()
 {
 	RegisterAs(CLOCK_SERVER_NAME);
     _clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
+    for (int i = 0;i < QUEUE_SIZE; i++) {
+        _tid_to_ticks[i] = 0;
+    }
 }
 
 int _await_queue_comparator1(int tid) 

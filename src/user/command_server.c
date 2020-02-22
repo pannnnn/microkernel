@@ -16,12 +16,23 @@ static int _uart2_rx_server_tid = -1;
 static int _uart2_tx_server_tid = -1;
 static int _train_speed = 0;
 
+void _init_command_server() 
+{
+	RegisterAs(COMMAND_SERVER_NAME);
+    _clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
+    _uart1_rx_server_tid = WhoIs(UART1_RX_SERVER_NAME);
+    _uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
+    _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
+    _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
+    _train_speed = 0;
+}
+
 void _process_command(Command *cmd) {
     if (cmd->content[0] == 'q' && cmd->len == 1) {
         Exit();
     }
     if (cmd->content[2] != ' ') return;
-    if (cmd->content[3] < '0' && cmd->content[3] > '9') return;
+    if (cmd->content[3] < '0' || cmd->content[3] > '9') return;
     // TODO: should we check valid range for train_number and switch_number
     if (cmd->content[0] == 't' && cmd->content[1] == 'r') {
         int train_number = -1, train_speed = -1;
@@ -95,39 +106,22 @@ void _process_command(Command *cmd) {
             switch_direction = switch_direction == 'S' ? SWITCH_STRAIGHT : SWITCH_BRANCH;
             Putc(_uart1_tx_server_tid, COM1, switch_direction);
             Putc(_uart1_tx_server_tid, COM1, (char) switch_number);
-            Delay(_clock_server_tid, SWITCH_END_DELAY_IN_TEN_MILLSEC);
+            Delay(_clock_server_tid, SWITCH_END_DELAY_TICKS);
             Putc(_uart1_tx_server_tid, COM1, SWITCH_END);
         }
     }
-
-}
-
-void _init_command_server() 
-{
-	RegisterAs(COMMAND_SERVER_NAME);
-    _clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
-    _uart1_rx_server_tid = WhoIs(UART1_RX_SERVER_NAME);
-    _uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
-    _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
-    _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
-    _train_speed = 0;
-}
-
-void train_server() 
-{
-    Putc(_uart1_tx_server_tid, COM1, TRAIN_START);
 }
 
 void command_server() {
     _init_command_server();
-    unsigned char c;
+    char c;
     Command cmd = {.content = {0}, .len = 0};
     while ( (c = Getc(_uart2_rx_server_tid, COM2)) > -1) {
         Putc(_uart2_tx_server_tid, COM2, c);
         if (c != TERMINAL_ENTER_KEY_CODE && cmd.len < COMMAND_MAX_LEN) {
             cmd.content[cmd.len++] = c;
         } else if (c == TERMINAL_ENTER_KEY_CODE) {
-            if (cmd.len < COMMAND_MAX_LEN) {
+            if (cmd.len <= COMMAND_MAX_LEN) {
                 _process_command(&cmd);
             }
             for (int i = 0; i < COMMAND_MAX_LEN; i++) cmd.content[i]= 0;

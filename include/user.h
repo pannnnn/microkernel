@@ -16,6 +16,7 @@
 #define UART_BUFFER_SIZE 4096
     #define UART_BUFFER_MASK 0xFFF
 #define COMMAND_MAX_LEN 8
+#define SENSOR_DATA_BYTES 10
 #define UART2_FIFO_SIZE 16
 #define UART1_RX_SERVER_NAME "uart1_rx_server"
 #define UART1_TX_SERVER_NAME "uart1_tx_server"
@@ -128,8 +129,8 @@ void uart2_tx_server();
 int Getc(int tid, int channel);
 int Putc(int tid, int channel, char ch);
 
-void train_server();
 void command_server();
+void train_server();
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
 HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);

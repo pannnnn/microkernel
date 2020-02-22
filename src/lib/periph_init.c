@@ -40,7 +40,7 @@ void init_interrupt() {
     timer2_load = (int *)( TIMER2_BASE + LDR_OFFSET );
 	timer2_control = (int *)( TIMER2_BASE + CRTL_OFFSET );
     *timer2_clear = 0;
-    *timer2_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K * 10;
+    *timer2_load = VIC_TIMER_INTR_INTERVAL * CLOCK_PER_MILLISEC_2K;
     *timer2_control = ENABLE_MASK | MODE_MASK;
 
     volatile int *vic1_int_select, *vic1_int_enable_clear, *vic1_int_enable;
@@ -51,13 +51,17 @@ void init_interrupt() {
     *vic1_int_enable_clear = 0;
     *vic1_int_enable = (1 << TC2UI);
 
-    volatile int *uart1_control;
+    volatile int *uart1_control, *uart1_intid_intclr;
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
-    *uart1_control = RIEN_MASK | UARTEN_MASK;
+    uart1_intid_intclr = (int *) (UART1_BASE + UART_INTR_OFFSET);
+    *uart1_control = UARTEN_MASK;
+    *uart1_intid_intclr = 0;
 
-    volatile int *uart2_control;
+    volatile int *uart2_control, *uart2_intid_intclr;
     uart2_control = (int *) (UART2_BASE + UART_CTLR_OFFSET);
-    *uart2_control = RIEN_MASK | RTIEN_MASK | UARTEN_MASK;
+    uart2_intid_intclr = (int *) (UART2_BASE + UART_INTR_OFFSET);
+    *uart2_control = UARTEN_MASK;
+    *uart2_intid_intclr = 0;
 
     volatile int *vic2_int_select, *vic2_int_enable_clear, *vic2_int_enable;
     vic2_int_select = (int *) ( VIC2 + VICxIntSelect );
@@ -87,13 +91,17 @@ void disable_interrupt() {
     *vic2_int_enable = 0;
     *vic2_int_enable_clear = 0;
 
-    volatile int *uart1_control;
+    volatile int *uart1_control, *uart1_intid_intclr;
     uart1_control = (int *) (UART1_BASE + UART_CTLR_OFFSET);
+    uart1_intid_intclr = (int *) (UART1_BASE + UART_INTR_OFFSET);
     *uart1_control = UARTEN_MASK;
+    *uart1_intid_intclr = 0;
 
-    volatile int *uart2_control;
+    volatile int *uart2_control, *uart2_intid_intclr;
     uart2_control = (int *) (UART2_BASE + UART_CTLR_OFFSET);
+    uart2_intid_intclr = (int *) (UART2_BASE + UART_INTR_OFFSET);
     *uart2_control = UARTEN_MASK;
+    *uart2_intid_intclr = 0;
 }
 
 void cache_on() {

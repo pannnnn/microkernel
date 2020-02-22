@@ -128,7 +128,7 @@ void uart1_tx_notifier()
         if ( !(*uart1_flags & CTS_MASK) ) {
             AwaitEvent(CTS_AST);
         } else {
-            highlight("uart1 notifier: cts already asserted");
+            // highlight("uart1 notifier: cts already asserted");
         }
         debug("uart1 notifier: cts asserted");
         uart1_tx_message.source = FROM_DEVICE;
@@ -143,7 +143,7 @@ void uart1_tx_notifier()
             if ( *uart1_flags & CTS_MASK ) {
                 AwaitEvent(CTS_NEG);
             } else {
-                highlight("uart1 notifier: cts already negated");
+                // highlight("uart1 notifier: cts already negated");
             }
             debug("uart1 notifier: cts negated");
         }
@@ -320,7 +320,6 @@ void uart2_tx_server()
                 for (int i = byte_buffer.start;
                     byte_buffer.start != byte_buffer.end && !(*uart2_flags & TXFF_MASK); 
                     i++) {
-                    // highlight("buffer %c", byte_buffer.buffer[byte_buffer.start]);
                     *uart2_data = byte_buffer.buffer[byte_buffer.start++];
                     byte_buffer.start &= UART_BUFFER_MASK;
                     count++;

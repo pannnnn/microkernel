@@ -30,7 +30,7 @@ void interrupt_handler() {
             // clear the interrupt
             *uart1_status = 0;
             *uart1_control &= ~MSIEN_MASK;
-            debug("INTR UART1 CTS: cts status change");
+            // highlight("INTR UART1 CTS: cts status change");
             if (!event_notifier_awaited[CTS_NEG] && !event_notifier_awaited[CTS_AST]) {
                 error("INTR UART1 CTS: not task waits for MIS intr");
                 return;
@@ -41,6 +41,7 @@ void interrupt_handler() {
         } else if ( *uart1_status & RIS )  {
             if (!event_notifier_awaited[UART1_RX_EVENT]) return;
             debug("INTR UART1 RIS: ris status change");
+            *uart1_control &= ~RIEN_MASK;
             tid = event_notifier_registrar[UART1_RX_EVENT];
             result = *uart1_data & DATA_MASK;
             event_notifier_awaited[UART1_RX_EVENT] = 0;
@@ -87,34 +88,37 @@ void sys_await_event(int eventid) {
     if ( eventid >= TIMER_EVENT && eventid <= UART2_TX_EVENT ) {
         event_notifier_awaited[eventid] = 1;
         td->state = EVENT_WAIT;
-        if ( eventid == UART2_RX_EVENT ) {
-            *uart2_control |= RIEN_MASK | RTIEN_MASK;
+        if ( eventid == UART1_RX_EVENT ) {
+            *uart1_control |= RIEN_MASK;
         }
         if ( eventid == UART1_TX_EVENT ) {
             *uart1_control |= TIEN_MASK;
+        }
+        if ( eventid == UART2_RX_EVENT ) {
+            *uart2_control |= RIEN_MASK | RTIEN_MASK;
         }
         if ( eventid == UART2_TX_EVENT ) {
             *uart2_control |= TIEN_MASK;
         }
     } else if ( eventid == CTS_AST ) {
         if ( *uart1_flags & CTS_MASK ) {
-            highlight("AWAIT: cts already asserted");
+            // highlight("AWAIT: cts already asserted");
             td->state = READY;
             pq_insert(&_kernel_state.ready_queue, tid);
             set_result(td, (unsigned int) 0);
         } else {
-            debug("AWAIT: wait for cts asserted");
+            // highlight("AWAIT: wait for cts asserted");
             event_notifier_awaited[eventid] = 1;
             *uart1_control |= MSIEN_MASK;
         }
     } else if ( eventid == CTS_NEG ) {
         if ( !(*uart1_flags & CTS_MASK) ) {
-            highlight("AWAIT: cts already negated");
+            // highlight("AWAIT: cts already negated");
             td->state = READY;
             pq_insert(&_kernel_state.ready_queue, tid);
             set_result(td, (unsigned int) 0);
         } else {
-            debug("AWAIT: wait for cts negated");
+            // highlight("AWAIT: wait for cts negated");
             event_notifier_awaited[eventid] = 1;
             *uart1_control |= MSIEN_MASK;
         }
