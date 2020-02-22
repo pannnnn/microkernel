@@ -40,7 +40,7 @@
 #define MAX_PRIORITY 100
 
 // KEEP UPDATED
-#define NUM_ALWAYS_LIVE_TASKS   13
+#define NUM_ALWAYS_LIVE_TASKS   15
 
 /*
  * Enum definition

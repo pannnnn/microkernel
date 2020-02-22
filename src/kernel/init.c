@@ -80,7 +80,6 @@ static void init_peripheral() {
     init_timer();
     init_terminal();
     init_uart();
-
     init_interrupt();
     cache_on();
 }

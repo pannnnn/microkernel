@@ -22,6 +22,10 @@ void _init_train_server()
     _uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
     _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
     _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
+    _acknowledged = 1;
+}
+
+void _init_rails() {
     Putc(_uart1_tx_server_tid, COM1, TRAIN_START);
     Delay(_clock_server_tid, INTER_COMMANDS_DELAY_TICKS);
 
@@ -45,7 +49,6 @@ void _init_train_server()
     }
     Putc(_uart1_tx_server_tid, COM1, SWITCH_END);
     Delay(_clock_server_tid, INTER_COMMANDS_DELAY_TICKS);
-    _acknowledged = 1;
 }
 
 void _process_sensor_data(char label, int data) {
@@ -53,9 +56,7 @@ void _process_sensor_data(char label, int data) {
         if (data & (1 << i)) {
             char str[3] = {label, '0' + (SENSOR_BITS_PER_MODULE - i) / 10, '0' + (SENSOR_BITS_PER_MODULE - i) % 10};
             for (int i = 0; i < 3; i++) {
-                Putc(_uart2_tx_server_tid, COM2, str[0]);
-                Putc(_uart2_tx_server_tid, COM2, str[1]);
-                Putc(_uart2_tx_server_tid, COM2, str[2]);
+                Putc(_uart2_tx_server_tid, COM2, str[i]);
 			}
         }
     }
@@ -81,8 +82,10 @@ void train_server()
 {
     _init_train_server();
     Create(TRAIN_DATA_PROCESSOR_PRIORITY, train_data_processor);
+    _init_rails();
     for (;;) {
         if (_acknowledged) {
+            // log("ticks: %d", Time(_clock_server_tid));
             Putc(_uart1_tx_server_tid, COM1, (char) SENSOR_DATA_QUERY_BYTE);
             _acknowledged = 0;
         }

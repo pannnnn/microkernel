@@ -35,6 +35,12 @@ void init_interrupt() {
     for (int i = 0; i < INTERRUPT_COUNT + CTS_INTERRUPT_COUNT; i++) event_notifier_awaited[i] = 0;
     for (int i = 0; i < INTERRUPT_COUNT; i++) event_notifier_registrar[i] = -1;
 
+    // clear garbage data from COM1
+    unsigned int cur_time = read_timer();
+    while (get_time_elaspsed(cur_time) < 100) {
+        *(volatile int *)( UART1_BASE + UART_DATA_OFFSET );
+    }
+
     volatile int *timer2_clear, *timer2_load, *timer2_control;
     timer2_clear = (int *) ( TIMER2_BASE + CLR_OFFSET );
     timer2_load = (int *)( TIMER2_BASE + LDR_OFFSET );
