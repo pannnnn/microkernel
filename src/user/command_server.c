@@ -34,7 +34,7 @@ static int _uart1_rx_server_tid = -1;
 static int _uart1_tx_server_tid = -1;
 static int _uart2_rx_server_tid = -1;
 static int _uart2_tx_server_tid = -1;
-static int _command_server = -1;
+static int _command_server_tid = -1;
 static int _train_speed = 0;
 
 static Command cmd_buffer[QUEUE_SIZE];
@@ -55,35 +55,8 @@ void _init_command_server()
     _uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
     _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
     _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
-    _command_server = MyTid();
+    _command_server_tid = MyTid();
     _train_speed = 0;
-}
-
-void _init_rails() 
-{
-    Putc(_uart1_tx_server_tid, COM1, TRAIN_START);
-
-    for (int sw = 1; sw <= SWITCH_ONE_WAY_COUNT; sw++) {
-        Delay(_clock_server_tid, INTER_COMMANDS_DELAY_TICKS);
-        Putc(_uart1_tx_server_tid, COM1, SWITCH_STRAIGHT);
-        Putc(_uart1_tx_server_tid, COM1, (char) sw);
-	}
-
-    int data[4][2] = {
-        {SWITCH_BRANCH, SWITCH_TWO_WAY_1a}, 
-        {SWITCH_STRAIGHT, SWITCH_TWO_WAY_1b}, 
-        {SWITCH_BRANCH, SWITCH_TWO_WAY_2a}, 
-        {SWITCH_STRAIGHT,SWITCH_TWO_WAY_2b}
-        };
-
-    for (int i = 0; i < 4; i++) {
-        Delay(_clock_server_tid, INTER_COMMANDS_DELAY_TICKS);
-        Putc(_uart1_tx_server_tid, COM1, data[i][0]);
-        Putc(_uart1_tx_server_tid, COM1, (char) data[i][1]);
-    }
-    Delay(_clock_server_tid, SWITCH_END_DELAY_TICKS);
-    Putc(_uart1_tx_server_tid, COM1, SWITCH_END);
-    Delay(_clock_server_tid, INTER_COMMANDS_DELAY_TICKS);
 }
 
 void _process_sensor_data(char label, int data) 
@@ -136,7 +109,7 @@ void _process_command(CommandBuffer *cmdBuf)
                 _train_speed = train_speed - TRAIN_LIGHTS_ON;
             }
             Command cmd = {.type = CT_TRAIN_NORMAL, .content = {_train_speed, train_number}, .len = 2};
-            int result = Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+            int result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
         }
     } else if (cmdBuf->content[0] == 'r' && cmdBuf->content[1] == 'v') {
@@ -149,14 +122,14 @@ void _process_command(CommandBuffer *cmdBuf)
         }
         if (train_number != -1) {
             Command cmd = {.type = CT_TRAIN_REVERSE, .content = {0, train_number}, .len = 2};
-            int result = Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+            int result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
             cmd.type = CT_TRAIN_NORMAL;
             cmd.content[0] = TRAIN_REVERSE_DIRECTION;
-            result = Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+            result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
             cmd.content[0] = _train_speed;
-            result = Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+            result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
         }
     } else if (cmdBuf->content[0] == 's' && cmdBuf->content[1] == 'w') {
@@ -183,15 +156,47 @@ void _process_command(CommandBuffer *cmdBuf)
             switch_direction = switch_direction == 'S' ? SWITCH_STRAIGHT : SWITCH_BRANCH;
 
             Command cmd = {.type = CT_SWITCH_NORMAL, .content = {switch_direction, switch_number}, .len = 2};
-            int result = Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+            int result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
             cmd.type = CT_SWITCH_END;
             cmd.content[0] = SWITCH_END;
             cmd.len = 1;
-            result = Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+            result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
         }
     }
+}
+
+void rails_task() 
+{
+    Command cmd = {.type = CT_TRAIN_NORMAL, .content = {TRAIN_START}, .len = 1};
+    Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+
+    cmd.type = CT_SWITCH_NORMAL;
+    cmd.len = 2;
+    for (int sw = 1; sw <= SWITCH_ONE_WAY_COUNT; sw++) {
+        cmd.content[0] = SWITCH_STRAIGHT;
+        cmd.content[1] = sw;
+        Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+	}
+
+    int data[4][2] = {
+        {SWITCH_BRANCH, SWITCH_TWO_WAY_1a}, 
+        {SWITCH_STRAIGHT, SWITCH_TWO_WAY_1b}, 
+        {SWITCH_BRANCH, SWITCH_TWO_WAY_2a}, 
+        {SWITCH_STRAIGHT,SWITCH_TWO_WAY_2b}
+        };
+
+    for (int i = 0; i < 4; i++) {
+        cmd.content[0] = data[i][0];
+        cmd.content[1] = data[i][1];
+        Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+    }
+
+    cmd.type = CT_SWITCH_END;
+    cmd.len = 1;
+    cmd.content[0] = SWITCH_END;
+    Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
 }
 
 void sensor_executor() 
@@ -201,7 +206,7 @@ void sensor_executor()
     int count = 0, acknowledged = 0;
     char buffer[2];
     // trigger first sensor data
-    int result = Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+    int result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
     if (result < 0) error("something went wrong here");
     while ( (c = Getc(_uart1_rx_server_tid, COM1) ) > -1) {
         buffer[count % 2] = c;
@@ -212,7 +217,7 @@ void sensor_executor()
         acknowledged = count / SENSOR_MODULE_BYTES_COUNT;
         count %= SENSOR_MODULE_BYTES_COUNT;
         if (acknowledged) {
-            result = Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+            result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
         }
     }
@@ -242,7 +247,7 @@ void command_executor()
     Queue command_queue = {.size = 0, .index = 0, .get_arg1 = _command_comparator1, .get_arg2 = _command_comparator2};
     int curr_ticks = 0, train_ticks = 0;
     int cmd_id, delay = INTER_COMMANDS_DELAY_TICKS;
-    while(Send(_command_server, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd)) > -1) {
+    while(Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd)) > -1) {
         switch (cmd.type)
         {
         case CT_FETCH_COMMAND:
@@ -303,7 +308,7 @@ void command_server()
     Create(SENSOR_EXECUTOR_PRIORITY, sensor_executor);
     Create(TERMINAL_EXECUTOR_PRIORITY, terminal_executor);
     Create(COMMAND_EXECUTOR_PRIORITY, command_executor);
-    _init_rails();
+    Create(RAILS_TASK_PRIORITY, rails_task);
     Queue cmd_queue = {.size = 0, .index = 0};
     int client_tid, cmd_id, id = 0;
     while (Receive(&client_tid, (char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]))) {

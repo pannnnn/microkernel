@@ -29,7 +29,7 @@ void name_server() {
     unsigned int _hash_table[HASHSIZE][2];
     init_hash_table(_hash_table, HASHSIZE);
     _name_server_tid = MyTid();
-    log("Name server tid <%d>", _name_server_tid);
+    // log("Name server tid <%d>", _name_server_tid);
     int client_tid, result;
     NSMessage ns_message;
     HashEntry *entry;

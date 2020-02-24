@@ -23,8 +23,8 @@
         #define M_HEAP_BLOCK_COUNT 4096
         #define M_HEAP_BLOCK_SIZE 256
     #define L_HEAP_REGION 0x1C00000
-        #define L_HEAP_BLOCK_COUNT 1024
-        #define L_HEAP_BLOCK_SIZE 1024
+        #define L_HEAP_BLOCK_COUNT 256
+        #define L_HEAP_BLOCK_SIZE 4096
 #define USER_STACK_STACK_REGION 0x1B00000
     #define USER_STACK_STACK_SIZE_PER_USER 0x10000
 

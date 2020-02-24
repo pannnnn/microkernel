@@ -23,6 +23,7 @@
 #define UART2_RX_SERVER_NAME "uart2_rx_server"
 #define UART2_TX_SERVER_NAME "uart2_tx_server"
 #define COMMAND_SERVER_NAME "command_server"
+#define GUI_SERVER_NAME "gui_server"
 
 /*
  * Enum definition
@@ -62,7 +63,7 @@ typedef enum
  * Struct definition
  */
 typedef struct {
-	unsigned char buffer[UART_BUFFER_SIZE];
+	char buffer[UART_BUFFER_SIZE];
 	int start;
 	int end;
 } RingBuffer;
@@ -129,8 +130,8 @@ void uart2_tx_server();
 int Getc(int tid, int channel);
 int Putc(int tid, int channel, char ch);
 
+void gui_server();
 void command_server();
-void train_server();
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
 HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);
