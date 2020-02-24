@@ -11,9 +11,9 @@
  * Macro definition
  */
 #define KERNEL_STACK_ADDR 0x1F00000
-    #define KERNEL_STACK_TD_COUNT 1024
-    #define KERNEL_STACK_TD_LIMIT 128
-    #define KERNEL_STACK_TD_SIZE 1024
+    #define KERNEL_STACK_TD_COUNT 512
+    #define KERNEL_STACK_TD_LIMIT 256
+    #define KERNEL_STACK_TD_SIZE 2048
 #define HEAP_ADDR 0x1E00000
     #define HEAP_META_SIZE 12
     #define S_HEAP_REGION 0x1E00000

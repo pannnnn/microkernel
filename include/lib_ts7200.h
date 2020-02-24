@@ -153,6 +153,6 @@
 	#define BIT_6_MASK 0x20
 	#define BIT_7_MASK 0x40
 	#define BIT_8_MASK 0x80
-#define INTER_COMMANDS_DELAY_TICKS 7
+#define INTER_COMMANDS_DELAY_TICKS 8
 
 #endif

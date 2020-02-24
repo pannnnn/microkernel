@@ -1,7 +1,7 @@
 #ifndef LMCVITTI_Y247PAN_QUEUE
 #define LMCVITTI_Y247PAN_QUEUE
 
-#define QUEUE_SIZE 128
+#define QUEUE_SIZE 256
 
 typedef struct
 {
