@@ -52,8 +52,6 @@ void user_task_0() {
     log("Created UART2 TX Server: <%d>", uart2_tx_server_tid);
     int command_server_tid = Create(COMMAND_SERVER_PRIORITY, command_server);
     log("Created Command Server: <%d>", command_server_tid);
-    int train_server_tid = Create(TRAIN_SERVER_PRIORITY, train_server);
-    log("Created Train Server: <%d>", train_server_tid);
     // int uart1_client_tid = Create(CLIENT_TASK_PRIORITY, uart1_client);
     // log("Created UART1 Client: <%d>", uart1_client_tid);
 
