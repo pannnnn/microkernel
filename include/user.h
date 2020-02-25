@@ -130,6 +130,7 @@ void uart2_tx_server();
 int Getc(int tid, int channel);
 int Putc(int tid, int channel, char ch);
 
+int PutStr(char *str);
 void gui_server();
 void command_server();
 

@@ -63,10 +63,8 @@ void _process_sensor_data(char label, int data)
 {
     for (int i = 0; i < SENSOR_BITS_PER_MODULE; i++) {
         if (data & (1 << i)) {
-            char str[3] = {label, '0' + (SENSOR_BITS_PER_MODULE - i) / 10, '0' + (SENSOR_BITS_PER_MODULE - i) % 10};
-            for (int i = 0; i < 3; i++) {
-                Putc(_uart2_tx_server_tid, COM2, str[i]);
-			}
+            char str[4] = {label, '0' + (SENSOR_BITS_PER_MODULE - i) / 10, '0' + (SENSOR_BITS_PER_MODULE - i) % 10, '\0'};
+            PutStr(str);
         }
     }
 }
