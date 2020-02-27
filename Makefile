@@ -24,11 +24,10 @@ CFLAGS = -O3 -g -S -fPIC -Wall -mcpu=arm920t -msoft-float -I. -I./include
 # -T: use linker script
 LDFLAGS = -O3 -static -e main -nmagic -T linker.ld -L ./lib -L $(XLIBDIR1) -L $(XLIBDIR2)
 
-CSOURCES = $(wildcard src/lib/*.c) $(wildcard src/user/*.c)  $(wildcard src/kernel/*.c)
+CSOURCES = $(wildcard src/lib/*.c) $(wildcard src/user/*.c)  $(wildcard src/kernel/*.c) main.c
 ASMSOURCES = $(wildcard src/kernel/*.S)
 ASMFILES = $(CSOURCES:.c=.s)
 OBJECTS = $(CSOURCES:.c=.o) $(ASMSOURCES:.S=.o)
-MAIN = main
 EXEC = k4
 
 all: clean $(ASMFILES) $(OBJECTS) $(EXEC).elf
@@ -36,22 +35,16 @@ all: clean $(ASMFILES) $(OBJECTS) $(EXEC).elf
 debug: CFLAGS += -DDEBUG=1
 debug: all
 
-$(MAIN).s: $(MAIN).c
-	$(CC) -S $(CFLAGS) $(MAIN).c
-
-$(MAIN).o: $(MAIN).s
-	$(AS) $(ASFLAGS) -o $(MAIN).o $(MAIN).s
-
-$(EXEC).elf: $(MAIN).o $(OBJECTS)
+$(EXEC).elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^ -lc -lgcc
 
-src/%.s: src/%.c
+%.s: %.c
 	$(CC) -S $(CFLAGS) -o $@ $<
 
-src/%.o: src/%.s
+%.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $<
 
-src/%.o: src/%.S
+%.o: %.S
 	$(AS) $(ASFLAGS) -o $@ $<
 
 clean:
