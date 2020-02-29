@@ -47,15 +47,10 @@ void loading_task()
     // Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels));
 }
 
-void px_worker_task() {
+void px_worker_task() 
+{
     Pixels pixels = {.source = PX_WORKER};
     while(Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels)) > -1) {
-        if (pixels.source == PX_NOWHERE) {
-            pixels.source = PX_WORKER;
-            // idle when nothing goes on, but awake frequent enough to offset delay
-            Delay(_clock_server_tid, 1);
-            continue;
-        }
         Putc(_uart2_tx_server_tid, COM2, pixels.chars[0]);
     }
 }
@@ -63,11 +58,11 @@ void px_worker_task() {
 void gui_server() 
 {
     _init_gui_server();
-    Create(PX_WORKER_TASK_PRIORITY, px_worker_task);
+    int px_worker_tid = Create(PX_WORKER_TASK_PRIORITY, px_worker_task);
     Create(LOADING_TASK_PRIORITY, loading_task);
     RingBuffer byte_buffer;
     Pixels pixels;
-    int client_tid, idx;
+    int client_tid, idx, is_workder_idled = 1;
     while (Receive(&client_tid, (char *) &(pixels), sizeof(pixels))) {
         switch (pixels.source)
         {
@@ -76,10 +71,11 @@ void gui_server()
                 pixels.chars = &byte_buffer.buffer[byte_buffer.start];
                 byte_buffer.start++;
                 byte_buffer.start &= UART_BUFFER_MASK;
+                is_workder_idled = 0;
+                Reply(client_tid, (const char *) &(pixels), sizeof(pixels));
             } else {
-                pixels.source = PX_NOWHERE;
+                is_workder_idled = 1;
             }
-            Reply(client_tid, (const char *) &(pixels), sizeof(pixels));
             break;
         case PX_CLIENT:
             idx = 0;
@@ -88,6 +84,14 @@ void gui_server()
                 byte_buffer.end &= UART_BUFFER_MASK;
             }
             Reply(client_tid, (const char *) &(pixels), sizeof(pixels));
+
+            if (is_workder_idled) {
+                pixels.chars = &byte_buffer.buffer[byte_buffer.start];
+                byte_buffer.start++;
+                byte_buffer.start &= UART_BUFFER_MASK;
+                is_workder_idled = 0;
+                Reply(px_worker_tid, (const char *) &(pixels), sizeof(pixels));
+            }
             break;        
         default:
             break;
