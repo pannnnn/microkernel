@@ -33,7 +33,6 @@ static int _clock_server_tid = -1;
 static int _uart1_rx_server_tid = -1;
 static int _uart1_tx_server_tid = -1;
 static int _uart2_rx_server_tid = -1;
-static int _uart2_tx_server_tid = -1;
 static int _command_server_tid = -1;
 static int _train_speed = 0;
 
@@ -54,7 +53,6 @@ void _init_command_server()
     _uart1_rx_server_tid = WhoIs(UART1_RX_SERVER_NAME);
     _uart1_tx_server_tid = WhoIs(UART1_TX_SERVER_NAME);
     _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
-    _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
     _command_server_tid = MyTid();
     _train_speed = 0;
 }
@@ -224,12 +222,12 @@ void sensor_executor()
 void terminal_executor() 
 {
     CommandBuffer cmdBuf = {.content = {0}, .len = 0};
-    char c;
-    while ( (c = Getc(_uart2_rx_server_tid, COM2)) > -1) {
-        Putc(_uart2_tx_server_tid, COM2, c);
-        if (c != TERMINAL_ENTER_KEY_CODE && cmdBuf.len < COMMAND_MAX_LEN) {
-            cmdBuf.content[cmdBuf.len++] = c;
-        } else if (c == TERMINAL_ENTER_KEY_CODE) {
+    char str[2] = {'\0'};
+    while ( (str[0] = Getc(_uart2_rx_server_tid, COM2)) > -1) {
+        PutStr(str);
+        if (str[0] != TERMINAL_ENTER_KEY_CODE && cmdBuf.len < COMMAND_MAX_LEN) {
+            cmdBuf.content[cmdBuf.len++] = str[0];
+        } else if (str[0] == TERMINAL_ENTER_KEY_CODE) {
             if (cmdBuf.len <= COMMAND_MAX_LEN) {
                 _process_command(&cmdBuf);
             }
@@ -274,13 +272,7 @@ void command_executor()
 
         if ((cmd_id = pq_get_min(&command_queue)) != -1) {
             cmd = cmd_buffer[cmd_id];
-            // if (cmd.type == CT_TRAIN_NORMAL) {
-            //     log("curr_ticks %d, cmd ticks %d", curr_ticks, cmd.ticks);
-            // }
             if (cmd.ticks <= curr_ticks) {
-                // if (cmd.type == CT_TRAIN_NORMAL) {
-                //     log("begin to pop");
-                // }
                 pq_pop(&command_queue);
                 for (int i = 0; i < cmd.len; i++) {
                     Putc(_uart1_tx_server_tid, COM1, cmd.content[i]);
