@@ -120,6 +120,10 @@
 
 // terminal
 #define TERMINAL_ENTER_KEY_CODE 13
+#define BACKSPACE_KEY_CODE 8
+	// TODO: put id under display.h
+	#define BACKSPACE_SEQUENCE "\033[K"
+	#define CLEAR_LINE_SEQUENCE "\033[2K"
 
 // train
 #define TRAIN_START 96

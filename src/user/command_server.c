@@ -225,9 +225,13 @@ void terminal_executor()
     char str[2] = {'\0'};
     while ( (str[0] = Getc(_uart2_rx_server_tid, COM2)) > -1) {
         PutStr(str);
-        if (str[0] != TERMINAL_ENTER_KEY_CODE && cmdBuf.len < COMMAND_MAX_LEN) {
+        if (str[0] == BACKSPACE_KEY_CODE) {
+            PutStr(BACKSPACE_SEQUENCE);
+            if (cmdBuf.len > 0 && cmdBuf.len <= COMMAND_MAX_LEN) cmdBuf.len--;
+        } else if (str[0] != TERMINAL_ENTER_KEY_CODE && cmdBuf.len < COMMAND_MAX_LEN) {
             cmdBuf.content[cmdBuf.len++] = str[0];
         } else if (str[0] == TERMINAL_ENTER_KEY_CODE) {
+            PutStr(CLEAR_LINE_SEQUENCE);
             if (cmdBuf.len <= COMMAND_MAX_LEN) {
                 _process_command(&cmdBuf);
             }
