@@ -13,17 +13,16 @@
 #define NAME_SERVER_NAME "name_server"
 #define RPS_SERVER_NAME "rps_server"
 #define CLOCK_SERVER_NAME "clock_server"
-#define UART_BUFFER_SIZE 4096
-    #define UART_BUFFER_MASK 0xFFF
+#define UART_BUFFER_SIZE 16384
+    #define UART_BUFFER_MASK 0x3FFF
 #define COMMAND_MAX_LEN 8
-#define SENSOR_DATA_BYTES 10
-#define UART2_FIFO_SIZE 16
 #define UART1_RX_SERVER_NAME "uart1_rx_server"
 #define UART1_TX_SERVER_NAME "uart1_tx_server"
 #define UART2_RX_SERVER_NAME "uart2_rx_server"
 #define UART2_TX_SERVER_NAME "uart2_tx_server"
 #define COMMAND_SERVER_NAME "command_server"
 #define GUI_SERVER_NAME "gui_server"
+#define UPDATE_EVERY_X_IDLES 20
 
 /*
  * Enum definition
@@ -136,7 +135,8 @@ void u_error(char *fmt, ...);
 int PutStr(char *str, int size);
 int update_sensor(char *str, int size);
 int update_switch(char *str, int size);
-int update_idle(char *str, int size);
+int update_idle(int percent_idle);
+int update_clock(int hundredth_milsec);
 void gui_server();
 void command_server();
 

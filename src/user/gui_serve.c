@@ -11,6 +11,7 @@ typedef enum {
 	PX_SWITCH_UPDATE,
 	PX_RAIL_UPDATE,
 	PX_IDLE_UPDATE,
+	PX_CLOCK_UPDATE,
 } PIXEL_TYPE;
 
 typedef struct
@@ -69,11 +70,33 @@ int update_switch(char *str, int size) {
     return 0;
 }
 
-int update_idle(char *str, int size) {
-    Pixels pixels = { .type=PX_IDLE_UPDATE, .size = size, .chars = str };
+int update_idle(int percent_idle) {
+	char idles[2] = {0};
+	idles[0] = percent_idle / 10;
+	idles[1] = percent_idle % 10;
+    Pixels pixels = { .type=PX_IDLE_UPDATE, .size = 2, .chars = idles };
     Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels));
     return 0;
 }
+
+int update_clock(int hundredth_milsec) {
+	int sec = 0, min = 0;
+    char ticks[8] = {'\0'};
+	sec = hundredth_milsec / 10;
+	min = sec / 60;
+	sec %= 60;
+	ticks[6] = '0' + hundredth_milsec % 10;
+	ticks[5] = ':';
+	ticks[4] = '0' + sec % 10;
+	ticks[3] = '0' + sec / 10;
+	ticks[2] = ':';
+	ticks[1] = '0' + min % 10;
+	ticks[0] = '0' + min / 10;
+    Pixels pixels = { .type=PX_CLOCK_UPDATE, .size = 8, .chars = ticks };
+    Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels));
+    return 0;
+}
+
 
 int _a2d( char ch ) 
 {
@@ -364,6 +387,14 @@ void gui_server()
 			break;
 		case PX_IDLE_UPDATE:
 			_sprintf(&movement_buffer, SAVE_CURSOR "\033[%d;%dH%d.%d" RESTORE_CURSOR, 35, 135, (int) pixels.chars[0], (int) pixels.chars[1]);
+			for (int i = 0; i < movement_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
+			}
+			movement_buffer.index = 0;
+			break;
+		case PX_CLOCK_UPDATE:
+			// kernel will never run above 255 mins, easy fix if we have to;
+			_sprintf(&movement_buffer, SAVE_CURSOR "\033[%d;%dH%s" RESTORE_CURSOR, 33, 131, pixels.chars);
 			for (int i = 0; i < movement_buffer.index; i++) {
 				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
 			}

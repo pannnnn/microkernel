@@ -92,14 +92,15 @@ void idle_task() {
     halt = (int *) ( HALT );
     *sys_sw_lock = *sys_sw_lock | 0xAA;
     *device_cfg = *device_cfg | 1;
-    int gui_server_tid = WhoIs(GUI_SERVER_NAME);
-    // putstr("\033[s\033[HIdle Percentage:\033[u"); 
-    char str[2];
+    int clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
+    int i = 0, tick = 0;
     while (1) {
-        str[0] = percent_idle / 10;
-        str[1] = percent_idle % 10;
-        update_idle(str, 2);
-        // usage_notification("%d.%d", percent_integer, percent_fractional);
+        if (!(i++ % UPDATE_EVERY_X_IDLES)) {
+            update_idle(percent_idle);
+            tick = Time(clock_server_tid);
+            update_clock(tick / 10);
+        }
+        i %= UPDATE_EVERY_X_IDLES;
         // log("Halting...");
         *halt;
     }
