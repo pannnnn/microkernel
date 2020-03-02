@@ -1,7 +1,6 @@
 #include <kernel.h>
 #include <ds.h>
 #include <shared.h>
-#include <stdio.h>
 #include <lib_ts7200.h>
 
 // declared as global variable in main.c

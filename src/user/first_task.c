@@ -1,7 +1,7 @@
 #include <user.h>
 #include <shared.h>
 #include <lib_ts7200.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
 
 typedef struct 
 {
@@ -36,24 +36,24 @@ void uart1_client() {
 }
 
 void user_task_0() {
-    putstr("\033[0m\n\r");
-    log("Task Id <%d> Parent Task Id <%d>", 0, -1);
+    // putstr("\033[0m\r\n");
+    // log("Task Id <%d> Parent Task Id <%d>", 0, -1);
     int name_server_tid = Create(NAME_SERVER_PRIORITY, name_server);
-    log("Created Name Server: <%d>", name_server_tid);
+    // log("Created Name Server: <%d>", name_server_tid);
     int clock_server_tid = Create(CLOCK_SERVER_PRIORITY, clock_server);
-    log("Created Clock Server: <%d>", clock_server_tid);
+    // log("Created Clock Server: <%d>", clock_server_tid);
     int uart1_rx_server_tid = Create(UART1_RX_SERVER_PRIORITY, uart1_rx_server);
-    log("Created UART1 RX Server: <%d>", uart1_rx_server_tid);
+    // log("Created UART1 RX Server: <%d>", uart1_rx_server_tid);
     int uart1_tx_server_tid = Create(UART1_TX_SERVER_PRIORITY, uart1_tx_server);
-    log("Created UART1 TX Server: <%d>", uart1_tx_server_tid);
+    // log("Created UART1 TX Server: <%d>", uart1_tx_server_tid);
     int uart2_rx_server_tid = Create(UART2_RX_SERVER_PRIORITY, uart2_rx_server);
-    log("Created UART2 RX Server: <%d>", uart2_rx_server_tid);
+    // log("Created UART2 RX Server: <%d>", uart2_rx_server_tid);
     int uart2_tx_server_tid = Create(UART2_TX_SERVER_PRIORITY, uart2_tx_server);
-    log("Created UART2 TX Server: <%d>", uart2_tx_server_tid);
+    // log("Created UART2 TX Server: <%d>", uart2_tx_server_tid);
     int gui_server_tid = Create(GUI_SERVER_PRIORITY, gui_server);
-    log("Created GUI Server: <%d>", gui_server_tid);
+    // log("Created GUI Server: <%d>", gui_server_tid);
     int command_server_tid = Create(COMMAND_SERVER_PRIORITY, command_server);
-    log("Created Command Server: <%d>", command_server_tid);
+    // log("Created Command Server: <%d>", command_server_tid);
     // int uart1_client_tid = Create(CLIENT_TASK_PRIORITY, uart1_client);
     // log("Created UART1 Client: <%d>", uart1_client_tid);
 
@@ -71,7 +71,7 @@ void user_task_0() {
     //     client_test_data.number_of_delays = data[i][1];
     //     Reply(client_tid, (const char *) &client_test_data, sizeof(client_test_data));
     // }
-    log("FirstUserTask: exiting");
+    // log("FirstUserTask: exiting");
 }
 
 void client_task() {
@@ -92,10 +92,13 @@ void idle_task() {
     halt = (int *) ( HALT );
     *sys_sw_lock = *sys_sw_lock | 0xAA;
     *device_cfg = *device_cfg | 1;
+    int gui_server_tid = WhoIs(GUI_SERVER_NAME);
     // putstr("\033[s\033[HIdle Percentage:\033[u"); 
+    char str[2];
     while (1) {
-        unsigned int percent_integer = percent_idle / 10;
-        // unsigned int percent_fractional = percent_idle % 10;
+        str[0] = percent_idle / 10;
+        str[1] = percent_idle % 10;
+        update_idle(str, 2);
         // usage_notification("%d.%d", percent_integer, percent_fractional);
         // log("Halting...");
         *halt;

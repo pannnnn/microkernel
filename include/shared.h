@@ -92,6 +92,6 @@ extern int event_notifier_registrar[INTERRUPT_COUNT];
  */
 void charstr_copy(char *msg, char *buf, int length);
 unsigned int read_timer();
-unsigned int get_time_elaspsed(unsigned int start_time);
+unsigned int get_time_elapsed(unsigned int start_time);
 
 #endif

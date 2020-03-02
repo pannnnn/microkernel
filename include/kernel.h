@@ -104,7 +104,7 @@ typedef struct
     // message passing
     Message message;
     // fifo queue implementation
-    Queue inbox;    
+    Queue inbox;
 
 	unsigned int stack_pointer;
 } TaskDescriptor;

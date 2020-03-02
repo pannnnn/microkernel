@@ -1,7 +1,7 @@
 #include <kernel.h>
 #include <user.h>
 #include <shared.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;

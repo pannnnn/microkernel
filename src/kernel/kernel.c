@@ -1,7 +1,7 @@
 #include <kernel.h>
 #include <shared.h>
 #include <ds.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
 #include <lib_periph_init.h>
 #include <user.h>
 
@@ -52,7 +52,7 @@ void k_main()
 
         if (tid == -1 || tid == _kernel_state.performance.idle_task_tid) {
             if (_kernel_state.num_active_tasks < NUM_ALWAYS_LIVE_TASKS) {
-                log("Exiting");
+                log("Exiting\t");
                 return;
             }
             if (tid == -1) {debug("no ready tasks"); continue;}

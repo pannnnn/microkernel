@@ -1,25 +1,12 @@
 #ifndef LMCVITTI_Y247PAN_BWIO
 #define LMCVITTI_Y247PAN_BWIO
 
+#include <stdio.h>
+#include <display.h>
+
 /*
- * bwio.h
+ * lib_periph_bwio.h
  */
-
-typedef char *va_list;
-
-#define __va_argsiz(t)	\
-		(((sizeof(t) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
-
-#define va_start(ap, pN) ((ap) = ((va_list) __builtin_next_arg(pN)))
-
-#define va_end(ap)	((void)0)
-
-#define va_arg(ap, t)	\
-		 (((ap) = (ap) + __va_argsiz(t)), *((t*) (void*) ((ap) - __va_argsiz(t))))
-
-#define COM1	0
-#define COM2	1
-
 #define ON	1
 #define	OFF	0
 
@@ -42,5 +29,20 @@ int bwputr( int channel, unsigned int reg );
 void bwputw( int channel, int n, char fc, char *bf );
 
 void bwprintf( int channel, char *format, ... );
+
+
+#define printf(f, ...)              bwprintf(COM2, "%s:%d\t" f, __FILE__, __LINE__, ## __VA_ARGS__)
+#define putc(c)                     bwputc(COM2, c)
+#define putstr(str)                 bwputstr(COM2, str)
+#define getc()                      bwgetc(COM2)
+
+#define log(f, ...)                 { printf(ANSI_GREEN f ANSI_RESET "\r\n", ## __VA_ARGS__); }
+#define error(f, ...)               { printf(ANSI_RED f ANSI_RESET "\r\n", ## __VA_ARGS__); }
+
+#if DEBUG
+    #define debug(f, ...)           { printf(f "\r\n", ## __VA_ARGS__); }
+#else
+    #define debug(f, ...)           { }
+#endif
 
 #endif

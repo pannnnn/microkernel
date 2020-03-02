@@ -1,7 +1,9 @@
 #include <shared.h>
 #include <user.h>
 #include <ds.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
+#include <lib_ts7200.h>
+
 
 static int _uart1_rx_server_tid = -1;
 static int _uart1_tx_server_tid = -1;
@@ -127,8 +129,6 @@ void uart1_tx_notifier()
         // To speed up
         if ( !(*uart1_flags & CTS_MASK) ) {
             AwaitEvent(CTS_AST);
-        } else {
-            // highlight("uart1 notifier: cts already asserted");
         }
         debug("uart1 notifier: cts asserted");
         uart1_tx_message.source = FROM_DEVICE;
@@ -142,8 +142,6 @@ void uart1_tx_notifier()
             // To speed up
             if ( *uart1_flags & CTS_MASK ) {
                 AwaitEvent(CTS_NEG);
-            } else {
-                // highlight("uart1 notifier: cts already negated");
             }
             debug("uart1 notifier: cts negated");
         }

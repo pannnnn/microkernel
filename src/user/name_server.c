@@ -1,5 +1,5 @@
 #include <user.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
 
 static int _name_server_tid = -1;
 

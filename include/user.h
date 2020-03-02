@@ -130,7 +130,13 @@ void uart2_tx_server();
 int Getc(int tid, int channel);
 int Putc(int tid, int channel, char ch);
 
-int PutStr(char *str);
+void u_debug(char *fmt, ...);
+void u_info(char *fmt, ...);
+void u_error(char *fmt, ...);
+int PutStr(char *str, int size);
+int update_sensor(char *str, int size);
+int update_switch(char *str, int size);
+int update_idle(char *str, int size);
 void gui_server();
 void command_server();
 

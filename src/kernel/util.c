@@ -1,5 +1,4 @@
 #include <kernel.h>
-#include <stdio.h>
 
 extern KernelState _kernel_state;
 

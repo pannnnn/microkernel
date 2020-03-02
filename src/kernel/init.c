@@ -2,7 +2,6 @@
 #include <user.h>
 #include <shared.h>
 #include <lib_periph_init.h>
-#include <stdio.h>
 
 // defined in swi.S
 extern int enter_kernel();
@@ -95,5 +94,6 @@ void bootstrap()
 }
 
 void clear_up() {
+    clear_terminal();
     disable_interrupt();
 }

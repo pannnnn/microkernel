@@ -1,7 +1,7 @@
 #include <kernel.h>
 #include <shared.h>
 #include <lib_ts7200.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
 
 extern KernelState _kernel_state;
 
@@ -30,7 +30,6 @@ void interrupt_handler() {
             // clear the interrupt
             *uart1_status = 0;
             *uart1_control &= ~MSIEN_MASK;
-            // highlight("INTR UART1 CTS: cts status change");
             if (!event_notifier_awaited[CTS_NEG] && !event_notifier_awaited[CTS_AST]) {
                 error("INTR UART1 CTS: not task waits for MIS intr");
                 return;
@@ -75,6 +74,10 @@ void interrupt_handler() {
             error("something went wrong here");
             return;
         }
+    } else {
+        // I don't know why, but this consumes me tons of time to debug it, I have no idea where this
+        // interrupt is from, and I have to type super fast and super randomly to reproduce this
+        error("unexpected interrupt %x %x", *vic1_status, *vic2_status);
     }
     TaskDescriptor *td = get_td(tid);
     td->state = READY;
@@ -102,23 +105,19 @@ void sys_await_event(int eventid) {
         }
     } else if ( eventid == CTS_AST ) {
         if ( *uart1_flags & CTS_MASK ) {
-            // highlight("AWAIT: cts already asserted");
             td->state = READY;
             pq_insert(&_kernel_state.ready_queue, tid);
             set_result(td, (unsigned int) 0);
         } else {
-            // highlight("AWAIT: wait for cts asserted");
             event_notifier_awaited[eventid] = 1;
             *uart1_control |= MSIEN_MASK;
         }
     } else if ( eventid == CTS_NEG ) {
         if ( !(*uart1_flags & CTS_MASK) ) {
-            // highlight("AWAIT: cts already negated");
             td->state = READY;
             pq_insert(&_kernel_state.ready_queue, tid);
             set_result(td, (unsigned int) 0);
         } else {
-            // highlight("AWAIT: wait for cts negated");
             event_notifier_awaited[eventid] = 1;
             *uart1_control |= MSIEN_MASK;
         }

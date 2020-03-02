@@ -1,7 +1,7 @@
 #include <shared.h>
 #include <user.h>
 #include <ds.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
 
 static int _clock_server_tid = -1;
 static int _tid_to_ticks[QUEUE_SIZE] = {0};

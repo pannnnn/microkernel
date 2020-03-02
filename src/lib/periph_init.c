@@ -2,13 +2,13 @@
 #include <shared.h>
 #include <lib_ts7200.h>
 #include <lib_periph_bwio.h>
-#include <stdio.h>
 
 int event_notifier_awaited[INTERRUPT_COUNT + CTS_INTERRUPT_COUNT];
 int event_notifier_registrar[INTERRUPT_COUNT];
 
 // initializes the uarts so they can be communicated with
-void init_uart() {
+void init_uart() 
+{
 	bwsetspeed( COM1, 2400 );
 	bwsetfifo( COM1, OFF );
 	bwsetstopbits( COM1, 2 );
@@ -18,26 +18,29 @@ void init_uart() {
 	bwsetstopbits( COM2, 1 );
 }
 
-void init_timer() {
+void init_timer() 
+{
     volatile int *timer2_control;
 	timer2_control = (int *)( TIMER3_BASE + CRTL_OFFSET );
 
 	*timer2_control = ENABLE_MASK | CLKSEL_MASK;
 }
 
-void init_terminal() {
+void init_terminal() 
+{
     // clear terminal 
-    // putstr("\033[2J");
-    // putstr("\033[2r");
+    putstr(CLEAR_SCREEN);
+    putstr(HIDE_CURSOR);
 }
 
-void init_interrupt() {
+void init_interrupt() 
+{
     for (int i = 0; i < INTERRUPT_COUNT + CTS_INTERRUPT_COUNT; i++) event_notifier_awaited[i] = 0;
     for (int i = 0; i < INTERRUPT_COUNT; i++) event_notifier_registrar[i] = -1;
 
     // clear garbage data from COM1
     unsigned int cur_time = read_timer();
-    while (get_time_elaspsed(cur_time) < 100) {
+    while (get_time_elapsed(cur_time) < 100) {
         *(volatile int *)( UART1_BASE + UART_DATA_OFFSET );
     }
 
@@ -78,7 +81,14 @@ void init_interrupt() {
     *vic2_int_enable = (1 << UART1_INTERRUPT) | (1 << UART2_INTERRUPT);
 }
 
-void disable_interrupt() {
+void clear_terminal()
+{
+    putstr(CLEAR_SCREEN);
+    putstr(CURSOR_HOME);
+}
+
+void disable_interrupt() 
+{
     volatile int * vic1_int_enable_clear, *vic1_int_enable;
     vic1_int_enable_clear = (int *) ( VIC1 + VICxIntEnClear );
     vic1_int_enable = (int *) ( VIC1 + VICxIntEnable );
@@ -110,7 +120,8 @@ void disable_interrupt() {
     *uart2_intid_intclr = 0;
 }
 
-void cache_on() {
+void cache_on() 
+{
     asm("stmfd sp!, {r0}\n\t"
         "mrc p15, 0, r0, c1, c0, 0\n\t"
         "orr r0, r0, #4096\n\t"
@@ -120,7 +131,8 @@ void cache_on() {
         "ldmfd sp!, {r0}\n\t");
 }
 
-void cache_off() {
+void cache_off() 
+{
     asm("stmfd sp!, {r0}\n\t"
         "mrc p15, 0, r0, c1, c0, 0\n\t"
         "bic r0, r0, #4096\n\t"

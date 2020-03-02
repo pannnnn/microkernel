@@ -1,23 +1,32 @@
 #ifndef LMCVITTI_Y247PAN_STDIO
 #define LMCVITTI_Y247PAN_STDIO
 
-#include <lib_ts7200.h>
-#include <lib_periph_bwio.h>
+#define COM1	0
+#define COM2	1
 
-#define printf(f, ...)              bwprintf(COM2, f, ## __VA_ARGS__)
-#define putc(c)                     bwputc(COM2, c)
-#define putstr(str)                 bwputstr(COM2, str)
-#define getc()                      bwgetc(COM2)
+#define ANSI_PREFIX_CHARS_COUNT 5
+#define LOG_PREFIX_CHARS_COUNT 7
+#define ANSI_SUFFIX_CHARS_COUNT 4
+#define NEW_LINE_CHARS_COUNT 2
+#define BIG_ENOUGH_BUFFER_SIZE 1024
 
-#define usage_notification(f, ...)  { putstr("\033[s\033[1;18H"); printf(f, ## __VA_ARGS__); putstr("\033[u");}
-#define log(f, ...)                 { printf("%s:%d\t" f, __FILE__, __LINE__, ## __VA_ARGS__); putstr("\n\r"); }
-#define highlight(f, ...)           { putstr("\033[32m"); printf(f, ## __VA_ARGS__); putstr("\033[0m\n\r"); }
-#define error(f, ...)               { putstr("\033[31m"); printf("%s:%d\t" f, __FILE__, __LINE__, ## __VA_ARGS__); putstr("\033[0m\n\r"); }
+typedef enum
+{
+    DEBUG = 0,
+    INFO,
+    ERROR
+} LOG_LEVEL;
 
-#if DEBUG
-    #define debug(f, ...)           { putstr("\033[33m"); printf(f, ## __VA_ARGS__); putstr("\033[0m\n\r"); }
-#else
-    #define debug(f, ...)           { }
-#endif
+typedef char *va_list;
+
+#define __va_argsiz(t)	\
+		(((sizeof(t) + sizeof(int) - 1) / sizeof(int)) * sizeof(int))
+
+#define va_start(ap, pN) ((ap) = ((va_list) __builtin_next_arg(pN)))
+
+#define va_end(ap)	((void)0)
+
+#define va_arg(ap, t)	\
+		 (((ap) = (ap) + __va_argsiz(t)), *((t*) (void*) ((ap) - __va_argsiz(t))))
 
 #endif

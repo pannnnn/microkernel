@@ -1,6 +1,6 @@
 #include <kernel.h>
 #include <ds.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
 
 // bubble up: sorting the heap after removing a node
 void percolate_up(Queue *queue_struct, int index) {

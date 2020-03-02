@@ -10,7 +10,7 @@ unsigned int read_timer() {
 	return value;
 }
 
-unsigned int get_time_elaspsed(unsigned int start_time) {
+unsigned int get_time_elapsed(unsigned int start_time) {
 	return (start_time - read_timer()) / CLOCK_PER_MILLISEC_508K;
 }
 

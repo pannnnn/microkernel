@@ -29,9 +29,6 @@
 	#define LED_RED		0x2
 	#define LED_BOTH	0x3
 
-#define COM1	0
-#define COM2	1
-
 #define IRDA_BASE	0x808b0000
 #define UART1_BASE	0x808c0000
 #define UART2_BASE	0x808d0000
@@ -121,9 +118,6 @@
 // terminal
 #define TERMINAL_ENTER_KEY_CODE 13
 #define BACKSPACE_KEY_CODE 8
-	// TODO: put id under display.h
-	#define BACKSPACE_SEQUENCE "\033[K"
-	#define CLEAR_LINE_SEQUENCE "\033[2K"
 
 // train
 #define TRAIN_START 96
@@ -139,7 +133,9 @@
 #define SWITCH_END 32
 	#define SWITCH_END_DELAY_TICKS 8
 #define SWITCH_STRAIGHT 33
+	#define SWITCH_STRAIGHT_SYMBOL 'S'
 #define SWITCH_BRANCH 34
+	#define SWITCH_BRANCH_SYMBOL 'C'
 #define SWITCH_ONE_WAY_COUNT 18
 #define SWITCH_TWO_WAY_1a 153
 #define SWITCH_TWO_WAY_1b 154

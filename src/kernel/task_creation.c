@@ -1,6 +1,5 @@
 #include <kernel.h>
 #include <ds.h>
-#include <stdio.h>
 
 // declared as global variable in main.c
 extern KernelState _kernel_state;
@@ -82,6 +81,6 @@ void sys_yield() {}
 
 // may need to do some clean up and relaim memory address
 void sys_exit() {
-    _kernel_state.td_user_stack_availability[_kernel_state.scheduled_tid] = 0;
+    // _kernel_state.td_user_stack_availability[_kernel_state.scheduled_tid] = 0;
     _kernel_state.num_active_tasks--;
 }

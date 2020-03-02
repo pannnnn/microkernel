@@ -1,7 +1,8 @@
 #include <shared.h>
 #include <user.h>
 #include <lib_ts7200.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
+#include <display.h>
 #include <ds.h>
 
 typedef struct
@@ -62,7 +63,7 @@ void _process_sensor_data(char label, int data)
     for (int i = 0; i < SENSOR_BITS_PER_MODULE; i++) {
         if (data & (1 << i)) {
             char str[4] = {label, '0' + (SENSOR_BITS_PER_MODULE - i) / 10, '0' + (SENSOR_BITS_PER_MODULE - i) % 10, '\0'};
-            PutStr(str);
+            update_sensor(str, 4);
         }
     }
 }
@@ -159,6 +160,9 @@ void _process_command(CommandBuffer *cmdBuf)
             cmd.len = 1;
             result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
+
+            char str[2] = { switch_direction, (char) switch_number};
+            update_switch(str, 2);
         }
     }
 }
@@ -174,6 +178,7 @@ void rails_task()
         cmd.content[0] = SWITCH_STRAIGHT;
         cmd.content[1] = sw;
         Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+        update_switch(cmd.content, 2);
 	}
 
     int data[4][2] = {
@@ -187,6 +192,7 @@ void rails_task()
         cmd.content[0] = data[i][0];
         cmd.content[1] = data[i][1];
         Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+        update_switch(cmd.content, 2);
     }
 
     cmd.type = CT_SWITCH_END;
@@ -222,21 +228,32 @@ void sensor_executor()
 void terminal_executor() 
 {
     CommandBuffer cmdBuf = {.content = {0}, .len = 0};
-    char str[2] = {'\0'};
-    while ( (str[0] = Getc(_uart2_rx_server_tid, COM2)) > -1) {
-        PutStr(str);
-        if (str[0] == BACKSPACE_KEY_CODE) {
-            PutStr(BACKSPACE_SEQUENCE);
+    char c;
+    int cursor_index = 0;
+    while ( (c = Getc(_uart2_rx_server_tid, COM2)) > -1) {
+        if (c == BACKSPACE_KEY_CODE) {
+            if (cursor_index > 0) {
+                PutStr(BACKSPACE, sizeof(BACKSPACE) - 1);
+                PutStr(&c, 1);
+                cursor_index--;
+            }
             if (cmdBuf.len > 0 && cmdBuf.len <= COMMAND_MAX_LEN) cmdBuf.len--;
-        } else if (str[0] != TERMINAL_ENTER_KEY_CODE && cmdBuf.len < COMMAND_MAX_LEN) {
-            cmdBuf.content[cmdBuf.len++] = str[0];
-        } else if (str[0] == TERMINAL_ENTER_KEY_CODE) {
-            PutStr(CLEAR_LINE_SEQUENCE);
+        } else if (c != TERMINAL_ENTER_KEY_CODE && cmdBuf.len < COMMAND_MAX_LEN) {
+            PutStr(&c, 1);
+            cmdBuf.content[cmdBuf.len++] = c;
+            cursor_index++;
+        } else if (c == TERMINAL_ENTER_KEY_CODE) {
+            PutStr(CLEAR_START_OF_LINE, sizeof(CLEAR_START_OF_LINE) - 1);
+            PutStr(PATCH_COMMAND_LINE_PREFIX, sizeof(PATCH_COMMAND_LINE_PREFIX) - 1);
             if (cmdBuf.len <= COMMAND_MAX_LEN) {
                 _process_command(&cmdBuf);
             }
             for (int i = 0; i < COMMAND_MAX_LEN; i++) cmdBuf.content[i]= 0;
             cmdBuf.len = 0;
+            cursor_index = 0;
+        } else {
+            cursor_index++;
+            PutStr(&c, 1);
         }
     }
 }
@@ -303,6 +320,7 @@ void command_server()
     Create(TERMINAL_EXECUTOR_PRIORITY, terminal_executor);
     Create(COMMAND_EXECUTOR_PRIORITY, command_executor);
     Create(RAILS_TASK_PRIORITY, rails_task);
+
     Queue cmd_queue = {.size = 0, .index = 0};
     int client_tid, cmd_id, id = 0;
     while (Receive(&client_tid, (char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]))) {

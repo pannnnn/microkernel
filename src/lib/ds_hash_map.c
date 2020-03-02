@@ -1,6 +1,6 @@
 #include <user.h>
 #include <shared.h>
-#include <stdio.h>
+#include <lib_periph_bwio.h>
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size) {
     for (int i = 0; i < hash_size; i++) {
