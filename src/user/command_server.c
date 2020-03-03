@@ -179,13 +179,14 @@ void rails_task()
         cmd.content[1] = sw;
         Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
         update_switch(cmd.content, 2);
+        u_info("Switch %d set to %c", sw, SWITCH_STRAIGHT_SYMBOL);
 	}
 
-    int data[4][2] = {
-        {SWITCH_BRANCH, SWITCH_TWO_WAY_1a}, 
-        {SWITCH_STRAIGHT, SWITCH_TWO_WAY_1b}, 
-        {SWITCH_BRANCH, SWITCH_TWO_WAY_2a}, 
-        {SWITCH_STRAIGHT,SWITCH_TWO_WAY_2b}
+    int data[4][3] = {
+        {SWITCH_BRANCH, SWITCH_TWO_WAY_1a, SWITCH_BRANCH_SYMBOL}, 
+        {SWITCH_STRAIGHT, SWITCH_TWO_WAY_1b, SWITCH_STRAIGHT_SYMBOL}, 
+        {SWITCH_BRANCH, SWITCH_TWO_WAY_2a, SWITCH_BRANCH_SYMBOL}, 
+        {SWITCH_STRAIGHT,SWITCH_TWO_WAY_2b, SWITCH_STRAIGHT_SYMBOL}
         };
 
     for (int i = 0; i < 4; i++) {
@@ -193,12 +194,14 @@ void rails_task()
         cmd.content[1] = data[i][1];
         Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
         update_switch(cmd.content, 2);
+        u_info("Switch %d set to %c", data[i][1], data[i][2]);
     }
 
     cmd.type = CT_SWITCH_END;
     cmd.len = 1;
     cmd.content[0] = SWITCH_END;
     Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+    u_info("Switch ended");
 }
 
 void sensor_executor() 

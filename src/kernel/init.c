@@ -94,6 +94,6 @@ void bootstrap()
 }
 
 void clear_up() {
-    // clear_terminal();
+    clear_terminal();
     disable_interrupt();
 }

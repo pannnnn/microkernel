@@ -12,6 +12,7 @@ typedef enum {
 	PX_RAIL_UPDATE,
 	PX_IDLE_UPDATE,
 	PX_CLOCK_UPDATE,
+	PX_LOG_UPDATE
 } PIXEL_TYPE;
 
 typedef struct
@@ -54,6 +55,12 @@ static LOG_LEVEL _log_level = DEBUG;
 int PutStr(char *str, int size) 
 {
     Pixels pixels = { .type=PX_REGULAR, .size = size, .chars = str };
+    Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels));
+    return 0;
+}
+
+int update_log(char *str, int size) {
+    Pixels pixels = { .type=PX_LOG_UPDATE, .size = size, .chars = str };
     Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels));
     return 0;
 }
@@ -245,21 +252,22 @@ void _add_log_info(LOG_LEVEL level, General_Buffer *fmt_buffer)
     {
     case DEBUG:
         charstr_copy(ANSI_WHITE, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
-        charstr_copy("[DEBUG]", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
+        charstr_copy("[DEBUG] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
         break;
     case INFO:
         charstr_copy(ANSI_CYAN, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
-        charstr_copy("[ INFO]", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
+        charstr_copy("[ INFO] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
         break;
     case ERROR:
         charstr_copy(ANSI_RED, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
-        charstr_copy("[ERROR]", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
+        charstr_copy("[ERROR] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
         break;
     default:
         break;
     }
     charstr_copy(ANSI_RESET, &fmt_buffer->content[fmt_buffer->index], ANSI_SUFFIX_CHARS_COUNT);
     fmt_buffer->index += ANSI_SUFFIX_CHARS_COUNT;
+	fmt_buffer->content[fmt_buffer->index++] = '\0';
 }
 
 void u_debug(char *fmt, ...)
@@ -274,7 +282,7 @@ void u_debug(char *fmt, ...)
 	va_end(va);
 
     _add_log_info(DEBUG, &format_buffer);
-    PutStr(format_buffer.content, format_buffer.index);
+    update_log(format_buffer.content, format_buffer.index);
 
     Free(format_buffer.content);
 }
@@ -292,7 +300,7 @@ void u_info(char *fmt, ...)
 
     _add_log_info(INFO, &format_buffer);
 
-    PutStr(format_buffer.content, format_buffer.index);
+    update_log(format_buffer.content, format_buffer.index);
 
     Free(format_buffer.content);
 }
@@ -309,7 +317,7 @@ void u_error(char *fmt, ...)
 	va_end(va);
 
     _add_log_info(ERROR, &format_buffer);
-    PutStr(format_buffer.content, format_buffer.index);
+    update_log(format_buffer.content, format_buffer.index);
 
     Free(format_buffer.content);
 }
@@ -344,7 +352,7 @@ void gui_server()
 	Switch_Gui switch_gui;
 	_init_map_data(&sensor_gui, &switch_gui);
     Pixels pixels;
-    int client_tid, row, col, prev_row, switch_number;
+    int client_tid, row, col, prev_row, switch_number, log_line = 0, prev_log_line;
 	char switch_direction;
     General_Buffer movement_buffer = {.content = Malloc(BIG_ENOUGH_BUFFER_SIZE), .index = 0};
     while (Receive(&client_tid, (char *) &(pixels), sizeof(pixels))) {
@@ -395,6 +403,18 @@ void gui_server()
 				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
 			}
 			movement_buffer.index = 0;
+			break;
+		case PX_LOG_UPDATE:
+			if (log_line == 0) prev_log_line = LOG_LINES - 1;
+			else prev_log_line = log_line - 1;
+
+			_sprintf(&movement_buffer, SAVE_CURSOR "\033[%d;4H" BACKSPACE "\033[%d;121H" CLEAR_START_OF_LINE "\033[%d;0H| @%s" RESTORE_CURSOR, 33 + prev_log_line,  33 + log_line, 33 + log_line, pixels.chars);
+			log_line++;
+			for (int i = 0; i < movement_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
+			}
+			movement_buffer.index = 0;
+			log_line %= LOG_LINES;
 			break;
 		default:
 			break;
