@@ -160,7 +160,7 @@ void _process_command(CommandBuffer *cmdBuf)
             cmd.len = 1;
             result = Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) error("something went wrong here");
-
+        
             char str[2] = { switch_direction, (char) switch_number};
             update_switch(str, 2);
         }
@@ -179,29 +179,26 @@ void rails_task()
         cmd.content[1] = sw;
         Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
         update_switch(cmd.content, 2);
-        u_info("Switch %d set to %c", sw, SWITCH_STRAIGHT_SYMBOL);
 	}
 
     int data[4][3] = {
-        {SWITCH_BRANCH, SWITCH_TWO_WAY_1a, SWITCH_BRANCH_SYMBOL}, 
-        {SWITCH_STRAIGHT, SWITCH_TWO_WAY_1b, SWITCH_STRAIGHT_SYMBOL}, 
-        {SWITCH_BRANCH, SWITCH_TWO_WAY_2a, SWITCH_BRANCH_SYMBOL}, 
-        {SWITCH_STRAIGHT,SWITCH_TWO_WAY_2b, SWITCH_STRAIGHT_SYMBOL}
-        };
+        {SWITCH_BRANCH, SWITCH_TWO_WAY_1a}, 
+        {SWITCH_STRAIGHT, SWITCH_TWO_WAY_1b}, 
+        {SWITCH_BRANCH, SWITCH_TWO_WAY_2a}, 
+        {SWITCH_STRAIGHT,SWITCH_TWO_WAY_2b}
+    };
 
     for (int i = 0; i < 4; i++) {
         cmd.content[0] = data[i][0];
         cmd.content[1] = data[i][1];
         Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
         update_switch(cmd.content, 2);
-        u_info("Switch %d set to %c", data[i][1], data[i][2]);
     }
 
     cmd.type = CT_SWITCH_END;
     cmd.len = 1;
     cmd.content[0] = SWITCH_END;
     Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
-    u_info("Switch ended");
 }
 
 void sensor_executor() 
@@ -301,12 +298,23 @@ void command_executor()
                 for (int i = 0; i < cmd.len; i++) {
                     Putc(_uart1_tx_server_tid, COM1, cmd.content[i]);
                 }
-                if (cmd.type == CT_TRAIN_REVERSE) {
-                    train_ticks = curr_ticks + TRAIN_STOP_DELAY_TICKS;
-                    // log("curr_ticks %d, train_ticks %d", curr_ticks, train_ticks);
-                }
                 if (cmd.type == CT_TRAIN_NORMAL) {
                     train_ticks = curr_ticks + INTER_COMMANDS_DELAY_TICKS;
+                    if (cmd.content[0] == TRAIN_REVERSE_DIRECTION) {
+                        u_info("[rv] Train %d reverse", cmd.content[1]);
+                    } else {
+                        u_info("[tr] Train %d set speed to %d", cmd.content[1], cmd.content[0]);
+                    }
+                }
+                if (cmd.type == CT_TRAIN_REVERSE) {
+                    train_ticks = curr_ticks + TRAIN_STOP_DELAY_TICKS;
+                    u_info("[tr] Train %d stops ...", cmd.content[1]);
+                }
+                if (cmd.type == CT_SWITCH_NORMAL) {
+                    u_info("[sw] Switch %d set to %c", cmd.content[1], cmd.content[0] == SWITCH_STRAIGHT ? SWITCH_STRAIGHT_SYMBOL : SWITCH_BRANCH_SYMBOL);
+                }
+                if (cmd.type == CT_SWITCH_END) {
+                    u_info("[sw] Switch ended");
                 }
             }
         }
