@@ -42,7 +42,7 @@ typedef struct
 
 typedef struct
 {
-    char* content;
+    char content[BIG_ENOUGH_BUFFER_SIZE];
     int index;
 } General_Buffer;
 
@@ -228,7 +228,6 @@ void _init_gui_server()
     _clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
     _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
     _gui_server_tid = MyTid();
-    // Never get freed since no clue of when program exit
     _log_level = DEBUG;
 }
 
@@ -274,7 +273,7 @@ void u_debug(char *fmt, ...)
 {
     if (_log_level > DEBUG) return;
     
-    General_Buffer format_buffer = {.content = Malloc(BIG_ENOUGH_BUFFER_SIZE), .index = ANSI_PREFIX_CHARS_COUNT + LOG_PREFIX_CHARS_COUNT};
+    General_Buffer format_buffer = {.index = ANSI_PREFIX_CHARS_COUNT + LOG_PREFIX_CHARS_COUNT};
 
     va_list va;
 	va_start(va, fmt);
@@ -283,15 +282,13 @@ void u_debug(char *fmt, ...)
 
     _add_log_info(DEBUG, &format_buffer);
     update_log(format_buffer.content, format_buffer.index);
-
-    Free(format_buffer.content);
 }
 
 void u_info(char *fmt, ...)
 {
     if (_log_level > INFO) return;
 
-    General_Buffer format_buffer = {.content = Malloc(BIG_ENOUGH_BUFFER_SIZE), .index = ANSI_PREFIX_CHARS_COUNT + LOG_PREFIX_CHARS_COUNT};
+    General_Buffer format_buffer = {.index = ANSI_PREFIX_CHARS_COUNT + LOG_PREFIX_CHARS_COUNT};
 
     va_list va;
 	va_start(va, fmt);
@@ -301,15 +298,13 @@ void u_info(char *fmt, ...)
     _add_log_info(INFO, &format_buffer);
 
     update_log(format_buffer.content, format_buffer.index);
-
-    Free(format_buffer.content);
 }
 
 void u_error(char *fmt, ...)
 {
     if (_log_level > ERROR) return;
 
-    General_Buffer format_buffer = {.content = Malloc(BIG_ENOUGH_BUFFER_SIZE), .index = ANSI_PREFIX_CHARS_COUNT + LOG_PREFIX_CHARS_COUNT};
+    General_Buffer format_buffer = {.index = ANSI_PREFIX_CHARS_COUNT + LOG_PREFIX_CHARS_COUNT};
 
     va_list va;
 	va_start(va, fmt);
@@ -318,8 +313,6 @@ void u_error(char *fmt, ...)
 
     _add_log_info(ERROR, &format_buffer);
     update_log(format_buffer.content, format_buffer.index);
-
-    Free(format_buffer.content);
 }
 
 void _sprintf( General_Buffer *buffer, char *fmt, ...)
@@ -354,7 +347,7 @@ void gui_server()
     Pixels pixels;
     int client_tid, row, col, prev_row, switch_number, log_line = 0, prev_log_line;
 	char switch_direction;
-    General_Buffer movement_buffer = {.content = Malloc(BIG_ENOUGH_BUFFER_SIZE), .index = 0};
+    General_Buffer movement_buffer = {.index = 0};
     while (Receive(&client_tid, (char *) &(pixels), sizeof(pixels))) {
         Reply(client_tid, (const char *) &(pixels), sizeof(pixels));
 		switch (pixels.type)

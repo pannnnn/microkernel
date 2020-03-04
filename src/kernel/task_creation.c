@@ -81,6 +81,7 @@ void sys_yield() {}
 
 // may need to do some clean up and relaim memory address
 void sys_exit() {
+    // remove reusing of the tid for easy debug
     // _kernel_state.td_user_stack_availability[_kernel_state.scheduled_tid] = 0;
     _kernel_state.num_active_tasks--;
 }
