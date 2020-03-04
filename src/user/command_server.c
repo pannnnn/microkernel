@@ -263,26 +263,14 @@ void command_executor()
     Command cmd = {.type = CT_FETCH_COMMAND};
     Queue command_queue = {.size = 0, .index = 0, .get_arg1 = _command_comparator1, .get_arg2 = _command_comparator2};
     int curr_ticks = 0, train_ticks = 0;
-    int cmd_id, delay = INTER_COMMANDS_DELAY_TICKS;
+    int cmd_id;
     while(Send(_command_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd)) > -1) {
-        switch (cmd.type)
-        {
-        case CT_FETCH_COMMAND:
-        case CT_TRAIN_NORMAL:
-        case CT_TRAIN_REVERSE:
-        case CT_SWITCH_END:
-        case CT_SENSOR_FETCH:
-            delay = INTER_COMMANDS_DELAY_TICKS;
-            break;
-        case CT_SWITCH_NORMAL:
-            delay = SWITCH_END_DELAY_TICKS;
-            break;
-        default:
-            break;
-        }
-
-        if (cmd.type == CT_TRAIN_NORMAL) {
+        if (cmd.type == CT_TRAIN_REVERSE) {
             cmd_buffer[cmd.id].ticks = train_ticks;
+            train_ticks += TRAIN_STOP_DELAY_TICKS;
+        } else if (cmd.type == CT_TRAIN_NORMAL) {
+            cmd_buffer[cmd.id].ticks = train_ticks;
+            train_ticks += INTER_COMMANDS_DELAY_TICKS;
         }  else {
             cmd_buffer[cmd.id].ticks = curr_ticks;
         }
@@ -299,26 +287,26 @@ void command_executor()
                     Putc(_uart1_tx_server_tid, COM1, cmd.content[i]);
                 }
                 if (cmd.type == CT_TRAIN_NORMAL) {
-                    train_ticks = curr_ticks + INTER_COMMANDS_DELAY_TICKS;
                     if (cmd.content[0] == TRAIN_REVERSE_DIRECTION) {
-                        u_info("[rv] Train %d reverse", cmd.content[1]);
+                        u_info("[%d][rv] Train %d reverse", curr_ticks, cmd.content[1]);
                     } else {
-                        u_info("[tr] Train %d set speed to %d", cmd.content[1], cmd.content[0]);
+                        u_info("[%d][tr] Train %d set speed to %d", curr_ticks, cmd.content[1], cmd.content[0]);
                     }
                 }
                 if (cmd.type == CT_TRAIN_REVERSE) {
-                    train_ticks = curr_ticks + TRAIN_STOP_DELAY_TICKS;
-                    u_info("[tr] Train %d stops ...", cmd.content[1]);
+                    u_info("[%d][tr] Train %d stops ...", curr_ticks, cmd.content[1]);
                 }
                 if (cmd.type == CT_SWITCH_NORMAL) {
-                    u_info("[sw] Switch %d set to %c", cmd.content[1], cmd.content[0] == SWITCH_STRAIGHT ? SWITCH_STRAIGHT_SYMBOL : SWITCH_BRANCH_SYMBOL);
+                    u_info("[%d][sw] Switch %d set to %c", curr_ticks, cmd.content[1], cmd.content[0] == SWITCH_STRAIGHT ? SWITCH_STRAIGHT_SYMBOL : SWITCH_BRANCH_SYMBOL);
                 }
                 if (cmd.type == CT_SWITCH_END) {
-                    u_info("[sw] Switch ended");
+                    u_info("[%d][sw] Switch ended", curr_ticks);
                 }
             }
         }
-        curr_ticks = Delay(_clock_server_tid, delay);
+        curr_ticks = Delay(_clock_server_tid, INTER_COMMANDS_DELAY_TICKS);
+
+        if (train_ticks < curr_ticks) train_ticks = curr_ticks;
         // reset to fetch new command
         cmd.type = CT_FETCH_COMMAND;
     }
