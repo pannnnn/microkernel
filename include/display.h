@@ -29,7 +29,6 @@
 #define SCROLLING "\033[43;100r"
 
 // data attributes
-#define MAX_MOVEMENT_BUFFER 128;
 #define SENSOR_TRACKED 10
 #define SWITCH_TRACKED 22
 

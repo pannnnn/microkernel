@@ -74,7 +74,6 @@ void percolate_down(Queue *queue_struct, int index) {
 void pq_insert(Queue *queue_struct, int tid) {
     int *queue = queue_struct->queue;
     // to prevent duplicate tids
-    // TODO: check ready status instead of for loop
     for (int i = 1; i < queue_struct->size; i++) {
         if (queue[i] == tid) return;
     }

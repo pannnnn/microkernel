@@ -20,6 +20,12 @@ void charstr_copy(char *msg, char *buf, int length) {
 	}
 }
 
+void *u_memset(void *s, int c, unsigned int n) {
+  unsigned char *p = s;
+  while(n --> 0) { *p++ = (unsigned char)c; }
+  return s;
+}
+
 void int_memset(int *mem, int val, int length) {
 	for (int i=0; i < length; i++) {
 		mem[i] = val;

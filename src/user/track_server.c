@@ -5,11 +5,19 @@
 #include <display.h>
 #include <ds.h>
 #include <track_data.h>
+#include <trainset_data.h>
+#include <string.h>
+#include <stdlib.h>
 
 typedef struct {
     char content[COMMAND_MAX_LEN];
     int len;
 } CommandBuffer;
+
+typedef enum {
+    TT_TRACK_A,
+    TT_TRACK_B
+} TRACK_TYPE;
 
 typedef enum {
     CT_FETCH_COMMAND,
@@ -19,7 +27,8 @@ typedef enum {
     CT_SWITCH_END,
     CT_SENSOR_FETCH,
     CT_SENSOR_UPDATE,
-    CT_GOTO_TARGET
+    CT_GOTO_TARGET,
+    CT_CHANGE_TRACK
 } COMMAND_TYPE;
 
 typedef struct {
@@ -61,6 +70,7 @@ void _init_track_server()
     _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
     _track_server_tid = MyTid();
     _train_speed = 0;
+    u_memset(cmd_buffer, 0, QUEUE_SIZE * sizeof(Command));
 }
 
 void _process_command(CommandBuffer *cmdBuf) 
@@ -68,154 +78,100 @@ void _process_command(CommandBuffer *cmdBuf)
     if (cmdBuf->content[0] == 'q' && cmdBuf->len == 1) {
         Exit();
     }
-    if (cmdBuf->content[2] != ' ') return;
-    if (cmdBuf->content[0] == 't' && cmdBuf->content[1] == 'r') {
-        if (cmdBuf->content[3] < '0' || cmdBuf->content[3] > '9') return;
-        int train_number = -1, train_speed = -1;
-        if (cmdBuf->content[4] == ' ') {
-            train_number = cmdBuf->content[3] - '0';
-            if (cmdBuf->content[5] < '0' || cmdBuf->content[5] > '9') return;
-            if (cmdBuf->len == 6) {
-                train_speed = cmdBuf->content[5] - '0';
-            } else if (cmdBuf->len == 7) {
-                if (cmdBuf->content[6] < '0' || cmdBuf->content[6] > '9') return;
-                train_speed = (cmdBuf->content[5] - '0') * 10 + (cmdBuf->content[6] - '0');
-            }
-        } else if (cmdBuf->content[5] == ' ') {
-            if (cmdBuf->content[4] < '0' || cmdBuf->content[4] > '9') return;
-            train_number = (cmdBuf->content[3] - '0') * 10 + (cmdBuf->content[4] - '0');
-            if (cmdBuf->content[6] < '0' || cmdBuf->content[6] > '9') return;
-            if (cmdBuf->len == 7) {
-                train_speed = cmdBuf->content[6] - '0';
-            } else if (cmdBuf->len == 8) {
-                if (cmdBuf->content[7] < '0' || cmdBuf->content[7] > '9') return;
-                train_speed = (cmdBuf->content[6] - '0') * 10 + (cmdBuf->content[7] - '0');
-            }
-        }
 
-        if (train_number != -1 && train_speed != -1) {
-            if (train_speed >= TRAIN_MIN_SPEED && train_speed <= TRAIN_MAX_SPEED) {
-                _train_speed = train_speed;
-            } else if (train_speed >= TRAIN_LIGHTS_ON + TRAIN_MIN_SPEED && train_speed <= TRAIN_LIGHTS_ON + TRAIN_MAX_SPEED) {
-                _train_speed = train_speed - TRAIN_LIGHTS_ON;
-            } else if (train_speed == TRAIN_REVERSE_DIRECTION_LIGHTS_ON || train_speed == TRAIN_REVERSE_DIRECTION_LIGHTS_OFF) {
-                _train_speed = 0;
-            } else {
-                return;
-            }
-            Command cmd = {.type = CT_TRAIN_NORMAL, .content = {_train_speed, train_number}, .len = 2};
-            int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
-            if (result < 0) u_error("something went wrong here");
-        }
-    } else if (cmdBuf->content[0] == 'r' && cmdBuf->content[1] == 'v') {
-        if (cmdBuf->content[3] < '0' || cmdBuf->content[3] > '9') return;
-        int train_number = -1;
-        if (cmdBuf->len == 4) {
-            train_number = cmdBuf->content[3] - '0';
-        } else if (cmdBuf->len == 5) {
-            if (cmdBuf->content[4] < '0' || cmdBuf->content[4] > '9') return;
-            train_number = (cmdBuf->content[3] - '0') * 10 + (cmdBuf->content[4] - '0');
-        }
-        if (train_number != -1) {
-            Command cmd = {.type = CT_TRAIN_REVERSE, .content = {0, train_number}, .len = 2};
-            int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
-            if (result < 0) u_error("something went wrong here");
-            cmd.type = CT_TRAIN_NORMAL;
-            cmd.content[0] = TRAIN_REVERSE_DIRECTION_LIGHTS_ON;
-            result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
-            if (result < 0) u_error("something went wrong here");
-            cmd.content[0] = _train_speed;
-            result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
-            if (result < 0) u_error("something went wrong here");
-        }
-    } else if (cmdBuf->content[0] == 's' && cmdBuf->content[1] == 'w') {
-        if (cmdBuf->content[3] < '0' || cmdBuf->content[3] > '9') return;
-        int switch_number = -1;
-        char switch_direction = '0';
-        if (cmdBuf->content[4] == ' ') {
-            switch_number = cmdBuf->content[3] - '0';
-            if ((cmdBuf->content[5] != 'S' && cmdBuf->content[5] != 'C') || cmdBuf->len != 6) return;
-            switch_direction = cmdBuf->content[5];
-        } else if (cmdBuf->content[5] == ' ') {
-            if (cmdBuf->content[4] < '0' || cmdBuf->content[4] > '9') return;
-            switch_number = (cmdBuf->content[3] - '0') * 10 + (cmdBuf->content[4] - '0');
-            if ((cmdBuf->content[6] != 'S' && cmdBuf->content[6] != 'C') || cmdBuf->len != 7) return;
-            switch_direction = cmdBuf->content[6];
-        } else if (cmdBuf->content[6] == ' ') {
-            if (cmdBuf->content[4] < '0' || cmdBuf->content[4] > '9') return;
-            if (cmdBuf->content[5] < '0' || cmdBuf->content[5] > '9') return;
-            switch_number = (cmdBuf->content[3] - '0') * 100 + (cmdBuf->content[4] - '0') * 10 + (cmdBuf->content[5] - '0');
-            if ((cmdBuf->content[7] != 'S' && cmdBuf->content[7] != 'C') || cmdBuf->len != 8) return;
-            switch_direction = cmdBuf->content[7];
-        }
+    char *operation = strtok(cmdBuf->content, " ");
+    if (!strcmp(operation, "tr")) {
+    	char *train_number_c = strtok(NULL, " ");
+		char *train_speed_c = strtok(NULL, " ");
+        if (strtok(NULL, " ") != NULL) return;
+        int train_number = (int) strtol(train_number_c, (char **)NULL, 10);
+		int train_speed = (int) strtol(train_speed_c, (char **)NULL, 10);
 
-        if (switch_number != -1 && switch_direction != '0') {
-            if (switch_number <= 0 || (switch_number > SWITCH_ONE_WAY_COUNT && switch_number < SWITCH_TWO_WAY_1a) || switch_number > SWITCH_TWO_WAY_2b) return;
-
-            switch_direction = switch_direction == 'S' ? SWITCH_STRAIGHT : SWITCH_BRANCH;
-
-            Command cmd = {.type = CT_SWITCH_NORMAL, .content = {switch_direction, switch_number}, .len = 2};
-            int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
-            if (result < 0) u_error("something went wrong here");
-            cmd.type = CT_SWITCH_END;
-            cmd.content[0] = SWITCH_END;
-            cmd.len = 1;
-            result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
-            if (result < 0) u_error("something went wrong here");
-        
-            char str[2] = { switch_direction, (char) switch_number};
-            update_switch(str, 2);
+        if (train_speed >= TRAIN_MIN_SPEED && train_speed <= TRAIN_MAX_SPEED) {
+            _train_speed = train_speed;
+        } else if (train_speed >= TRAIN_LIGHTS_ON + TRAIN_MIN_SPEED && train_speed <= TRAIN_LIGHTS_ON + TRAIN_MAX_SPEED) {
+            _train_speed = train_speed - TRAIN_LIGHTS_ON;
+        } else if (train_speed == TRAIN_REVERSE_DIRECTION_LIGHTS_ON || train_speed == TRAIN_REVERSE_DIRECTION_LIGHTS_OFF) {
+            _train_speed = 0;
+        } else {
+            return;
         }
-    } else if (cmdBuf->content[0] == 'g' && cmdBuf->content[1] == 't') {
-        int switch_number = -1, sensor_number = -1, node_number = -1;
-        if (cmdBuf->len == 4 || cmdBuf->len == 5) {
-            if (cmdBuf->len == 4) {
-                if (cmdBuf->content[3] < '0' || cmdBuf->content[3] > '9') return;
-                switch_number = cmdBuf->content[3] - '0';
-            } else {
-                if (cmdBuf->content[3] < '0' || cmdBuf->content[3] > '9') return;
-                if (cmdBuf->content[4] < '0' || cmdBuf->content[4] > '9') return;
-                switch_number = (cmdBuf->content[3] - '0') * 10 + (cmdBuf->content[4] - '0');
-            }
-        }
+        Command cmd = {.type = CT_TRAIN_NORMAL, .content = {_train_speed, train_number}, .len = 2};
+        int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+        if (result < 0) u_error("something went wrong here");
+    } else if(!strcmp(operation, "rv")) {
+    	char *train_number_c = strtok(NULL, " ");
+        if (strtok(NULL, " ") != NULL) return;
+		int train_number = (int) strtol(train_number_c, (char **)NULL, 10);
 
-        if (cmdBuf->len == 6) {
-            if (cmdBuf->content[3] >= 'A' && cmdBuf->content[3] <= 'E') {
-                if (cmdBuf->content[4] == '0') {
-                    if (cmdBuf->content[5] < '1' || cmdBuf->content[5] > '9') return;
-                    sensor_number = (cmdBuf->content[3] - 'A') * 16 + cmdBuf->content[5] - '1';
-                }
-                if (cmdBuf->content[4] == '1' && cmdBuf->content[5] >= '0' && cmdBuf->content[5] <= '6') {
-                    sensor_number = (cmdBuf->content[3] - 'A') * 16 + 9 + (cmdBuf->content[5] - '0');
-                }
-            } else {
-                if (cmdBuf->content[3] < '0' || cmdBuf->content[3] > '9') return;
-                if (cmdBuf->content[4] < '0' || cmdBuf->content[4] > '9') return;
-                if (cmdBuf->content[5] < '0' || cmdBuf->content[5] > '9') return;
-                switch_number = (cmdBuf->content[3] - '0') * 100 + (cmdBuf->content[4] - '0') * 10 + (cmdBuf->content[5] - '0');
-            }
-        }
+        Command cmd1 = {.type = CT_TRAIN_REVERSE, .content = {0, train_number}, .len = 2};
+        int result = Send(_track_server_tid, (const char *) &cmd1, sizeof(cmd1), (char *)&cmd1, sizeof(cmd1));
+        if (result < 0) u_error("something went wrong here");
+        Command cmd2 = {.type = CT_TRAIN_NORMAL, .content = {TRAIN_REVERSE_DIRECTION_LIGHTS_ON, train_number}, .len = 2};
+        result = Send(_track_server_tid, (const char *) &cmd2, sizeof(cmd2), (char *)&cmd2, sizeof(cmd2));
+        if (result < 0) u_error("something went wrong here");
+        Command cmd3 = {.type = CT_TRAIN_NORMAL, .content = {_train_speed, train_number}, .len = 2};
+        result = Send(_track_server_tid, (const char *) &cmd3, sizeof(cmd3), (char *)&cmd3, sizeof(cmd3));
+        if (result < 0) u_error("something went wrong here");
+    } else if(!strcmp(operation, "sw")) {
+		char *switch_number_c = strtok(NULL, " ");
+		char *switch_direction_s = strtok(NULL, " ");
+        if (strtok(NULL, " ") != NULL) return;
+        if (strlen(switch_direction_s) != 1 || (switch_direction_s[0] != 'S' && switch_direction_s[0] != 'C')) return;
 
-        if (switch_number != -1) {
+		int switch_number = (int) strtol(switch_number_c, (char **)NULL, 10);
+        char switch_direction = switch_direction_s[0];
+
+        if (switch_number <= 0 || (switch_number > SWITCH_ONE_WAY_COUNT && switch_number < SWITCH_TWO_WAY_1a) || switch_number > SWITCH_TWO_WAY_2b) return;
+
+        switch_direction = switch_direction == 'S' ? SWITCH_STRAIGHT : SWITCH_BRANCH;
+
+        Command cmd = {.type = CT_SWITCH_NORMAL, .content = {switch_direction, switch_number}, .len = 2};
+        int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+        if (result < 0) u_error("something went wrong here");
+        cmd.type = CT_SWITCH_END;
+        cmd.content[0] = SWITCH_END;
+        cmd.len = 1;
+        result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+        if (result < 0) u_error("something went wrong here");
+    
+        char str[2] = { switch_direction, (char) switch_number};
+        update_switch(str, 2);
+    } else if(!strcmp(operation, "goto")) {
+        int node_number;
+    	char *train_number_c = strtok(NULL, " ");
+        char *node_label = strtok(NULL, " ");
+        if (strtok(NULL, " ") != NULL) return;
+        int train_number = (int) strtol(train_number_c, (char **)NULL, 10);
+        if (node_label[0] >= 'A' && node_label[0] <= 'E') {
+            int sensor_number = (int) strtol(&node_label[1], (char **)NULL, 10);
+            if (sensor_number < 1 || sensor_number > 16) return;
+            node_number = (node_label[0] - 'A') * 16 + sensor_number - 1;
+        } else {
+            int switch_number = (int) strtol(node_label, (char **)NULL, 10);
             if (switch_number <= 0 || (switch_number > SWITCH_ONE_WAY_COUNT && switch_number < SWITCH_TWO_WAY_1a) || switch_number > SWITCH_TWO_WAY_2b) return;
             if (switch_number >= SWITCH_TWO_WAY_1a && switch_number <= SWITCH_TWO_WAY_2b) {
                 node_number = 116 + switch_number - SWITCH_TWO_WAY_1a;
             } else {
                 node_number = 79 + switch_number;
             }
-            // cmd.content[1] = switch_number;
         }
 
-        if (sensor_number != -1) {
-            node_number = sensor_number;
-            // cmd.content[1] = sensor_number;
-        }
-
-        if (node_number != -1) {
-            Command cmd = {.type = CT_GOTO_TARGET, .content = {node_number}, .len = 1};
-            int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
-            if (result < 0) u_error("something went wrong here");
-        }
+        Command cmd = {.type = CT_GOTO_TARGET, .content = {train_number, node_number}, .len = 2};
+        int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+        if (result < 0) u_error("something went wrong here");
+    } else if(!strcmp(operation, "track")) {
+        TRACK_TYPE track_type;
+    	char *train_label = strtok(NULL, " ");
+        if (strtok(NULL, " ") != NULL) return;
+        if (strlen(train_label) != 1 || train_label[0] != 'a' || train_label[1] != 'b') return;
+        if (train_label[0] != 'a') track_type = TT_TRACK_A;
+        if (train_label[0] != 'b') track_type = TT_TRACK_B;
+        Command cmd = {.type = CT_CHANGE_TRACK, .content = {track_type}, .len = 1};
+        int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+        if (result < 0) u_error("something went wrong here");
+    } else {
+        return;
     }
 }
 
@@ -306,13 +262,13 @@ void rails_task()
     Command cmd = {.type = CT_TRAIN_NORMAL, .content = {TRAIN_START}, .len = 1};
     Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
 
-    cmd.type = CT_SWITCH_NORMAL;
-    cmd.len = 2;
     for (int sw = 1; sw <= SWITCH_ONE_WAY_COUNT; sw++) {
+        cmd.type = CT_SWITCH_NORMAL;
+        cmd.len = 2;
         cmd.content[0] = SWITCH_STRAIGHT;
         cmd.content[1] = sw;
-        Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
         update_switch(cmd.content, 2);
+        Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
 	}
 
     int data[4][3] = {
@@ -323,10 +279,12 @@ void rails_task()
     };
 
     for (int i = 0; i < 4; i++) {
+        cmd.type = CT_SWITCH_NORMAL;
+        cmd.len = 2;
         cmd.content[0] = data[i][0];
         cmd.content[1] = data[i][1];
-        Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
         update_switch(cmd.content, 2);
+        Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
     }
 
     cmd.type = CT_SWITCH_END;
@@ -347,6 +305,7 @@ void sensor_executor()
         for (int i = 0; i < 8; i++) {
             if (c & (1 << (7 - i))) {
                 cmd.type = CT_SENSOR_UPDATE;
+                cmd.len = 1;
                 sensor_number = 8 * count + i;
                 // sensor number is always between 0-79
                 cmd.content[0] = sensor_number;
@@ -354,7 +313,13 @@ void sensor_executor()
                 if (result < 0) u_error("something went wrong here");
 
                 sensor_value = i + 1 + 8 * (count % 2);
-                char str[4] = {sensor_label, '0' + sensor_value / 10, '0' + sensor_value % 10, '\0'};
+                char str[4] = {sensor_label, '\0', '\0', '\0'};
+                if (sensor_value < 10) {
+                    str[1] = '0' + sensor_value % 10;
+                } else {
+                    str[1] = '0' + sensor_value / 10;
+                    str[2] = '0' + sensor_value % 10;
+                }
                 update_sensor(str, 4);
             }
         }
@@ -363,6 +328,7 @@ void sensor_executor()
         count %= SENSOR_MODULE_BYTES_COUNT;
         if (acknowledged) {
             cmd.type = CT_SENSOR_FETCH;
+            cmd.len = 1;
             cmd.content[0] = SENSOR_DATA_FETCH_BYTE;
             result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) u_error("something went wrong here");
@@ -390,13 +356,14 @@ void terminal_executor()
         } else if (c == TERMINAL_ENTER_KEY_CODE) {
             PutStr(CLEAR_START_OF_LINE, sizeof(CLEAR_START_OF_LINE) - 1);
             PutStr(PATCH_COMMAND_LINE_PREFIX, sizeof(PATCH_COMMAND_LINE_PREFIX) - 1);
-            if (cmdBuf.len <= COMMAND_MAX_LEN) {
+            if (cmdBuf.len < COMMAND_MAX_LEN) {
+                cmdBuf.content[cmdBuf.len] = '\0';
                 _process_command(&cmdBuf);
             }
             for (int i = 0; i < COMMAND_MAX_LEN; i++) cmdBuf.content[i]= 0;
             cmdBuf.len = 0;
             cursor_index = 0;
-        } else {
+        } else if (cursor_index < TERMINAL_OUTPUT_MAX_LEN) {
             cursor_index++;
             PutStr(&c, 1);
         }
@@ -416,7 +383,7 @@ void command_executor()
         } else if (cmd.type == CT_TRAIN_NORMAL) {
             cmd_buffer[cmd.id].ticks = train_ticks;
             train_ticks += INTER_COMMANDS_DELAY_TICKS;
-        }  else {
+        }  else if (cmd.type != CT_FETCH_COMMAND) {
             cmd_buffer[cmd.id].ticks = curr_ticks;
         }
 
@@ -432,7 +399,9 @@ void command_executor()
                     Putc(_uart1_tx_server_tid, COM1, cmd.content[i]);
                 }
                 if (cmd.type == CT_TRAIN_NORMAL) {
-                    if (cmd.content[0] == TRAIN_REVERSE_DIRECTION_LIGHTS_ON) {
+                    if (cmd.content[0] == TRAIN_START) {
+                        u_info("[%d][tr] Enable trainset", curr_ticks);
+                    } else if (cmd.content[0] == TRAIN_REVERSE_DIRECTION_LIGHTS_ON) {
                         u_info("[%d][rv] Train %d reverse", curr_ticks, cmd.content[1]);
                     } else {
                         u_info("[%d][tr] Train %d set speed to %d", curr_ticks, cmd.content[1], cmd.content[0]);
@@ -467,13 +436,16 @@ void track_server()
     Create(RAILS_TASK_PRIORITY, rails_task);
 
     track_node track[TRACK_MAX];
+    Train_Node trainset[TRAIN_MAX];
     init_tracka(track);
+    init_trainset(trainset);
 
     int sensor_node_number = -1;
     Instructions instructions = {.length = 0};
     
     Queue cmd_queue = {.size = 0, .index = 0};
-    int client_tid, cmd_id, node_num, id = 0;
+    int client_tid, cmd_id, train_number, node_number, id = 0;
+    TRACK_TYPE track_type;
     while (Receive(&client_tid, (char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]))) {
         switch (cmd_buffer[id].type)
         {
@@ -491,9 +463,9 @@ void track_server()
         case CT_SENSOR_FETCH:
             enqueue(&cmd_queue, id);
             cmd_buffer[id].id = id;
-            Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
-            id++;
+            id += 1;
             id %= QUEUE_SIZE;
+            Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
             break;
         case CT_SENSOR_UPDATE:
             if (sensor_node_number != cmd_buffer[id].content[0]) {
@@ -502,11 +474,18 @@ void track_server()
             Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
             break;
         case CT_GOTO_TARGET:
-            node_num = cmd_buffer[id].content[0];
-            Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
+            train_number = cmd_buffer[id].content[0];
+            node_number = cmd_buffer[id].content[1];
             if (sensor_node_number != -1) {
-                routing(sensor_node_number, track, &instructions, node_num);
+                routing(sensor_node_number, track, &instructions, node_number);
             }
+            Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
+            break;
+        case CT_CHANGE_TRACK:
+            track_type = cmd_buffer[id].content[0];
+            if (track_type == TT_TRACK_A) init_tracka(track);
+            if (track_type == TT_TRACK_B) init_trackb(track);
+            Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
             break;
         default:
             break;
