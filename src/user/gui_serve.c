@@ -34,18 +34,6 @@ typedef struct
     int index;
 } Switch_Gui;
 
-typedef struct
-{
-    char content[BIG_ENOUGH_BUFFER_SIZE];
-    int index;
-} Movement_Buffer;
-
-typedef struct
-{
-    char content[BIG_ENOUGH_BUFFER_SIZE];
-    int index;
-} General_Buffer;
-
 static int _clock_server_tid = -1;
 static int _uart2_tx_server_tid = -1;
 static int _gui_server_tid = -1;
@@ -78,7 +66,7 @@ int update_switch(char *str, int size) {
 }
 
 int update_idle(int percent_idle) {
-	char idles[2] = {0};
+	char idles[2];
 	idles[0] = percent_idle / 10;
 	idles[1] = percent_idle % 10;
     Pixels pixels = { .type=PX_IDLE_UPDATE, .size = 2, .chars = idles };
@@ -88,7 +76,8 @@ int update_idle(int percent_idle) {
 
 int update_clock(int hundredth_milsec) {
 	int sec = 0, min = 0;
-    char ticks[8] = {'\0'};
+    char ticks[8];
+	ticks[7] = '\0';
 	sec = hundredth_milsec / 10;
 	min = sec / 60;
 	sec %= 60;
@@ -315,7 +304,7 @@ void u_error(char *fmt, ...)
     update_log(format_buffer.content, format_buffer.index);
 }
 
-void _sprintf( General_Buffer *buffer, char *fmt, ...)
+void u_sprintf( General_Buffer *buffer, char *fmt, ...)
 {
 	va_list va;
 	va_start(va, fmt);
@@ -330,8 +319,8 @@ void loading_task()
 	PutStr(CLEAR_SCREEN, sizeof(CLEAR_SCREEN) - 1);
 	PutStr(CURSOR_HOME, sizeof(CURSOR_HOME) - 1);
 	
-	char *str = "-----------------------------------------------------------------------------------------------------------------------------------------------------------------\r\n|********************************************************************************************************************    | Switch State                         |\r\n|                          *        *                                                                                *   |                                      |\r\n|**************************        *                                                                                  *  |   1   2   3   4   5   6   7   8   9  |\r\n|         A16        *            * *********************************************************************************  * |                                      |\r\n|********************            **                                   *           *                                   * *|                                      |\r\n|         A15                   *                                       *   *   *                                       *|                                      |\r\n|                               *                                         * * *                                         *|  10  11  12  13  14  15  16  17  18  |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *| 153 154 155 156                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|--------------------------------------|\r\n|                               *                                           *                                           *| Sensor State                         |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                         * * *                                         *|                                      |\r\n|                               *                                       *   *   *                                       *|                                      |\r\n|                                **                                   *           *                                   * *|                                      |\r\n|**************                   * *********************************************************************************  * |                                      |\r\n|              *                   *                                                                                  *  |                                      |\r\n|********************               *                                                                                *   |                                      |\r\n|                    *               ********************************************************************************    |                                      |\r\n|**************************                          *                                              *                    |                                      |\r\n|                          *                           *                                          *                      |                                      |\r\n|***************************************************************************************************************         |                                      |\r\n|---------------------------------------------------------------------------------------------------------------------------------------------------------------|\r\n| >                                                                                                                      | Kernel Statistics                    |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        | Clock:                               |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        | Idle time:                           |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n|                                                                                                                        |                                      |\r\n-----------------------------------------------------------------------------------------------------------------------------------------------------------------\r\n";
-	PutStr(str, 8479);
+	char *str = "-----------------------------------------------------------------------------------------------------------------------------------------------------------------\r\n|********************************************************************************************************************    | Switch State                         |\r\n|                          *        *                                                                                *   |                                      |\r\n|**************************        *                                                                                  *  |   1   2   3   4   5   6   7   8   9  |\r\n|         A16        *            * *********************************************************************************  * |                                      |\r\n|********************            **                                   *           *                                   * *|                                      |\r\n|         A15                   *                                       *   *   *                                       *|                                      |\r\n|                               *                                         * * *                                         *|  10  11  12  13  14  15  16  17  18  |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *| 153 154 155 156                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|--------------------------------------|\r\n|                               *                                           *                                           *| Sensor State                         |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                           *                                           *|                                      |\r\n|                               *                                         * * *                                         *|                                      |\r\n|                               *                                       *   *   *                                       *|                                      |\r\n|                                **                                   *           *                                   * *|                                      |\r\n|**************                   * *********************************************************************************  * |                                      |\r\n|              *                   *                                                                                  *  |                                      |\r\n|********************               *                                                                                *   |                                      |\r\n|                    *               ********************************************************************************    |                                      |\r\n|**************************                          *                                              *                    |                                      |\r\n|                          *                           *                                          *                      |                                      |\r\n|***************************************************************************************************************         |                                      |\r\n|---------------------------------------------------------------------------------------------------------------------------------------------------------------|\r\n| >                                                                                                                                                             |\r\n|---------------------------------------------------------------------------------------------------------------------------------------------------------------|\r\n| Kernel Statistics                                                                                                                                             |\r\n|                                                                                                                                                               |\r\n| Clock:                                                                                                                                                        |\r\n|                                                                                                                                                               |\r\n| Idle Time:                                                                                                                                                    |\r\n|                                                                                                                                                               |\r\n|                                                                                                                                                               |\r\n|                                                                                                                                                               |\r\n-----------------------------------------------------------------------------------------------------------------------------------------------------------------\r\n";
+	PutStr(str, 6680);
 
 	PutStr(CURSOR_COMMAND_LINE, sizeof(CURSOR_COMMAND_LINE) - 1);
 }
@@ -345,9 +334,9 @@ void gui_server()
 	Switch_Gui switch_gui;
 	_init_map_data(&sensor_gui, &switch_gui);
     Pixels pixels;
-    int client_tid, row, col, prev_row, switch_number, log_line = 0, prev_log_line;
+    int client_tid, row, col, prev_row, switch_number;
 	char switch_direction;
-    General_Buffer movement_buffer = {.index = 0};
+    General_Buffer format_buffer = {.index = 0};
     while (Receive(&client_tid, (char *) &(pixels), sizeof(pixels))) {
         Reply(client_tid, (const char *) &(pixels), sizeof(pixels));
 		switch (pixels.type)
@@ -363,12 +352,12 @@ void gui_server()
 			if (sensor_gui.index == 0) prev_row = sensor_gui.map[SENSOR_TRACKED - 1][0];
 			else prev_row = sensor_gui.map[sensor_gui.index - 1][0];
 			if (++sensor_gui.index == SENSOR_TRACKED) sensor_gui.index = 0;
-			_sprintf(&movement_buffer, SAVE_CURSOR "\033[%d;%dH" BACKSPACE "\033[%d;%dH> %s" RESTORE_CURSOR, 
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH" BACKSPACE "\033[%d;%dH> %s" RESTORE_CURSOR, 
 			prev_row, col + 1, row, col, pixels.chars);
-			for (int i = 0; i < movement_buffer.index; i++) {
-				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
+			for (int i = 0; i < format_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
-			movement_buffer.index = 0;
+			format_buffer.index = 0;
 			break;
 		case PX_SWITCH_UPDATE:
 			switch_number = (int) pixels.chars[1];
@@ -376,38 +365,33 @@ void gui_server()
 			switch_number = switch_number > 152 ? switch_number - 135 : switch_number - 1;
 			row = switch_gui.map[switch_number][0];
 			col = switch_gui.map[switch_number][1];
-			_sprintf(&movement_buffer, SAVE_CURSOR "\033[%d;%dH%c" RESTORE_CURSOR, row, col, switch_direction);
-			for (int i = 0; i < movement_buffer.index; i++) {
-				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH%c" RESTORE_CURSOR, row, col, switch_direction);
+			for (int i = 0; i < format_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
-			movement_buffer.index = 0;
+			format_buffer.index = 0;
 			break;
 		case PX_IDLE_UPDATE:
-			_sprintf(&movement_buffer, SAVE_CURSOR "\033[%d;%dH%d.%d" RESTORE_CURSOR, 35, 135, (int) pixels.chars[0], (int) pixels.chars[1]);
-			for (int i = 0; i < movement_buffer.index; i++) {
-				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH%d.%d" RESTORE_CURSOR, 37, 14, (int) pixels.chars[0], (int) pixels.chars[1]);
+			for (int i = 0; i < format_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
-			movement_buffer.index = 0;
+			format_buffer.index = 0;
 			break;
 		case PX_CLOCK_UPDATE:
 			// kernel will never run above 255 mins, easy fix if we have to;
-			_sprintf(&movement_buffer, SAVE_CURSOR "\033[%d;%dH%s" RESTORE_CURSOR, 33, 131, pixels.chars);
-			for (int i = 0; i < movement_buffer.index; i++) {
-				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH%s" RESTORE_CURSOR, 35, 10, pixels.chars);
+			for (int i = 0; i < format_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
-			movement_buffer.index = 0;
+			format_buffer.index = 0;
 			break;
 		case PX_LOG_UPDATE:
-			if (log_line == 0) prev_log_line = LOG_LINES - 1;
-			else prev_log_line = log_line - 1;
-
-			_sprintf(&movement_buffer, SAVE_CURSOR "\033[%d;4H" BACKSPACE "\033[%d;121H" CLEAR_START_OF_LINE "\033[%d;0H| @%s" RESTORE_CURSOR, 33 + prev_log_line,  33 + log_line, 33 + log_line, pixels.chars);
-			log_line++;
-			for (int i = 0; i < movement_buffer.index; i++) {
-				Putc(_uart2_tx_server_tid, COM2, movement_buffer.content[i]);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[100;4H" "%s" SCROLL_UP RESTORE_CURSOR, pixels.chars);
+			for (int i = 0; i < format_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
-			movement_buffer.index = 0;
-			log_line %= LOG_LINES;
+			format_buffer.index = 0;
 			break;
 		default:
 			break;

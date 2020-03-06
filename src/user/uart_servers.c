@@ -21,7 +21,7 @@ int Getc(int tid, int channel)
     if (channel == COM2 && tid != _uart2_rx_server_tid) return -1;
     int uart_server_tid = channel == COM1 ? _uart1_rx_server_tid : _uart2_rx_server_tid;
     UartMessage uart_rx_message;
-    uart_rx_message.source = FROM_USER;
+    uart_rx_message.source = UM_FROM_USER;
     Send(uart_server_tid, (const char *) &uart_rx_message, sizeof(uart_rx_message), (char *)&uart_rx_message, sizeof(uart_rx_message));
     return (int) uart_rx_message.data;
 }
@@ -33,7 +33,7 @@ int Putc(int tid, int channel, char ch)
     if (channel == COM2 && tid != _uart2_tx_server_tid) return -1;
     int uart_server_tid = channel == COM1 ? _uart1_tx_server_tid : _uart2_tx_server_tid;
     UartMessage uart_tx_message;
-    uart_tx_message.source = FROM_USER;
+    uart_tx_message.source = UM_FROM_USER;
     uart_tx_message.data = ch;
     Send(uart_server_tid, (const char *) &uart_tx_message, sizeof(uart_tx_message), (char *)&uart_tx_message, sizeof(uart_tx_message));
     return 0;
@@ -54,7 +54,7 @@ void uart1_rx_notifier()
     UartMessage uart1_rx_message;
     while ((uart1_rx_message.data = AwaitEvent(UART1_RX_EVENT)) > -1) {
         debug("uart1 rx notifier");
-        uart1_rx_message.source = FROM_DEVICE;
+        uart1_rx_message.source = UM_FROM_DEVICE;
         int result = Send(_uart1_rx_server_tid, (const char *) &uart1_rx_message, sizeof(uart1_rx_message), (char *)&uart1_rx_message, sizeof(uart1_rx_message));
         if (result < 0) {
             error("something went wrong here");
@@ -76,7 +76,7 @@ void uart1_rx_server()
     while (Receive(&client_tid, (char *) &uart1_rx_message, sizeof(uart1_rx_message))) {
         switch ( uart1_rx_message.source )
         {
-        case FROM_DEVICE:
+        case UM_FROM_DEVICE:
             byte_buffer.buffer[byte_buffer.end++] = uart1_rx_message.data;
             byte_buffer.end &= UART_BUFFER_MASK;
             if (  client_queue.index != client_queue.size ) {
@@ -89,16 +89,16 @@ void uart1_rx_server()
             } else {
                 debug("get byte from uart1 rx notifier and add to buffer");
             }
-            uart1_rx_message.source = FROM_SERVER;
+            uart1_rx_message.source = UM_FROM_SERVER;
             Reply(uart1_rx_notifier_tid, (const char *) &uart1_rx_message, sizeof(uart1_rx_message));
             break;
-        case FROM_USER:
+        case UM_FROM_USER:
             debug("get request from client for uart1 rx server");
             if (byte_buffer.start != byte_buffer.end) {
                 uart1_rx_message.data = byte_buffer.buffer[byte_buffer.start++];
                 byte_buffer.start &= UART_BUFFER_MASK;
                 // to differentiate if the client has been waiting or not
-                uart1_rx_message.source = FROM_SERVER;
+                uart1_rx_message.source = UM_FROM_SERVER;
                 Reply(client_tid, (const char *) &uart1_rx_message, sizeof(uart1_rx_message));
             } else {
                 enqueue(&client_queue, client_tid);
@@ -131,7 +131,7 @@ void uart1_tx_notifier()
             AwaitEvent(CTS_AST);
         }
         debug("uart1 notifier: cts asserted");
-        uart1_tx_message.source = FROM_DEVICE;
+        uart1_tx_message.source = UM_FROM_DEVICE;
         int result = Send(_uart1_tx_server_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message), (char *)&uart1_tx_message, sizeof(uart1_tx_message));
         if (result < 0) {
             error("something went wrong here");
@@ -161,7 +161,7 @@ void uart1_tx_server()
     while (Receive(&client_tid, (char *) &uart1_tx_message, sizeof(uart1_tx_message))) {
         switch ( uart1_tx_message.source )
         {
-        case FROM_DEVICE:
+        case UM_FROM_DEVICE:
             if (byte_buffer.start == byte_buffer.end) {
                 debug("uart1 server: register notifier %d", client_tid);
                 put_ready = 1;
@@ -169,12 +169,12 @@ void uart1_tx_server()
                 uart1_tx_message.data = byte_buffer.buffer[byte_buffer.start++];
                 byte_buffer.start &= UART_BUFFER_MASK;
                 // to differentiate if the notifier has been waiting or not
-                uart1_tx_message.source = FROM_SERVER;
+                uart1_tx_message.source = UM_FROM_SERVER;
                 debug("uart1 server: put char %c to notifier from buffer %d", uart1_tx_message.data, uart1_tx_notifier_tid);
                 Reply(uart1_tx_notifier_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message));
             }
             break;
-        case FROM_USER:
+        case UM_FROM_USER:
             byte_buffer.buffer[byte_buffer.end++] = uart1_tx_message.data;
             byte_buffer.end &= UART_BUFFER_MASK;
             if (put_ready) {
@@ -183,11 +183,11 @@ void uart1_tx_server()
                 debug("uart1 server: put char %c to notifier from user", uart1_tx_message.data);
                 Reply(uart1_tx_notifier_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message));
                 put_ready = 0;
-                uart1_tx_message.source = FROM_DEVICE;
+                uart1_tx_message.source = UM_FROM_DEVICE;
             } else {
                 // to differentiate if the client has been waiting or not
                 debug("uart1 server: tx not ready reply back");
-                uart1_tx_message.source = FROM_SERVER;
+                uart1_tx_message.source = UM_FROM_SERVER;
             }
             Reply(client_tid, (const char *) &uart1_tx_message, sizeof(uart1_tx_message));
             break;
@@ -213,7 +213,7 @@ void uart2_rx_notifier()
     UartMessage uart2_rx_message;
     while (AwaitEvent(UART2_RX_EVENT) > -1) {
         debug("uart2 rx notifier");
-        uart2_rx_message.source = FROM_DEVICE;
+        uart2_rx_message.source = UM_FROM_DEVICE;
         int result = Send(_uart2_rx_server_tid, (const char *) &uart2_rx_message, sizeof(uart2_rx_message), (char *)&uart2_rx_message, sizeof(uart2_rx_message));
         if (result < 0) {
             error("something went wrong here");
@@ -235,7 +235,7 @@ void uart2_rx_server()
     while (Receive(&client_tid, (char *) &uart2_rx_message, sizeof(uart2_rx_message))) {
         switch ( uart2_rx_message.source )
         {
-        case FROM_DEVICE:
+        case UM_FROM_DEVICE:
             while ( !(*uart2_flags & RXFE_MASK) ) {
                 byte_buffer.buffer[byte_buffer.end++] = *uart2_data & DATA_MASK;
                 byte_buffer.end &= UART_BUFFER_MASK;
@@ -250,16 +250,16 @@ void uart2_rx_server()
             } else {
                 debug("get byte from uart2 rx notifier and add to buffer");
             }
-            uart2_rx_message.source = FROM_SERVER;
+            uart2_rx_message.source = UM_FROM_SERVER;
             Reply(uart2_rx_notifier_tid, (const char *) &uart2_rx_message, sizeof(uart2_rx_message));
             break;
-        case FROM_USER:
+        case UM_FROM_USER:
             debug("get request from client for uart2 rx server");
             if ( byte_buffer.start != byte_buffer.end ) {
                 uart2_rx_message.data = byte_buffer.buffer[byte_buffer.start++];
                 byte_buffer.start &= UART_BUFFER_MASK;
                 // to differentiate if the client has been waiting or not
-                uart2_rx_message.source = FROM_SERVER;
+                uart2_rx_message.source = UM_FROM_SERVER;
                 Reply(client_tid, (const char *) &uart2_rx_message, sizeof(uart2_rx_message));
             } else {
                 enqueue(&client_queue, client_tid);
@@ -288,7 +288,7 @@ void uart2_tx_notifier()
 
     while (AwaitEvent(UART2_TX_EVENT) > -1) {
         debug("uart2 tx notifier");
-        uart2_tx_message.source = FROM_DEVICE;
+        uart2_tx_message.source = UM_FROM_DEVICE;
         int result = Send(_uart2_tx_server_tid, (const char *) &uart2_tx_message, sizeof(uart2_tx_message), (char *)&uart2_tx_message, sizeof(uart2_tx_message));
         if (result < 0) {
             error("something went wrong here");
@@ -309,7 +309,7 @@ void uart2_tx_server()
     while (Receive(&client_tid, (char *) &uart2_tx_message, sizeof(uart2_tx_message))) {
         switch ( uart2_tx_message.source )
         {
-        case FROM_DEVICE:
+        case UM_FROM_DEVICE:
             if (byte_buffer.start == byte_buffer.end) {
                 debug("uart2 server: register notifier %d", client_tid);
                 put_ready = 1;
@@ -323,12 +323,12 @@ void uart2_tx_server()
                     count++;
                 }
                 // to differentiate if the notifier has been waiting or not
-                uart2_tx_message.source = FROM_SERVER;
+                uart2_tx_message.source = UM_FROM_SERVER;
                 debug("uart2 server: put %d chars to notifier from buffer %d", count, uart2_tx_notifier_tid);
                 Reply(uart2_tx_notifier_tid, (const char *) &uart2_tx_message, sizeof(uart2_tx_message));
             }
             break;
-        case FROM_USER:
+        case UM_FROM_USER:
             byte_buffer.buffer[byte_buffer.end++] = uart2_tx_message.data;
             byte_buffer.end &= UART_BUFFER_MASK;
             if (put_ready) {
@@ -337,11 +337,11 @@ void uart2_tx_server()
                 debug("uart2 server: put char %c to notifier from user", uart2_tx_message.data);
                 Reply(uart2_tx_notifier_tid, (const char *) &uart2_tx_message, sizeof(uart2_tx_message));
                 put_ready = 0;
-                uart2_tx_message.source = FROM_DEVICE;
+                uart2_tx_message.source = UM_FROM_DEVICE;
             } else {
                 // to differentiate if the client has been waiting or not
                 debug("uart2 server: tx not ready reply back");
-                uart2_tx_message.source = FROM_SERVER;
+                uart2_tx_message.source = UM_FROM_SERVER;
             }
             Reply(client_tid, (const char *) &uart2_tx_message, sizeof(uart2_tx_message));
             break;

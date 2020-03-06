@@ -11,7 +11,6 @@
 #define HASHSIZE 101
 #define STRING_MAX_LENGTH 256
 #define NAME_SERVER_NAME "name_server"
-#define RPS_SERVER_NAME "rps_server"
 #define CLOCK_SERVER_NAME "clock_server"
 #define UART_BUFFER_SIZE 16384
     #define UART_BUFFER_MASK 0x3FFF
@@ -20,47 +19,41 @@
 #define UART1_TX_SERVER_NAME "uart1_tx_server"
 #define UART2_RX_SERVER_NAME "uart2_rx_server"
 #define UART2_TX_SERVER_NAME "uart2_tx_server"
-#define COMMAND_SERVER_NAME "command_server"
+#define TRACK_SERVER_NAME "track_server"
 #define GUI_SERVER_NAME "gui_server"
 #define UPDATE_EVERY_X_IDLES 20
+#define BIG_ENOUGH_BUFFER_SIZE 1024
 
 /*
  * Enum definition
  */
-typedef enum 
-{
-    FROM_USER,
-    FROM_SERVER,
-    FROM_DEVICE
-} UM_SOURCE;
-typedef enum
-{
-    TICK = 0,
-    TIME,
-    DELAY,
-    DELAY_UNTIL
-} CR_TYPE;
-
-typedef enum
-{
-    REGISTERAS = 0,
-    WHOIS
-} NS_OPERATION;
+typedef enum {
+    NS_REGISTERAS = 0,
+    NS_WHOIS
+} NAME_SERVER_OPERATION;
 
 typedef enum {
-    CACHE_ON = 0,
-    CACHE_OFF = 1
-} CACHE_STATUS;
+    UM_FROM_USER,
+    UM_FROM_SERVER,
+    UM_FROM_DEVICE
+} UART_MESSAGE_SOURCE;
 
-typedef enum
-{
-    SENDER_FIRST = 0,
-    RECEIVER_FIRST
-} PF_EXECUTION_ORDER;
+typedef enum {
+    CM_TICK = 0,
+    CM_TIME,
+    CM_DELAY,
+    CM_DELAY_UNTIL
+} CLOCK_MESSAGE_TYPE;
 
 /*
  * Struct definition
  */
+typedef struct
+{
+    char content[BIG_ENOUGH_BUFFER_SIZE];
+    int index;
+} General_Buffer;
+
 typedef struct {
 	char buffer[UART_BUFFER_SIZE];
 	int start;
@@ -68,21 +61,20 @@ typedef struct {
 } RingBuffer;
 
 typedef struct {
-    UM_SOURCE source;
+    UART_MESSAGE_SOURCE source;
     unsigned char data;
 } UartMessage;
 
 typedef struct {
-    CR_TYPE type;
+    CLOCK_MESSAGE_TYPE type;
     int ticks;
 } ClockMessage;
 
-typedef struct 
-{
-	NS_OPERATION operation;
+typedef struct {
+	NAME_SERVER_OPERATION operation;
     const char *name;
     int tid;
-} NSMessage;
+} NameServerMessage;
 
 typedef struct _HashEntry
 {
@@ -132,13 +124,14 @@ int Putc(int tid, int channel, char ch);
 void u_debug(char *fmt, ...);
 void u_info(char *fmt, ...);
 void u_error(char *fmt, ...);
+void u_sprintf(General_Buffer *buffer, char *fmt, ...);
 int PutStr(char *str, int size);
 int update_sensor(char *str, int size);
 int update_switch(char *str, int size);
 int update_idle(int percent_idle);
 int update_clock(int hundredth_milsec);
 void gui_server();
-void command_server();
+void track_server();
 
 void init_hash_table(unsigned int (*hash_table)[2], int hash_size);
 HashEntry *get(unsigned int (*hash_table)[2], int hash_size, const char *key);

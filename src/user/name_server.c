@@ -5,8 +5,8 @@ static int _name_server_tid = -1;
 
 int RegisterAs(const char *name) {
     if (_name_server_tid == -1) return -1;
-    NSMessage ns_message;
-    ns_message.operation = REGISTERAS;
+    NameServerMessage ns_message;
+    ns_message.operation = NS_REGISTERAS;
     ns_message.name = name;
     ns_message.tid = MyTid();
     int result = Send(_name_server_tid, (const char *) &ns_message, sizeof(ns_message), (char *)&ns_message, sizeof(ns_message));
@@ -16,8 +16,8 @@ int RegisterAs(const char *name) {
 
 int WhoIs(const char *name) {
     if (_name_server_tid == -1) return -1;
-    NSMessage ns_message;
-    ns_message.operation = WHOIS;
+    NameServerMessage ns_message;
+    ns_message.operation = NS_WHOIS;
     ns_message.name = name;
     int result = Send(_name_server_tid, (const char *) &ns_message, sizeof(ns_message), (char *)&ns_message, sizeof(ns_message));
     if (result < 0) return -1;
@@ -31,16 +31,16 @@ void name_server() {
     _name_server_tid = MyTid();
     // log("Name server tid <%d>", _name_server_tid);
     int client_tid, result;
-    NSMessage ns_message;
+    NameServerMessage ns_message;
     HashEntry *entry;
     while (Receive(&client_tid, (char *) &ns_message, sizeof(ns_message))) {
         // debug("Name Server: get request of <%d> with key <%s> value <%d>", ns_message.operation,ns_message.name , ns_message.tid);
         switch (ns_message.operation)
         {
-        case REGISTERAS:
+        case NS_REGISTERAS:
             put(_hash_table, HASHSIZE, ns_message.name, (unsigned int) ns_message.tid);
             break;
-        case WHOIS:
+        case NS_WHOIS:
             entry = get(_hash_table, HASHSIZE, ns_message.name);
             ns_message.tid = (int) entry->value;
             break;

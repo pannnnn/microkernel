@@ -8,7 +8,6 @@
 #define LOG_PREFIX_CHARS_COUNT 8
 #define ANSI_SUFFIX_CHARS_COUNT 4
 #define NEW_LINE_CHARS_COUNT 2
-#define BIG_ENOUGH_BUFFER_SIZE 1024
 
 typedef enum
 {

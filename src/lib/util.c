@@ -19,3 +19,15 @@ void charstr_copy(char *msg, char *buf, int length) {
 		buf[i] = msg[i];
 	}
 }
+
+void int_memset(int *mem, int val, int length) {
+	for (int i=0; i < length; i++) {
+		mem[i] = val;
+	}
+}
+
+void char_memset(char *mem, char val, int length) {
+	for (int i=0; i < length; i++) {
+		mem[i] = val;
+	}
+}

@@ -29,8 +29,10 @@ void init_timer()
 void init_terminal() 
 {
     // clear terminal 
+    putstr(CLEAR_TERMINAL_SETTING);
     putstr(CLEAR_SCREEN);
     putstr(HIDE_CURSOR);
+    putstr(SCROLLING);
 }
 
 void init_interrupt() 

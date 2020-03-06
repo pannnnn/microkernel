@@ -52,8 +52,8 @@ void user_task_0() {
     // log("Created UART2 TX Server: <%d>", uart2_tx_server_tid);
     int gui_server_tid = Create(GUI_SERVER_PRIORITY, gui_server);
     // log("Created GUI Server: <%d>", gui_server_tid);
-    int command_server_tid = Create(COMMAND_SERVER_PRIORITY, command_server);
-    // log("Created Command Server: <%d>", command_server_tid);
+    int track_server_tid = Create(TRACK_SERVER_PRIORITY, track_server);
+    // log("Created Track Server: <%d>", track_server_tid);
     // int uart1_client_tid = Create(CLIENT_TASK_PRIORITY, uart1_client);
     // log("Created UART1 Client: <%d>", uart1_client_tid);
 

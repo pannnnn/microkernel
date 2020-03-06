@@ -7,6 +7,7 @@
 // in bytes/chars (each char is 1 byte)
 #define MESSAGE_SIZE    4
 #define NULL 0
+#define MAXIMUM_SIGNED_INT 0x7FFFFFFF
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
 #define CHECK_BIT(x, y) (x & (1 << y))
 #define UNUSED(x) (void)(x)
@@ -26,11 +27,11 @@
 #define UART2_RX_SERVER_PRIORITY 15
 #define UART2_TX_NOTIFIER_PRIORITY 16
 #define UART2_TX_SERVER_PRIORITY 17
-#define COMMAND_SERVER_PRIORITY 20
-#define SENSOR_EXECUTOR_PRIORITY 21
-#define TERMINAL_EXECUTOR_PRIORITY 21
+#define TRACK_SERVER_PRIORITY 20
 #define COMMAND_EXECUTOR_PRIORITY 21
 #define RAILS_TASK_PRIORITY 21
+#define SENSOR_EXECUTOR_PRIORITY 21
+#define TERMINAL_EXECUTOR_PRIORITY 21
 #define GUI_SERVER_PRIORITY 20
 #define LOADING_TASK_PRIORITY 21
 #define CLIENT_TASK_PRIORITY 30
@@ -90,8 +91,10 @@ extern int event_notifier_registrar[INTERRUPT_COUNT];
 /*
  * Function definition
  */
-void charstr_copy(char *msg, char *buf, int length);
 unsigned int read_timer();
 unsigned int get_time_elapsed(unsigned int start_time);
+void charstr_copy(char *msg, char *buf, int length);
+void int_memset(int *mem, int val, int length);
+void char_memset(char *mem, char val, int length);
 
 #endif

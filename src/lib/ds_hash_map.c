@@ -93,11 +93,11 @@ int remove(unsigned int (*hash_table)[2], int hash_size, char *key) {
 
 void dump_hash_map(unsigned int (*hash_table)[2]) {
     HashEntry *entry;
-    bwprintf( COM2, "Hash map");
+    printf("Hash map:");
     for (int i = 0; i < HASHSIZE; i++) {
         for (entry = (HashEntry *) hash_table[i][0]; entry != NULL; entry = entry->next) {
-            bwprintf( COM2, "key [%s] value [%d]", entry->key, entry->value);
+            inline_printf(" key [%s] value [%d]", entry->key, entry->value);
         }
     }
-    bwprintf( COM2, "");
+    inline_printf("\r\n");
 }

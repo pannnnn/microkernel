@@ -21,16 +21,16 @@
 #define CURSOR_HOME "\033[H"
 #define CURSOR_COMMAND_LINE "\033[31;5H"
 #define PATCH_COMMAND_LINE_PREFIX "\033[31;0H| > "
-#define PATCH_LOG_LINE_PREFIX "\033[31;0H|  "
 #define SAVE_CURSOR "\033[s"
 #define RESTORE_CURSOR "\033[u"
 #define HIDE_CURSOR "\033[?25l"
+#define CLEAR_TERMINAL_SETTING "\033c"
+#define SCROLL_UP "\r\n"
+#define SCROLLING "\033[43;100r"
 
 // data attributes
 #define MAX_MOVEMENT_BUFFER 128;
 #define SENSOR_TRACKED 10
 #define SWITCH_TRACKED 22
-#define LOG_LINES 18
-
 
 #endif

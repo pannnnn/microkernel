@@ -113,9 +113,9 @@ int pq_get_min(Queue *queue_struct) {
 
 // flush the priority queue; used for debugging
 void dump_queue(Queue *queue_struct) {
-    bwprintf( COM2, "Queue:");
+    printf("Queue:");
     for (int i = 1; i <= queue_struct->size; i++) {
-        bwprintf( COM2, " %d", queue_struct->queue[i]);
+        inline_printf(" %d", queue_struct->queue[i]);
     }
-    bwprintf( COM2, "\r\n");
+    inline_printf("\r\n");
 }

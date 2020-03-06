@@ -16,7 +16,7 @@ LD = $(XBINDIR)/arm-none-eabi-ld
 # -Wall: report all warnings
 # -mcpu=arm920t: generate code for the 920t architecture
 # -msoft-float: no FP co-processor
-CFLAGS = -O3 -g -S -fPIC -Wall -mcpu=arm920t -msoft-float -I. -I./include
+CFLAGS = -O3 -g -S -fPIC -MMD -Wall -mcpu=arm920t -msoft-float -I. -I./include
 
 # -static: force static linking
 # -e: set entry point
@@ -28,18 +28,21 @@ CSOURCES = $(wildcard src/lib/*.c) $(wildcard src/user/*.c)  $(wildcard src/kern
 ASMSOURCES = $(wildcard src/kernel/*.S)
 ASMFILES = $(CSOURCES:.c=.s)
 OBJECTS = $(CSOURCES:.c=.o) $(ASMSOURCES:.S=.o)
+DEPENDS = $(CSOURCES:.c=.d)
 EXEC = k4
 
-all: clean $(ASMFILES) $(OBJECTS) $(EXEC).elf
+all: $(ASMFILES) $(OBJECTS) $(EXEC).elf
 
 debug: CFLAGS += -DDEBUG=1
 debug: all
 
 $(EXEC).elf: $(OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^ -lc -lgcc
+-include $(DEPENDS)
 
 %.s: %.c
 	$(CC) -S $(CFLAGS) -o $@ $<
+	@sed -i 's;$*.o;$*.s;g' $*.d
 
 %.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $<
@@ -48,6 +51,7 @@ $(EXEC).elf: $(OBJECTS)
 	$(AS) $(ASFLAGS) -o $@ $<
 
 clean:
-	-rm -f *.elf *.s *.o
+	-rm -f *.elf
 	-rm -f $(OBJECTS)
 	-rm -f $(ASMFILES)
+	-rm -f $(DEPENDS)

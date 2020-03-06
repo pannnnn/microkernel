@@ -10,9 +10,7 @@ void _init_clock_server()
 {
 	RegisterAs(CLOCK_SERVER_NAME);
     _clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
-    for (int i = 0;i < QUEUE_SIZE; i++) {
-        _tid_to_ticks[i] = 0;
-    }
+    int_memset(_tid_to_ticks, 0, QUEUE_SIZE);
 }
 
 int _await_queue_comparator1(int tid) 
@@ -29,7 +27,7 @@ int Time(int tid)
 {
     if (tid != _clock_server_tid) return -1;
     ClockMessage clock_request;
-    clock_request.type = TIME;
+    clock_request.type = CM_TIME;
     Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
     return clock_request.ticks;
 }
@@ -38,7 +36,7 @@ int Delay(int tid, int ticks)
 {
     if (tid != _clock_server_tid) return -1;
     ClockMessage clock_request;
-    clock_request.type = DELAY;
+    clock_request.type = CM_DELAY;
     clock_request.ticks = ticks;
     Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
     return clock_request.ticks;
@@ -48,7 +46,7 @@ int DelayUntil(int tid, int ticks)
 {
     if (tid != _clock_server_tid) return -1;
     ClockMessage clock_request;
-    clock_request.type = DELAY_UNTIL;
+    clock_request.type = CM_DELAY_UNTIL;
     clock_request.ticks = ticks;
     Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
     return clock_request.ticks;
@@ -58,7 +56,7 @@ void clock_notifier()
 {
     event_notifier_registrar[TIMER_EVENT] = MyTid();
     ClockMessage clock_request;
-    clock_request.type = TICK;
+    clock_request.type = CM_TICK;
     while (AwaitEvent(TIMER_EVENT) > -1) {
         // debug("awake every one tick (one sec)");
         int result = Send(_clock_server_tid, (const char *) &clock_request, sizeof(clock_request), (char *)&clock_request, sizeof(clock_request));
@@ -82,7 +80,7 @@ void clock_server()
     int client_tid, ticks = 0;
     while (Receive(&client_tid, (char *) &clock_request, sizeof(clock_request))) {
         switch ( clock_request.type ) {
-        case TICK:
+        case CM_TICK:
             // check result error
             // debug("Ticks <%d>", ticks);
             ticks++;
@@ -98,11 +96,11 @@ void clock_server()
                 Reply(blocked_tid, (const char *) &clock_request, sizeof(clock_request));
             }
             break;
-        case TIME:
+        case CM_TIME:
             clock_request.ticks = ticks;
             Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
             break;
-        case DELAY:
+        case CM_DELAY:
             if (clock_request.ticks < 0) {
                 clock_request.ticks = -2;
                 Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));
@@ -111,7 +109,7 @@ void clock_server()
                 pq_insert(&blocked_tids, client_tid);
             }
             break;
-        case DELAY_UNTIL:
+        case CM_DELAY_UNTIL:
             if (clock_request.ticks < ticks) {
                 clock_request.ticks = -2;
                 Reply(client_tid, (const char *) &clock_request, sizeof(clock_request));

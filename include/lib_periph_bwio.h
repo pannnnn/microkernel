@@ -31,6 +31,7 @@ void bwputw( int channel, int n, char fc, char *bf );
 void bwprintf( int channel, char *format, ... );
 
 
+#define inline_printf(f, ...)       bwprintf(COM2, f, ## __VA_ARGS__)
 #define printf(f, ...)              bwprintf(COM2, "%s:%d\t" f, __FILE__, __LINE__, ## __VA_ARGS__)
 #define putc(c)                     bwputc(COM2, c)
 #define putstr(str)                 bwputstr(COM2, str)
