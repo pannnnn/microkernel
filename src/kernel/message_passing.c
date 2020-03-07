@@ -27,7 +27,7 @@ void sys_send(int tid, char *msg, int msglen, char *reply, int rplen) {
 		sender_td->state = REPLY_WAIT;
 		*receiver_td->message.receiver_reserved_sid = sender_tid;
 		int copied_length = MIN(msglen, receiver_td->message.receive_message_length);
-		charstr_copy(msg, receiver_td->message.receive_message, copied_length);
+		chars_copy(msg, receiver_td->message.receive_message, copied_length);
 		pq_insert(&_kernel_state.ready_queue, receiver_td->id);
 		set_result(receiver_td, copied_length);
 	} else {
@@ -53,7 +53,7 @@ void sys_receive(int *tid, char *msg, int msglen) {
 		if (sender_td->state == SEND_WAIT) {
 			sender_td->state = REPLY_WAIT;
 			int copied_length = MIN(sender_td->message.sent_message_length, msglen);
-			charstr_copy(sender_td->message.sent_message, msg, copied_length);
+			chars_copy(sender_td->message.sent_message, msg, copied_length);
 			pq_insert(&_kernel_state.ready_queue, receiver_td->id);
 			set_result(receiver_td, copied_length);
 		}
@@ -70,7 +70,7 @@ int sys_reply(int tid, char *reply, int rplen) {
 	}
 	sender_td->state = READY;
 	int copied_length = MIN(sender_td->message.replied_message_length, rplen);
-	charstr_copy(reply, sender_td->message.replied_message, copied_length);
+	chars_copy(reply, sender_td->message.replied_message, copied_length);
 	pq_insert(&_kernel_state.ready_queue, sender_td->id);
 	set_result(sender_td, copied_length);
 	return copied_length;

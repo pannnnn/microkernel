@@ -14,9 +14,9 @@ unsigned int get_time_elapsed(unsigned int start_time) {
 	return (start_time - read_timer()) / CLOCK_PER_MILLISEC_508K;
 }
 
-void charstr_copy(char *msg, char *buf, int length) {
+void chars_copy(char *src, char *dst, int length) {
 	for (int i=0; i < length; i++) {
-		buf[i] = msg[i];
+		dst[i] = src[i];
 	}
 }
 

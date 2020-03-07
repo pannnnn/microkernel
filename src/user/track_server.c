@@ -50,6 +50,7 @@ static int _uart1_tx_server_tid = -1;
 static int _uart2_rx_server_tid = -1;
 static int _track_server_tid = -1;
 static int _train_speed = 0;
+static int _track_type = TT_TRACK_A;
 
 static Command cmd_buffer[QUEUE_SIZE];
 
@@ -70,6 +71,7 @@ void _init_track_server()
     _uart2_rx_server_tid = WhoIs(UART2_RX_SERVER_NAME);
     _track_server_tid = MyTid();
     _train_speed = 0;
+    _track_type = TT_TRACK_A;
     u_memset(cmd_buffer, 0, QUEUE_SIZE * sizeof(Command));
 }
 
@@ -143,7 +145,31 @@ void _process_command(CommandBuffer *cmdBuf)
         char *node_label = strtok(NULL, " ");
         if (strtok(NULL, " ") != NULL) return;
         int train_number = (int) strtol(train_number_c, (char **)NULL, 10);
-        if (node_label[0] >= 'A' && node_label[0] <= 'E') {
+        if (!strncmp(node_label, "EN", 2)) {
+            int entry_number = (int) strtol(&node_label[2], (char **)NULL, 10);
+            if (entry_number <= 0 || entry_number > 10) return;
+            if (_track_type == TT_TRACK_A) {
+                node_number = 122 + 2 * entry_number;
+            } else {
+                if (entry_number == 6 || entry_number == 8) return;
+                else if (entry_number == 7) node_number = 134;
+                else if (entry_number == 9) node_number = 136;
+                else if (entry_number == 10) node_number = 138;
+                else node_number = 122 + 2 * entry_number;
+            }
+        } else if (!strncmp(node_label, "EX", 2)) {
+            int exit_number = (int) strtol(&node_label[2], (char **)NULL, 10);
+            if (exit_number <= 0 || exit_number > 10) return;
+            if (_track_type == TT_TRACK_A) {
+                node_number = 122 + 2 * exit_number + 1;
+            } else {
+                if (exit_number == 6 || exit_number == 8) return;
+                if (exit_number == 7) node_number = 135;
+                else if (exit_number == 9) node_number = 137;
+                else if (exit_number == 10) node_number = 139;
+                else node_number = 122 + 2 * exit_number + 1;
+            }
+        } else if (node_label[0] >= 'A' && node_label[0] <= 'E') {
             int sensor_number = (int) strtol(&node_label[1], (char **)NULL, 10);
             if (sensor_number < 1 || sensor_number > 16) return;
             node_number = (node_label[0] - 'A') * 16 + sensor_number - 1;
@@ -171,6 +197,7 @@ void _process_command(CommandBuffer *cmdBuf)
         int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
         if (result < 0) u_error("something went wrong here");
     } else {
+        u_error("Invalid command");
         return;
     }
 }
@@ -193,7 +220,7 @@ void routing(int src_index, track_node *track, Instructions *instructions, int d
     prev[next_index] = prev_index;
 
     // traverse
-    int unreachable = 0;
+    int unreachable = 0, complementary_index;
     while (!visited[dest_index]) {
         // find w not in N' such that D(w) is a minimum
         for (int i = 0; i < TRACK_MAX; i++) {
@@ -238,8 +265,15 @@ void routing(int src_index, track_node *track, Instructions *instructions, int d
     }
 
     if (unreachable) {
-         u_info("[routing] Unreachable destination %s", track[dest_index].name);
-         return;
+        complementary_index = dest_index ^ 1;
+        if (prev[complementary_index] != -1) {
+            u_info("[routing] Destination changed %s -> %s", track[dest_index].name, track[complementary_index].name);
+            prev[dest_index] = complementary_index;
+        } else {
+            u_info("[routing] Explore the other direction by changing source %s -> %s", track[src_index].name, track[src_index ^ 1].name);
+            routing(src_index ^ 1, track, instructions, dest_index);
+            return;
+        }
     }
 
     General_Buffer format_buffer = {.index = 0};
@@ -483,6 +517,7 @@ void track_server()
             break;
         case CT_CHANGE_TRACK:
             track_type = cmd_buffer[id].content[0];
+            _track_type = track_type;
             if (track_type == TT_TRACK_A) init_tracka(track);
             if (track_type == TT_TRACK_B) init_trackb(track);
             Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));

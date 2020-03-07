@@ -93,7 +93,7 @@ extern int event_notifier_registrar[INTERRUPT_COUNT];
  */
 unsigned int read_timer();
 unsigned int get_time_elapsed(unsigned int start_time);
-void charstr_copy(char *msg, char *buf, int length);
+void chars_copy(char *msg, char *buf, int length);
 void *u_memset(void *s, int c, unsigned int n);
 void int_memset(int *mem, int val, int length);
 void char_memset(char *mem, char val, int length);

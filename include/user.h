@@ -23,7 +23,7 @@
 #define TRACK_SERVER_NAME "track_server"
 #define GUI_SERVER_NAME "gui_server"
 #define UPDATE_EVERY_X_IDLES 20
-#define BIG_ENOUGH_BUFFER_SIZE 1024
+#define BIG_ENOUGH_BUFFER_SIZE 16384
 
 /*
  * Enum definition

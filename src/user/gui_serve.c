@@ -239,21 +239,21 @@ void _add_log_info(LOG_LEVEL level, General_Buffer *fmt_buffer)
     switch (level)
     {
     case DEBUG:
-        charstr_copy(ANSI_WHITE, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
-        charstr_copy("[DEBUG] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
+        chars_copy(ANSI_WHITE, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
+        chars_copy("[DEBUG] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
         break;
     case INFO:
-        charstr_copy(ANSI_CYAN, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
-        charstr_copy("[ INFO] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
+        chars_copy(ANSI_CYAN, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
+        chars_copy("[ INFO] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
         break;
     case ERROR:
-        charstr_copy(ANSI_RED, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
-        charstr_copy("[ERROR] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
+        chars_copy(ANSI_RED, &fmt_buffer->content[0], ANSI_PREFIX_CHARS_COUNT);
+        chars_copy("[ERROR] ", &fmt_buffer->content[ANSI_PREFIX_CHARS_COUNT], LOG_PREFIX_CHARS_COUNT);
         break;
     default:
         break;
     }
-    charstr_copy(ANSI_RESET, &fmt_buffer->content[fmt_buffer->index], ANSI_SUFFIX_CHARS_COUNT);
+    chars_copy(ANSI_RESET, &fmt_buffer->content[fmt_buffer->index], ANSI_SUFFIX_CHARS_COUNT);
     fmt_buffer->index += ANSI_SUFFIX_CHARS_COUNT;
 	fmt_buffer->content[fmt_buffer->index++] = '\0';
 }
@@ -301,6 +301,7 @@ void u_error(char *fmt, ...)
 	va_end(va);
 
     _add_log_info(ERROR, &format_buffer);
+
     update_log(format_buffer.content, format_buffer.index);
 }
 
@@ -337,13 +338,17 @@ void gui_server()
     int client_tid, row, col, prev_row, switch_number;
 	char switch_direction;
     General_Buffer format_buffer = {.index = 0};
+	General_Buffer char_buffer = {.index = 0};
     while (Receive(&client_tid, (char *) &(pixels), sizeof(pixels))) {
+		chars_copy(pixels.chars, char_buffer.content, pixels.size);
+		char_buffer.index = pixels.size;
+
         Reply(client_tid, (const char *) &(pixels), sizeof(pixels));
 		switch (pixels.type)
 		{
 		case PX_REGULAR:
-			for (int i = 0; i < pixels.size; i++) {
-				Putc(_uart2_tx_server_tid, COM2, pixels.chars[i]);
+			for (int i = 0; i < char_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, char_buffer.content[i]);
 			}
 			break;
 		case PX_SENSOR_UPDATE:
@@ -353,15 +358,15 @@ void gui_server()
 			else prev_row = sensor_gui.map[sensor_gui.index - 1][0];
 			if (++sensor_gui.index == SENSOR_TRACKED) sensor_gui.index = 0;
 			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH" BACKSPACE "\033[%d;%dH>" CLEAR_END_OF_LINE "%s\033[%d;161H|" RESTORE_CURSOR, 
-			prev_row, col + 1, row, col, pixels.chars, row);
+			prev_row, col + 1, row, col, char_buffer.content, row);
 			for (int i = 0; i < format_buffer.index; i++) {
 				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
 			format_buffer.index = 0;
 			break;
 		case PX_SWITCH_UPDATE:
-			switch_number = (int) pixels.chars[1];
-			switch_direction = pixels.chars[0] == SWITCH_STRAIGHT ? SWITCH_STRAIGHT_SYMBOL : SWITCH_BRANCH_SYMBOL;
+			switch_number = (int) char_buffer.content[1];
+			switch_direction = char_buffer.content[0] == SWITCH_STRAIGHT ? SWITCH_STRAIGHT_SYMBOL : SWITCH_BRANCH_SYMBOL;
 			switch_number = switch_number > 152 ? switch_number - 135 : switch_number - 1;
 			row = switch_gui.map[switch_number][0];
 			col = switch_gui.map[switch_number][1];
@@ -372,7 +377,7 @@ void gui_server()
 			format_buffer.index = 0;
 			break;
 		case PX_IDLE_UPDATE:
-			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH%d.%d" RESTORE_CURSOR, 37, 14, (int) pixels.chars[0], (int) pixels.chars[1]);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH%d.%d" RESTORE_CURSOR, 37, 14, (int) char_buffer.content[0], (int) char_buffer.content[1]);
 			for (int i = 0; i < format_buffer.index; i++) {
 				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
@@ -380,14 +385,14 @@ void gui_server()
 			break;
 		case PX_CLOCK_UPDATE:
 			// kernel will never run above 255 mins, easy fix if we have to;
-			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH%s" RESTORE_CURSOR, 35, 10, pixels.chars);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH%s" RESTORE_CURSOR, 35, 10, char_buffer.content);
 			for (int i = 0; i < format_buffer.index; i++) {
 				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
 			format_buffer.index = 0;
 			break;
 		case PX_LOG_UPDATE:
-			u_sprintf(&format_buffer, SAVE_CURSOR "\033[100;4H" "%s" SCROLL_UP RESTORE_CURSOR, pixels.chars);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[100;4H" "%s" SCROLL_UP RESTORE_CURSOR, char_buffer.content);
 			for (int i = 0; i < format_buffer.index; i++) {
 				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}
