@@ -14,6 +14,12 @@ unsigned int get_time_elapsed(unsigned int start_time) {
 	return (start_time - read_timer()) / CLOCK_PER_MILLISEC_508K;
 }
 
+unsigned int get_time_elapsed_with_update(unsigned int *start_time) {
+	int time = *start_time;
+	*start_time = read_timer();
+	return (time - *start_time) / CLOCK_PER_MILLISEC_508K;
+}
+
 void chars_copy(char *src, char *dst, int length) {
 	for (int i=0; i < length; i++) {
 		dst[i] = src[i];

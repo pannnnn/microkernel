@@ -5,7 +5,6 @@
  * Macro definition
  */
 // in bytes/chars (each char is 1 byte)
-#define MESSAGE_SIZE    4
 #define NULL 0
 #define MAXIMUM_SIGNED_INT 0x7FFFFFFF
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
@@ -93,6 +92,7 @@ extern int event_notifier_registrar[INTERRUPT_COUNT];
  */
 unsigned int read_timer();
 unsigned int get_time_elapsed(unsigned int start_time);
+unsigned int get_time_elapsed_with_update(unsigned int *start_time);
 void chars_copy(char *msg, char *buf, int length);
 void *u_memset(void *s, int c, unsigned int n);
 void int_memset(int *mem, int val, int length);
