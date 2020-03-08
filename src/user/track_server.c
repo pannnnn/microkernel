@@ -25,13 +25,14 @@ typedef enum {
     CT_GOTO_TARGET,
     CT_CHANGE_TRACK,
     CT_SET_TRAIN_NUMBER,
-    CT_SET_VELOCITY_LEVEL
+    CT_SET_VELOCITY_LEVEL,
+    CT_SET_LOOP
 } COMMAND_TYPE;
 
 typedef struct {
     COMMAND_TYPE type;
     int id;
-    char content[2];
+    char content[8];
     int len;
     int ticks;
     int priority;
@@ -110,16 +111,17 @@ void _init_track_server()
     init_trainset(_trainset);
 }
 
-void _track_a_loop() {
-    Command cmd;
-    for (int i = 0; i < TRACK_A_LOOP_SWITCH; i++) 
-    {
-        cmd.type = CT_SWITCH_NORMAL;
-        cmd.len = 2;
-        cmd.content[0] = SWITCH_BRANCH;
-        cmd.content[1] = _track_a_loop_switch[i];
-        cmd.priority = 0;
-        Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+void _loop_a(Queue *cmd_queue, int *id) {
+    for (int i = 0; i < TRACK_A_LOOP_SWITCH; i++) {
+        enqueue(cmd_queue, *id);
+        cmd_buffer[*id].id = *id;
+        cmd_buffer[*id].type = CT_SWITCH_NORMAL;
+        cmd_buffer[*id].len = 2;
+        cmd_buffer[*id].content[0] = SWITCH_BRANCH;
+        cmd_buffer[*id].content[1] = _track_a_loop_switch[i];
+        cmd_buffer[*id].priority = 0;
+        *id += 1;
+        *id %= QUEUE_SIZE;
     }
 }
 
@@ -146,14 +148,14 @@ int _get_train_index(int train_number)
 
 int _get_distance(int start_node_number, int end_node_number) 
 {
-    if (_track[start_node_number].type != NODE_SENSOR || _track[start_node_number].type != NODE_SENSOR) return -1;
+    if (_track[start_node_number].type != NODE_SENSOR || _track[end_node_number].type != NODE_SENSOR) return -1;
     int count = 0, distance = 0, curr_node_number = start_node_number;
     while(curr_node_number != end_node_number) {
         if (_track[curr_node_number].type != NODE_BRANCH) {
+            if (_track[curr_node_number].type == NODE_EXIT) return -1;
             distance += _track[curr_node_number].edge[DIR_AHEAD].dist;
             curr_node_number = _track[curr_node_number].edge[DIR_AHEAD].dest - _track;
         } else {
-            if (_track[curr_node_number].type == NODE_EXIT) return -1;
             int dir_type = _switch_map[curr_node_number];
             distance += _track[curr_node_number].edge[dir_type].dist;
             curr_node_number = _track[curr_node_number].edge[dir_type].dest - _track;
@@ -317,7 +319,9 @@ void _process_command(CommandBuffer *cmdBuf)
     } else if(!strcmp(operation, "goto")) {
         int node_number;
         char *node_label = strtok(NULL, " ");
+        char *offset_c = strtok(NULL, " ");
         if (strtok(NULL, " ") != NULL) return;
+        int offset = (int) strtol(offset_c, (char **)NULL, 10);
         if (!strncmp(node_label, "EN", 2)) {
             int entry_number = (int) strtol(&node_label[2], (char **)NULL, 10);
             if (entry_number <= 0 || entry_number > 10) return;
@@ -350,13 +354,14 @@ void _process_command(CommandBuffer *cmdBuf)
             int switch_number = (int) strtol(node_label, (char **)NULL, 10);
             if (switch_number <= 0 || (switch_number > SWITCH_ONE_WAY_COUNT && switch_number < SWITCH_TWO_WAY_1a) || switch_number > SWITCH_TWO_WAY_2b) return;
             if (switch_number >= SWITCH_TWO_WAY_1a && switch_number <= SWITCH_TWO_WAY_2b) {
-                node_number = 116 + switch_number - SWITCH_TWO_WAY_1a;
+                node_number = 115 + (switch_number - SWITCH_TWO_WAY_1a) * 2 - 1;
             } else {
-                node_number = 79 + switch_number;
+                node_number = 79 + switch_number * 2 - 1;
             }
         }
 
-        Command cmd = {.type = CT_GOTO_TARGET, .content = {node_number}, .len = 1};
+        Command cmd = {.type = CT_GOTO_TARGET, .content = {node_number}, .len = 8};
+        *((int *) &cmd.content[4]) = offset;
         int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
         if (result < 0) u_error("something went wrong here");
     } else if(!strcmp(operation, "track")) {
@@ -385,19 +390,23 @@ void _process_command(CommandBuffer *cmdBuf)
     	char *velocity_level_c = strtok(NULL, " ");
         int velocity_level = (int) strtol(velocity_level_c, (char **)NULL, 10);
         if (velocity_level < 0 || velocity_level > 2) {
-            u_info("Invalid velocity level %d. [0,1,2]", velocity_level);
+            u_info("Invalid velocity level %d choose in [0,1,2]", velocity_level);
         } else {
             Command cmd = {.type = CT_SET_VELOCITY_LEVEL, .content = {velocity_level}, .len = 1};
             int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
             if (result < 0) u_error("something went wrong here");
         }
+    } else if(!strcmp(operation, "loop")) {
+        Command cmd = {.type = CT_SET_LOOP, .content = {}, .len = 0};
+        int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
+        if (result < 0) u_error("something went wrong here");
     } else {
         u_error("Invalid command");
         return;
     }
 }
 
-int _issue_stop_command(int curr_node_number, Queue *cmd_queue, int *id, int train_index, int velocity_level) {
+int _issue_stop_command(int curr_node_number, Queue *cmd_queue, int *id, int train_index, int velocity_level, int *offset) {
     int next_node_number = _get_next_sensor_node_number(curr_node_number);
     if (next_node_number == -1)  {
         u_error("[goto] Can not get next node number for %s", _track[curr_node_number].name);
@@ -409,6 +418,11 @@ int _issue_stop_command(int curr_node_number, Queue *cmd_queue, int *id, int tra
         u_debug("[goto] Enter uncovered path from %s to %s", _track[curr_node_number].name, _track[next_node_number].name);
         return -1;
     }
+
+    dtd += *offset;
+    next_dtd += *offset;
+
+    u_info("[issue] offset %d", *offset);
 
     int stopping_distance = _trainset[train_index].curr_stopping_distance;
     int velocity = _trainset[train_index].curr_velocity;
@@ -428,6 +442,7 @@ int _issue_stop_command(int curr_node_number, Queue *cmd_queue, int *id, int tra
         (*id)++;
         (*id) %= QUEUE_SIZE;
         int_memset(distance_to_destination, -1, TRACK_MAX);
+        *offset = 0;
         return 0;
     }
     // 1 means not reaching closely to destination, keep pooling sensors
@@ -435,7 +450,7 @@ int _issue_stop_command(int curr_node_number, Queue *cmd_queue, int *id, int tra
 }
 
 
-void calibrate_speed(int train_index, int velocity_level, int prev_node_number, int curr_node_number) {
+void calibration(int train_index, int velocity_level, int prev_node_number, int curr_node_number) {
     Train_Node *train = &_trainset[train_index];
     if (train->last_read_time == 0) {
         train->last_read_time = read_timer();
@@ -447,12 +462,13 @@ void calibrate_speed(int train_index, int velocity_level, int prev_node_number, 
 
     int d = _get_distance(prev_node_number, curr_node_number) * 1000 / train->time_elapsed;
     if (d == -1)  {
-        u_info("[calibrate_speed] check sensor  %s and %s", _track[prev_node_number].name, _track[curr_node_number].name);
+        u_info("[calibration] check sensor  %s and %s", _track[prev_node_number].name, _track[curr_node_number].name);
         return;
     }
-    int c = train->measurement[_track_type].velocity[velocity_level];
-    train->measurement[_track_type].velocity[velocity_level] = (7 * c + d) >> 3;
-    u_info("[calibration] Converging velocity %d", train->measurement[_track_type].velocity[velocity_level]);
+    int c = train->curr_velocity;
+    train->curr_velocity = (7 * c + d) >> 3;
+
+    u_info("[calibration] Converging velocity %d", train->curr_velocity);
 }
 
 void routing(int src_index, int dest_index, Queue *cmd_queue, int *id) {
@@ -688,7 +704,7 @@ void command_executor()
                 cmd_buffer[cmd.id].ticks = curr_ticks;
             }
         } else {
-            u_debug("[command] id %d get priority zero task with type %d", cmd_buffer[cmd.id].id, cmd_buffer[cmd.id].type);
+            // u_debug("[command] id %d get priority zero task with type %d", cmd_buffer[cmd.id].id, cmd_buffer[cmd.id].type);
         }
 
         if (cmd.type != CT_FETCH_COMMAND) {
@@ -742,7 +758,7 @@ void track_server()
     Create(RAILS_TASK_PRIORITY, rails_task);
 
     Queue cmd_queue = {.size = 0, .index = 0};
-    int client_tid, cmd_id, id = 0, train_index = 0, velocity_level = 0, prev_node_number = -1, curr_node_number = -1, goto_mode = 0;
+    int client_tid, cmd_id, id = 0, train_index = -1, prev_node_number = -1, curr_node_number = -1, goto_mode = 0, offset = 0;
     while (Receive(&client_tid, (char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]))) {
         switch (cmd_buffer[id].type)
         {
@@ -770,8 +786,7 @@ void track_server()
         case CT_SENSOR_UPDATE:
             curr_node_number = cmd_buffer[id].content[0];
             if (goto_mode) {
-                velocity_level = _trainset[train_index].curr_level;
-                int result = _issue_stop_command(curr_node_number, &cmd_queue, &id, train_index, _trainset[train_index].curr_level);
+                int result = _issue_stop_command(curr_node_number, &cmd_queue, &id, train_index, _trainset[train_index].curr_level, &offset);
                 if (result == 0) {
                     u_info("[goto] Schedule stop command");
                     goto_mode = 0;
@@ -781,15 +796,16 @@ void track_server()
                 }
             }
             // this is to calibrate velocity
-            // calibrate_speed(train_index, velocity_level, prev_node_number, curr_node_number);
+            calibration(train_index, _trainset[train_index].curr_level, prev_node_number, curr_node_number);
             prev_node_number = curr_node_number;
             Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
             break;
         case CT_GOTO_TARGET:
-            if (!train_index) {
+            if (train_index == -1) {
                 u_error("[goto] Please set train number before goto");
             } else{
                 int dst_node_number = cmd_buffer[id].content[0];
+                offset = *((int *) &cmd_buffer[id].content[4]);
                 if (curr_node_number != -1) {
                     int next_hop_node_number = _get_next_hop_node_number(curr_node_number);
                     if (next_hop_node_number != -1) {
@@ -825,7 +841,7 @@ void track_server()
             if (!train_index) {
                 u_error("[level] Please set train number before level");
             } else {
-                velocity_level = cmd_buffer[id].content[0];
+                int velocity_level = cmd_buffer[id].content[0];
                 _trainset[train_index].curr_level = velocity_level;
                 _trainset[train_index].curr_speed = _trainset[train_index].measurement[_track_type].speed[velocity_level];
                 _trainset[train_index].curr_velocity = _trainset[train_index].measurement[_track_type].velocity[velocity_level];
@@ -843,6 +859,10 @@ void track_server()
             }
             Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
             break;
+        case CT_SET_LOOP:
+            if (_track_type == TT_TRACK_A) _loop_a(&cmd_queue, &id);
+            // if (_track_type == TT_TRACK_B) _loop_b(&id);
+            Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
         default:
             break;
         }

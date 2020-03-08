@@ -109,9 +109,9 @@ void init_trainset(Train_Node *trainset) {
     trainset[3].measurement[TT_TRACK_A].velocity[0] = 380;
     trainset[3].measurement[TT_TRACK_A].velocity[1] = 545;
     trainset[3].measurement[TT_TRACK_A].velocity[2] = 650;
-    trainset[3].measurement[TT_TRACK_A].stopping_distance[0] = 380;
-    trainset[3].measurement[TT_TRACK_A].stopping_distance[1] = 610;
-    trainset[3].measurement[TT_TRACK_A].stopping_distance[2] = 745;
+    trainset[3].measurement[TT_TRACK_A].stopping_distance[0] = 420;
+    trainset[3].measurement[TT_TRACK_A].stopping_distance[1] = 650;
+    trainset[3].measurement[TT_TRACK_A].stopping_distance[2] = 780;
     trainset[3].measurement[TT_TRACK_B].speed[0] = 8;
     trainset[3].measurement[TT_TRACK_B].speed[1] = 11;
     trainset[3].measurement[TT_TRACK_B].speed[2] = 14;
