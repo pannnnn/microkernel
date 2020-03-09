@@ -208,7 +208,7 @@ int _get_instructions(int *paths, int path_count, Queue *cmd_queue, int *id)
 
         if (expected_next_node_number != next_node_number) {
             // freeze the first switch and reroute if the first switched switch is too close
-            u_debug("[schedule_commands] distance to branch %d expected distance %d", total_distance, _trainset[_train_index].curr_velocity * SWITCH_SAFE_TICKS / 100);
+            u_debug("[avoid_derail] actual distance to branch: [%d] expected distance to branch: [%d]", total_distance, _trainset[_train_index].curr_velocity * SWITCH_SAFE_TICKS / 100);
             if (total_distance < _trainset[_train_index].curr_velocity * SWITCH_SAFE_TICKS / 100) return -1;
 
             total_distance += _track[paths[i]].edge[dir_type ^ 1].dist;
@@ -398,7 +398,20 @@ void _process_command(CommandBuffer *cmdBuf)
     }
 }
 
-int _issue_stop_command(int curr_node_number, Queue *cmd_queue, int *id, int *offset) {
+void _issue_stop_command(Queue *cmd_queue, int *id, int ticks) {
+    enqueue(cmd_queue, *id);
+    cmd_buffer[*id].id = *id;
+    cmd_buffer[*id].type = CT_TRAIN_NORMAL;
+    cmd_buffer[*id].len = 2;
+    cmd_buffer[*id].content[0] = 0;
+    cmd_buffer[*id].content[1] = _trainset[_train_index].number;
+    cmd_buffer[*id].priority = 0;
+    cmd_buffer[*id].ticks = ticks;
+    (*id)++;
+    (*id) %= QUEUE_SIZE;
+}
+
+int _try_stop(int curr_node_number, Queue *cmd_queue, int *id, int *offset) {
     int next_node_number = _get_next_sensor_node_number(curr_node_number);
     if (next_node_number == -1)  {
         u_error("[goto] Can not get next node number for %s", _track[curr_node_number].name);
@@ -406,31 +419,31 @@ int _issue_stop_command(int curr_node_number, Queue *cmd_queue, int *id, int *of
     }
     int dtd = distance_to_destination[curr_node_number];
     int next_dtd = distance_to_destination[next_node_number];
-    if (dtd == -1 || next_dtd == -1) {
-        u_debug("[goto] Enter uncovered path from %s to %s", _track[curr_node_number].name, _track[next_node_number].name);
+    if (dtd == -1) {
+        u_error("[goto] Current node not in the planed path %s", _track[curr_node_number].name);
         return -1;
     }
 
-    dtd += *offset;
-    next_dtd += *offset;
-
     int stopping_distance = _trainset[_train_index].curr_stopping_distance;
     int velocity = _trainset[_train_index].curr_velocity;
-    if (dtd > stopping_distance && next_dtd < stopping_distance) {
-        enqueue(cmd_queue, *id);
-        cmd_buffer[*id].id = *id;
-        cmd_buffer[*id].type = CT_TRAIN_NORMAL;
-        cmd_buffer[*id].len = 2;
-        cmd_buffer[*id].content[0] = 0;
-        cmd_buffer[*id].content[1] = _trainset[_train_index].number;
-        cmd_buffer[*id].priority = 0;
+    dtd += *offset;
 
+    if (next_dtd == -1) {
+        u_info("[goto] Next node not in the planed path %s", _track[next_node_number].name);
         int unfinished_distance = dtd - stopping_distance;
         int delayed_ticks = unfinished_distance * 100 / velocity;
-        cmd_buffer[*id].ticks = curr_ticks + delayed_ticks;
+        _issue_stop_command(cmd_queue, id, curr_ticks + delayed_ticks);
+        int_memset(distance_to_destination, -1, TRACK_MAX);
+        *offset = 0;
+        return 0;
+    }
 
-        (*id)++;
-        (*id) %= QUEUE_SIZE;
+    next_dtd += *offset;
+
+    if (dtd >= stopping_distance && next_dtd < stopping_distance) {
+        int unfinished_distance = dtd - stopping_distance;
+        int delayed_ticks = unfinished_distance * 100 / velocity;
+        _issue_stop_command(cmd_queue, id, curr_ticks + delayed_ticks);
         int_memset(distance_to_destination, -1, TRACK_MAX);
         *offset = 0;
         return 0;
@@ -446,16 +459,16 @@ void calibration(int prev_node_number, int curr_node_number) {
         train->last_read_time = read_timer();
         return;
     }
-    if (prev_node_number == -1 || curr_node_number == -1) return;
-    
+    if (prev_node_number == -1) return;    
+
     train->time_elapsed = get_time_elapsed_with_update(&train->last_read_time);
 
-    int d = _get_distance(prev_node_number, curr_node_number) * 1000 / train->time_elapsed;
-    if (d == -1)  {
-        u_info("[calibration] check sensor  %s and %s", _track[prev_node_number].name, _track[curr_node_number].name);
+    int distance = _get_distance(prev_node_number, curr_node_number);
+    if (distance == -1)  {
+        u_error("[calibration] Can not find distance for sensor %s and %s", _track[prev_node_number].name, _track[curr_node_number].name);
         return;
     }
-
+    int d = distance * 1000 / train->time_elapsed;
     int velocity_level = _trainset[_train_index].curr_level;
     int base_velocity = _trainset[_train_index].measurement[_track_type].velocity[velocity_level];
 
@@ -465,7 +478,15 @@ void calibration(int prev_node_number, int curr_node_number) {
         train->curr_velocity = base_velocity;
     }
 
-    u_info("[calibration] Converging velocity %d", train->curr_velocity);
+    int actual_arrival_time = train->time_elapsed;
+    int predicted_arrival_time = distance * 1000 / train->curr_velocity;
+    int time_difference = actual_arrival_time - predicted_arrival_time;
+    int distance_difference = time_difference * train->curr_velocity / 1000;
+
+    update_time_difference(time_difference);
+    update_distance_difference(distance_difference);
+
+    u_debug("[calibration] Converging velocity %d", train->curr_velocity);
 }
 
 int routing(int src_index, int dest_index, Queue *cmd_queue, int *id) {
@@ -606,7 +627,7 @@ void sensor_executor()
     int count = 0, result, acknowledged;
     char byte[SENSOR_MODULE_BYTES_COUNT];
     char_memset(byte, 0, SENSOR_MODULE_BYTES_COUNT);
-    Command cmd = {.type = CT_SENSOR_FETCH, .content = { SENSOR_DATA_FETCH_BYTE }, .len = 1};
+    Command cmd = {.type = CT_SENSOR_FETCH, .content = { SENSOR_DATA_FETCH_BYTE }, .len = 1, .priority = 1};
     result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
     if (result < 0) u_error("something went wrong here");
     while ( (c = Getc(_uart1_rx_server_tid, COM1) ) > -1) {
@@ -700,7 +721,7 @@ void command_executor()
                 cmd_buffer[cmd.id].ticks = curr_ticks;
             }
         } else {
-            // u_debug("[command] id %d get priority zero task with type %d", cmd_buffer[cmd.id].id, cmd_buffer[cmd.id].type);
+            u_debug("[command] id %d get priority zero task with type %d", cmd_buffer[cmd.id].id, cmd_buffer[cmd.id].type);
         }
 
         if (cmd.type != CT_FETCH_COMMAND) {
@@ -780,13 +801,17 @@ void track_server()
         case CT_SENSOR_UPDATE:
             curr_node_number = cmd_buffer[id].content[0];
             if (goto_mode == GM_GOTO) {
-                int result = _issue_stop_command(curr_node_number, &cmd_queue, &id, &offset);
+                int result = _try_stop(curr_node_number, &cmd_queue, &id, &offset);
                 // int result = 0;
                 if (result == 0) {
-                    u_info("[goto] Schedule stop command");
+                    u_info("[goto] Issue stop command");
                     goto_mode = GM_CRUISE;
                 } else if (result == 1) {
-                    u_info("[goto] Distance to destination %d", distance_to_destination[curr_node_number]);
+                    u_debug("[goto] Distance to destination %d", distance_to_destination[curr_node_number]);
+                } else if (result == -1) {
+                    u_error("[goto] Unexpected track state change at sensor %d. Immediately stop ...", _track[curr_node_number].name);
+                    _issue_stop_command(&cmd_queue, &id, curr_ticks);
+                    goto_mode = GM_CRUISE;
                 }
             } else if(goto_mode == GM_REROUTE) {
                 if (goto_mode_lock == 0) {

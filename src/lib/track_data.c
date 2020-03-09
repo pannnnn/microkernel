@@ -1061,7 +1061,9 @@ void init_tracka(track_node *track) {
   track[120].edge[DIR_CURVED].reverse = &track[48].edge[DIR_AHEAD];
   track[120].edge[DIR_CURVED].src = &track[120];
   track[120].edge[DIR_CURVED].dest = &track[49];
-  track[120].edge[DIR_CURVED].dist = 227;
+  // BUG: this is to accomandate broken switch int the track
+  // track[120].edge[DIR_CURVED].dist = 227;
+  track[120].edge[DIR_CURVED].dist = 2000000000;
   track[121].name = "MR155";
   track[121].type = NODE_MERGE;
   track[121].num = 155;

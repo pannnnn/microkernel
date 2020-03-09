@@ -12,7 +12,9 @@ typedef enum {
 	PX_RAIL_UPDATE,
 	PX_IDLE_UPDATE,
 	PX_CLOCK_UPDATE,
-	PX_LOG_UPDATE
+	PX_LOG_UPDATE,
+	PX_TIME_DIFF_UPDATE,
+	PX_DISTANCE_DIFF_UPDATE
 } PIXEL_TYPE;
 
 typedef struct
@@ -89,6 +91,22 @@ int update_clock(int hundredth_milsec) {
 	ticks[1] = '0' + min % 10;
 	ticks[0] = '0' + min / 10;
     Pixels pixels = { .type=PX_CLOCK_UPDATE, .size = 8, .chars = ticks };
+    Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels));
+    return 0;
+}
+
+int update_time_difference(int time_difference) {
+	char difference[4];
+	*((int *) difference) = time_difference;
+    Pixels pixels = { .type=PX_TIME_DIFF_UPDATE, .size = 4, .chars = difference };
+    Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels));
+    return 0;
+}
+
+int update_distance_difference(int distance_difference) {
+	char difference[4];
+	*((int *) difference) = distance_difference;
+    Pixels pixels = { .type=PX_DISTANCE_DIFF_UPDATE, .size = 4, .chars = difference };
     Send(_gui_server_tid, (const char *) &pixels, sizeof(pixels), (char *)&pixels, sizeof(pixels));
     return 0;
 }
@@ -335,7 +353,7 @@ void gui_server()
 	Switch_Gui switch_gui;
 	_init_map_data(&sensor_gui, &switch_gui);
     Pixels pixels;
-    int client_tid, row, col, prev_row, switch_number;
+    int client_tid, row, col, prev_row, switch_number, difference;
 	char switch_direction;
     General_Buffer format_buffer = {.index = 0};
 	General_Buffer char_buffer = {.index = 0};
@@ -393,6 +411,22 @@ void gui_server()
 			break;
 		case PX_LOG_UPDATE:
 			u_sprintf(&format_buffer, SAVE_CURSOR "\033[100;4H" "%s" SCROLL_UP RESTORE_CURSOR, char_buffer.content);
+			for (int i = 0; i < format_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
+			}
+			format_buffer.index = 0;
+			break;
+		case PX_TIME_DIFF_UPDATE:
+			difference = *((int *) char_buffer.content);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[35;98H" "%d        " RESTORE_CURSOR, difference);
+			for (int i = 0; i < format_buffer.index; i++) {
+				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
+			}
+			format_buffer.index = 0;
+			break;
+		case PX_DISTANCE_DIFF_UPDATE:
+			difference = *((int *) char_buffer.content);
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[37;102H" "%d        " RESTORE_CURSOR, difference);
 			for (int i = 0; i < format_buffer.index; i++) {
 				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);
 			}

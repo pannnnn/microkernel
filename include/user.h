@@ -131,6 +131,8 @@ int update_sensor(char *str, int size);
 int update_switch(char *str, int size);
 int update_idle(int percent_idle);
 int update_clock(int hundredth_milsec);
+int update_time_difference(int time_difference);
+int update_distance_difference(int distance_difference);
 void gui_server();
 void track_server();
 
