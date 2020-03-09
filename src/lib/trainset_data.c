@@ -25,7 +25,6 @@ void init_trainset(Train_Node *trainset) {
     trainset[0].curr_stopping_distance = 145;
     trainset[0].last_read_time = 0;
     trainset[0].time_elapsed = 0;
-    // calibrated
     trainset[0].measurement[TT_TRACK_A].speed[0] = 8;
     trainset[0].measurement[TT_TRACK_A].speed[1] = 11;
     trainset[0].measurement[TT_TRACK_A].speed[2] = 14;
@@ -104,6 +103,7 @@ void init_trainset(Train_Node *trainset) {
     trainset[3].curr_stopping_distance = 420;
     trainset[3].last_read_time = 0;
     trainset[3].time_elapsed = 0;
+    // calibrated
     trainset[3].measurement[TT_TRACK_A].speed[0] = 8;
     trainset[3].measurement[TT_TRACK_A].speed[1] = 11;
     trainset[3].measurement[TT_TRACK_A].speed[2] = 14;
