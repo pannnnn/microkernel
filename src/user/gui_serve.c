@@ -375,7 +375,7 @@ void gui_server()
 			if (sensor_gui.index == 0) prev_row = sensor_gui.map[SENSOR_TRACKED - 1][0];
 			else prev_row = sensor_gui.map[sensor_gui.index - 1][0];
 			if (++sensor_gui.index == SENSOR_TRACKED) sensor_gui.index = 0;
-			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH" BACKSPACE "\033[%d;%dH>" CLEAR_END_OF_LINE "%s\033[%d;161H|" RESTORE_CURSOR, 
+			u_sprintf(&format_buffer, SAVE_CURSOR "\033[%d;%dH" BACKSPACE "\033[%d;%dH>%s " RESTORE_CURSOR, 
 			prev_row, col + 1, row, col, char_buffer.content, row);
 			for (int i = 0; i < format_buffer.index; i++) {
 				Putc(_uart2_tx_server_tid, COM2, format_buffer.content[i]);

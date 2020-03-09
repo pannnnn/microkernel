@@ -845,11 +845,16 @@ void track_server()
                 if (curr_node_number != -1) {
                     int next_sensor_node_number = _get_next_sensor_node_number(curr_node_number);
                     if (next_sensor_node_number != -1) {
-                        if (routing(next_sensor_node_number, dst_node_number, &cmd_queue, &id) == -1) {
+                        if (next_sensor_node_number == dst_node_number) {
                             goto_mode = GM_REROUTE;
                             goto_mode_lock = 1;
                         } else {
-                            goto_mode = GM_GOTO;
+                            if (routing(next_sensor_node_number, dst_node_number, &cmd_queue, &id) == -1) {
+                                goto_mode = GM_REROUTE;
+                                goto_mode_lock = 1;
+                            } else {
+                                goto_mode = GM_GOTO;
+                            }
                         }
                     } else {
                         u_info("[goto] Can not predict the path");
@@ -894,8 +899,6 @@ void track_server()
             cmd_buffer[id].priority = 1;
             id += 1;
             id %= QUEUE_SIZE;
-            u_info("[level] Set speed to %d velocity %d", _trainset[_train_index].curr_speed, _trainset[_train_index].curr_velocity);
-
             Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
             break;
         case CT_SET_LOOP:
