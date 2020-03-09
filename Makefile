@@ -10,13 +10,16 @@ AR = $(XBINDIR)/arm-none-eabi-ar
 AS = $(XBINDIR)/arm-none-eabi-as
 LD = $(XBINDIR)/arm-none-eabi-ld
 
+# the length of time to calculate idling in secs
+IL = 60
+
 # -g: include debug information for gdb
 # -S: only compile and emit assembly
 # -fPIC: emit position-independent code
 # -Wall: report all warnings
 # -mcpu=arm920t: generate code for the 920t architecture
 # -msoft-float: no FP co-processor
-CFLAGS = -O3 -g -S -fPIC -MMD -Wall -mcpu=arm920t -msoft-float -I. -I./include
+CFLAGS = -O3 -D IDLE_LENGTH=${IL} -g -S -fPIC -MMD -Wall -mcpu=arm920t -msoft-float -I. -I./include
 
 # -static: force static linking
 # -e: set entry point
@@ -29,7 +32,7 @@ ASMSOURCES = $(wildcard src/kernel/*.S)
 ASMFILES = $(CSOURCES:.c=.s)
 OBJECTS = $(CSOURCES:.c=.o) $(ASMSOURCES:.S=.o)
 DEPENDS = $(CSOURCES:.c=.d)
-EXEC = k4
+EXEC = tc1
 
 all: $(ASMFILES) $(OBJECTS) $(EXEC).elf
 
