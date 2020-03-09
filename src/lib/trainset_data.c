@@ -40,8 +40,8 @@ void init_trainset(Train_Node *trainset) {
     trainset[0].measurement[TT_TRACK_B].velocity[0] = 260;
     trainset[0].measurement[TT_TRACK_B].velocity[1] = 445;
     trainset[0].measurement[TT_TRACK_B].velocity[2] = 620;
-    trainset[0].measurement[TT_TRACK_B].stopping_distance[0] = 140;
-    trainset[0].measurement[TT_TRACK_B].stopping_distance[1] = 530;
+    trainset[0].measurement[TT_TRACK_B].stopping_distance[0] = 180; 
+    trainset[0].measurement[TT_TRACK_B].stopping_distance[1] = 630;
     trainset[0].measurement[TT_TRACK_B].stopping_distance[2] = 1280;
 
     trainset[1].number = 24;
@@ -92,7 +92,7 @@ void init_trainset(Train_Node *trainset) {
     trainset[2].measurement[TT_TRACK_B].velocity[0] = 190;
     trainset[2].measurement[TT_TRACK_B].velocity[1] = 370;
     trainset[2].measurement[TT_TRACK_B].velocity[2] = 580;
-    trainset[2].measurement[TT_TRACK_B].stopping_distance[0] = 120;
+    trainset[2].measurement[TT_TRACK_B].stopping_distance[0] = 140;
     trainset[2].measurement[TT_TRACK_B].stopping_distance[1] = 500;
     trainset[2].measurement[TT_TRACK_B].stopping_distance[2] = 1160;
 
@@ -118,9 +118,9 @@ void init_trainset(Train_Node *trainset) {
     trainset[3].measurement[TT_TRACK_B].velocity[0] = 380;
     trainset[3].measurement[TT_TRACK_B].velocity[1] = 540;
     trainset[3].measurement[TT_TRACK_B].velocity[2] = 640;
-    trainset[3].measurement[TT_TRACK_B].stopping_distance[0] = 460;
-    trainset[3].measurement[TT_TRACK_B].stopping_distance[1] = 660;
-    trainset[3].measurement[TT_TRACK_B].stopping_distance[2] = 800;
+    trainset[3].measurement[TT_TRACK_B].stopping_distance[0] = 450;
+    trainset[3].measurement[TT_TRACK_B].stopping_distance[1] = 650;
+    trainset[3].measurement[TT_TRACK_B].stopping_distance[2] = 780;
 
     trainset[4].number = 78;
     trainset[4].curr_level = 0;
@@ -144,7 +144,7 @@ void init_trainset(Train_Node *trainset) {
     trainset[4].measurement[TT_TRACK_B].velocity[0] = 195;
     trainset[4].measurement[TT_TRACK_B].velocity[1] = 350;
     trainset[4].measurement[TT_TRACK_B].velocity[2] = 520;
-    trainset[4].measurement[TT_TRACK_B].stopping_distance[0] = 120;
+    trainset[4].measurement[TT_TRACK_B].stopping_distance[0] = 100;
     trainset[4].measurement[TT_TRACK_B].stopping_distance[1] = 400;
     trainset[4].measurement[TT_TRACK_B].stopping_distance[2] = 900;
 
