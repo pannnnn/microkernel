@@ -235,7 +235,7 @@ void _init_gui_server()
     _clock_server_tid = WhoIs(CLOCK_SERVER_NAME);
     _uart2_tx_server_tid = WhoIs(UART2_TX_SERVER_NAME);
     _gui_server_tid = MyTid();
-    _log_level = DEBUG;
+    _log_level = INFO;
 }
 
 void _init_map_data(Sensor_Gui *sensor_gui, Switch_Gui *switch_gui) {

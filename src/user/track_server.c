@@ -44,6 +44,12 @@ typedef struct {
     int priority;
 } Command;
 
+typedef struct {
+    int nodes[TRACK_MAX];
+    int index;
+    int size;
+} Node_Array;
+
 static int _clock_server_tid = -1;
 static int _uart1_rx_server_tid = -1;
 static int _uart1_tx_server_tid = -1;
@@ -189,6 +195,27 @@ int _get_next_sensor_node_number(int start_node_number) {
         }
     }
     return curr_node_number;
+}
+
+int _get_next_nodes_within_safe_distance(int start_node_number, Node_Array *node_array) {
+    int stopping_distance = _trainset[_train_index].curr_stopping_distance;
+    int velocity = _trainset[_train_index].curr_velocity;
+    int safe_distance = velocity * INTER_COMMANDS_DELAY_TICKS / 100 + stopping_distance;
+    int distance = 0, curr_node_number = start_node_number;
+    while(distance < safe_distance) {
+        if (_track[curr_node_number].type != NODE_BRANCH) {
+            if (_track[curr_node_number].type == NODE_EXIT) return -1;
+            distance += _track[curr_node_number].edge[DIR_AHEAD].dist;
+            curr_node_number = _track[curr_node_number].edge[DIR_AHEAD].dest - _track;
+            node_array->nodes[node_array->size++] = curr_node_number;
+        } else {
+            int dir_type = _switch_map[curr_node_number];
+            distance += _track[curr_node_number].edge[dir_type].dist;
+            curr_node_number = _track[curr_node_number].edge[dir_type].dest - _track;
+            node_array->nodes[node_array->size++] = curr_node_number;
+        }
+    }
+    return 0;
 }
 
 int _get_instructions(int *paths, int path_count, Queue *cmd_queue, int *id) 
@@ -371,7 +398,7 @@ void _process_command(CommandBuffer *cmdBuf)
         int train_number = (int) strtol(train_number_c, (char **)NULL, 10);
         int result = _get_train_index(train_number);
         if (result == -1) {
-            u_info("Invalid train number %d", train_number);
+            u_error("Invalid train number %d", train_number);
         } else {
             int train_index = result;
             Command cmd = {.type = CT_SET_TRAIN_NUMBER, .content = {train_index}, .len = 1};
@@ -382,7 +409,7 @@ void _process_command(CommandBuffer *cmdBuf)
     	char *velocity_level_c = strtok(NULL, " ");
         int velocity_level = (int) strtol(velocity_level_c, (char **)NULL, 10);
         if (velocity_level < 0 || velocity_level > 2) {
-            u_info("Invalid velocity level %d choose in [0,1,2]", velocity_level);
+            u_error("Invalid velocity level %d choose in [0,1,2]", velocity_level);
         } else {
             Command cmd = {.type = CT_SET_VELOCITY_LEVEL, .content = {velocity_level}, .len = 1};
             int result = Send(_track_server_tid, (const char *) &cmd, sizeof(cmd), (char *)&cmd, sizeof(cmd));
@@ -429,7 +456,7 @@ int _try_stop(int curr_node_number, Queue *cmd_queue, int *id, int *offset) {
     dtd += *offset;
 
     if (next_dtd == -1) {
-        u_info("[goto] Next node not in the planed path %s", _track[next_node_number].name);
+        u_info("[goto] Next node %s not in the planed path. Almost there ...", _track[next_node_number].name);
         int unfinished_distance = dtd - stopping_distance;
         int delayed_ticks = unfinished_distance * 100 / velocity;
         _issue_stop_command(cmd_queue, id, curr_ticks + delayed_ticks);
@@ -776,7 +803,9 @@ void track_server()
     Create(RAILS_TASK_PRIORITY, rails_task);
 
     Queue cmd_queue = {.size = 0, .index = 0};
-    int client_tid, cmd_id, id = 0, prev_node_number = -1, curr_node_number = -1, dst_node_number = -1, goto_mode = GM_CRUISE, offset = 0, goto_mode_lock = 0, velocity_level;
+    Node_Array node_array = {.size = 0, .index = 0};
+    int client_tid, cmd_id, id = 0, prev_node_number = -1, curr_node_number = -1, dst_node_number = -1, goto_mode = GM_CRUISE, offset = 0, goto_mode_lock = 0, safe_distance_lock = 0, safe_distance_index = 0, velocity_level;
+
     while (Receive(&client_tid, (char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]))) {
         switch (cmd_buffer[id].type)
         {
@@ -809,23 +838,35 @@ void track_server()
                 } else if (result == 1) {
                     u_debug("[goto] Distance to destination %d", distance_to_destination[curr_node_number]);
                 } else if (result == -1) {
-                    u_error("[goto] Unexpected track state change at sensor %d. Immediately stop ...", _track[curr_node_number].name);
+                    u_error("[goto] Unexpected track state change at sensor %s. Immediately stop ...", _track[curr_node_number].name);
                     _issue_stop_command(&cmd_queue, &id, curr_ticks);
                     goto_mode = GM_CRUISE;
                 }
             } else if(goto_mode == GM_REROUTE) {
                 if (goto_mode_lock == 0) {
-                    u_info("[reroute] ...");
-                    int next_sensor_node_number = _get_next_sensor_node_number(curr_node_number);
-                    if (next_sensor_node_number != -1) {
-                        if (routing(next_sensor_node_number, dst_node_number, &cmd_queue, &id) == -1) {
+                    if (safe_distance_lock == 0) {
+                        u_info("[reroute] ...");
+                        if (routing(curr_node_number, dst_node_number, &cmd_queue, &id) == -1) {
                             goto_mode = GM_REROUTE;
                             goto_mode_lock = 1;
                         } else {
                             goto_mode = GM_GOTO;
                         }
                     } else {
-                        u_info("[goto] Can not predict the path");
+                        safe_distance_index = 0;
+                        while (safe_distance_index < node_array.size) {
+                            if (node_array.nodes[safe_distance_index] == curr_node_number) {
+                                u_info("[goto] Sensor %s in the safe distance region visited", _track[curr_node_number].name);
+                                break;
+                            }
+                            safe_distance_index++;
+                        }
+                        if (safe_distance_index >= node_array.index) {
+                            u_info("[goto] Safe distance region cleared, free to reroute ... %d %d", safe_distance_index, node_array.index);
+                            safe_distance_lock = 0;
+                            node_array.index = 0;
+                            node_array.size = 0;
+                        }
                     }
                 } else {
                     goto_mode_lock = 0;
@@ -843,24 +884,32 @@ void track_server()
                 u_error("[goto] Can not reschedule goto when doing goto");
             } else {
                 if (curr_node_number != -1) {
-                    int next_sensor_node_number = _get_next_sensor_node_number(curr_node_number);
-                    if (next_sensor_node_number != -1) {
-                        if (next_sensor_node_number == dst_node_number) {
-                            goto_mode = GM_REROUTE;
-                            goto_mode_lock = 1;
-                        } else {
-                            if (routing(next_sensor_node_number, dst_node_number, &cmd_queue, &id) == -1) {
+                    int result = _get_next_nodes_within_safe_distance(curr_node_number, &node_array);
+                    if (result == 0) {
+                        while (node_array.index < node_array.size) {
+                            if (dst_node_number == node_array.nodes[node_array.index]) {
+                                u_info("[goto] Destination %s fall into safe distance region that has %d nodes", _track[dst_node_number].name, node_array.size);
+                                goto_mode = GM_REROUTE;
+                                safe_distance_lock = 1;
+                                break;
+                            }
+                            node_array.index++;
+                        }
+                        if (node_array.index == node_array.size) {
+                            if (routing(node_array.nodes[0], dst_node_number, &cmd_queue, &id) == -1) {
                                 goto_mode = GM_REROUTE;
                                 goto_mode_lock = 1;
                             } else {
                                 goto_mode = GM_GOTO;
                             }
+                            node_array.size = 0;
+                            node_array.index = 0;
                         }
                     } else {
-                        u_info("[goto] Can not predict the path");
+                        u_error("[goto] Unreachble path that goes beyond exit");
                     }
                 } else {
-                    u_info("[goto] Make train move before goto");
+                    u_error("[goto] Make train move before goto");
                 }
             }
             Reply(client_tid, (const char *) &(cmd_buffer[id]), sizeof(cmd_buffer[id]));
