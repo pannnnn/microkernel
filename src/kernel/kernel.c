@@ -35,7 +35,7 @@ int schedule()
 void task_performance(int tid) {
     unsigned int curr_time = read_timer();
     unsigned int runtime = _kernel_state.performance.task_start_time - curr_time;
-    int max_ticks = IDLE_LENGTH*508000;
+    int max_ticks = IDLE_LENGTH * 508000;
     _kernel_state.performance.task_start_time = curr_time;
     if (_kernel_state.performance.total_ticks < max_ticks) {
         _kernel_state.performance.total_ticks += runtime;
@@ -49,15 +49,15 @@ void task_performance(int tid) {
         if (_kernel_state.performance.total_ticks >= max_ticks) _kernel_state.performance.idle_ticks = 0;
         return;
     }
-    unsigned int time_elapsed = 0xFFFFFFFF - curr_time;
-    unsigned int half_second_ticks = CLOCK_PER_MILLISEC_508K*500;
-    int half_secs_elapsed = (time_elapsed/half_second_ticks);
-    unsigned int half_sec_boundary = half_secs_elapsed*half_second_ticks;
-    if (half_sec_boundary > time_elapsed-runtime) {
+    _kernel_state.performance.total_ticks += runtime;
+    unsigned int half_second_ticks = CLOCK_PER_MILLISEC_508K * 500;
+    int half_secs_elapsed = (_kernel_state.performance.total_ticks / half_second_ticks);
+    unsigned int half_sec_boundary = half_secs_elapsed * half_second_ticks;
+    if (half_sec_boundary > _kernel_state.performance.total_ticks - runtime) {
         // we crossed the half-second boundary during the last runtime
-        int num_half_seconds_rolling = IDLE_LENGTH*2;
+        int num_half_seconds_rolling = IDLE_LENGTH * 2;
         int temp_percent_idle = (_kernel_state.performance.idle_ticks) / (half_second_ticks / 1000);
-        percent_idle = (percent_idle*(num_half_seconds_rolling-1))/num_half_seconds_rolling + temp_percent_idle/num_half_seconds_rolling;
+        percent_idle = (percent_idle * (num_half_seconds_rolling - 1)) / num_half_seconds_rolling + temp_percent_idle/num_half_seconds_rolling;
         _kernel_state.performance.idle_ticks = 0;
     }
 
