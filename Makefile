@@ -32,7 +32,7 @@ ASMSOURCES = $(wildcard src/kernel/*.S)
 ASMFILES = $(CSOURCES:.c=.s)
 OBJECTS = $(CSOURCES:.c=.o) $(ASMSOURCES:.S=.o)
 DEPENDS = $(CSOURCES:.c=.d)
-EXEC = tc1
+EXEC = tc2
 
 all: $(ASMFILES) $(OBJECTS) $(EXEC).elf
 

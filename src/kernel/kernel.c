@@ -32,40 +32,30 @@ int schedule()
     return scheduled_tid;
 }
 
-void task_performance(int tid) {
+void task_performance(int tid, unsigned int *idle_window, int *idle_window_index) {
     unsigned int curr_time = read_timer();
     unsigned int runtime = _kernel_state.performance.task_start_time - curr_time;
-    int max_ticks = IDLE_LENGTH * 508000;
+    unsigned int one_sec_ticks = CLOCK_PER_MILLISEC_508K * 1000;
     _kernel_state.performance.task_start_time = curr_time;
-    if (_kernel_state.performance.total_ticks < max_ticks) {
-        _kernel_state.performance.total_ticks += runtime;
-        
-        // increment idle counter if just-finished task was idle task
-        if (tid == _kernel_state.performance.idle_task_tid) _kernel_state.performance.idle_ticks += runtime;
-       
-        // calculate the percentage for the idle task to print performance metrics
-        percent_idle = (_kernel_state.performance.idle_ticks) / (_kernel_state.performance.total_ticks / 1000);
-
-        if (_kernel_state.performance.total_ticks >= max_ticks) _kernel_state.performance.idle_ticks = 0;
-        return;
-    }
     _kernel_state.performance.total_ticks += runtime;
-    unsigned int half_second_ticks = CLOCK_PER_MILLISEC_508K * 500;
-    int half_secs_elapsed = (_kernel_state.performance.total_ticks / half_second_ticks);
-    unsigned int half_sec_boundary = half_secs_elapsed * half_second_ticks;
-    if (half_sec_boundary > _kernel_state.performance.total_ticks - runtime) {
-        // we crossed the half-second boundary during the last runtime
-        int num_half_seconds_rolling = IDLE_LENGTH * 2;
-        int temp_percent_idle = (_kernel_state.performance.idle_ticks) / (half_second_ticks / 1000);
-        percent_idle = (percent_idle * (num_half_seconds_rolling - 1)) / num_half_seconds_rolling + temp_percent_idle/num_half_seconds_rolling;
-        _kernel_state.performance.idle_ticks = 0;
-    }
-
+    // increment idle counter if just-finished task was idle task
     if (tid == _kernel_state.performance.idle_task_tid) _kernel_state.performance.idle_ticks += runtime;
+    unsigned int round = MIN(_kernel_state.performance.total_ticks / one_sec_ticks, IDLE_LENGTH - 1);
+    unsigned int divisor_ticks = round * one_sec_ticks + _kernel_state.performance.total_ticks % one_sec_ticks;
+    unsigned int idle_ticks_within_idle_length = _kernel_state.performance.idle_ticks - idle_window[*idle_window_index];
+    // calculate the percentage for the idle task to print performance metrics
+    percent_idle = (idle_ticks_within_idle_length) / (divisor_ticks / 1000);
+    if (((_kernel_state.performance.total_ticks / one_sec_ticks) % IDLE_LENGTH) != *idle_window_index) {
+        idle_window[(*idle_window_index)++] = _kernel_state.performance.idle_ticks;
+        *idle_window_index %= IDLE_LENGTH;
+    }
 }
 
 void k_main() 
 {
+    unsigned int idle_window[IDLE_LENGTH];
+    int idle_window_index = 0;
+    int_memset((int *)idle_window, 0, IDLE_LENGTH);
     while(1) {
         // get the new task from the scheduler
         int tid = schedule();
@@ -86,13 +76,13 @@ void k_main()
         args = &interruptArg;
 
         // measure time of kernel activity & print idle percentage
-        task_performance(-1);
+        task_performance(-1, idle_window, &idle_window_index);
 
         // switch out of kernel mode and run the scheduled task
         unsigned int stack_pointer = leave_kernel(td->stack_pointer, &args);
 
         // measure time of task activity & print idle percentage
-        task_performance(tid);
+        task_performance(tid, idle_window, &idle_window_index);
 
         // store the new location of the task's stack pointer into
         // the task's task descriptor
